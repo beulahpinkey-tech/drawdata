@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { GameHeader } from "@/components/GameHeader";
 import { HonestyNote } from "@/components/HonestyNote";
 import { PairsView } from "./PairsView";

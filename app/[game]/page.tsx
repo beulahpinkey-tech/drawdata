@@ -1,3 +1,5 @@
+export const runtime = "edge";
+
 import { GameHeader } from "@/components/GameHeader";
 import { StatCard } from "@/components/StatCard";
 import { NumberBall } from "@/components/NumberBall";

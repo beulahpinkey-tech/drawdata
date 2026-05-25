@@ -3,12 +3,11 @@ import type { ReactNode } from "react";
 
 const GAMES = new Set(["pick3", "pick4", "powerball", "megamillions"]);
 
-// Fully-static: only the four params below are prerendered, anything else
-// 404s without an SSR fallback. This is what Cloudflare Pages needs — it
-// has no Node.js runtime, only the Edge runtime, and we don't need either
-// because the data is baked in at build time.
+// Cloudflare Pages requires every dynamic-segment route to declare
+// `runtime = 'edge'` on the page itself (see each /[game]/*/page.tsx).
+// At the layout level we just lock the param set: any slug not in
+// generateStaticParams 404s without an SSR fallback.
 export const dynamicParams = false;
-export const dynamic = "force-static";
 
 export default function GameLayout({
   children,
