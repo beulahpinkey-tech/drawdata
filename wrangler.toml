@@ -1,0 +1,6 @@
+# Cloudflare Pages config — used by `npm run build:cf`.
+# Owner: replace `name` with your Pages project name when you create it in Cloudflare.
+name = "drawdata"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"

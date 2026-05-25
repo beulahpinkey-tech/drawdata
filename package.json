@@ -1,0 +1,36 @@
+{
+  "name": "drawdata",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "precompute": "tsx scripts/precompute.ts",
+    "ingest": "tsx scripts/precompute.ts",
+    "verify": "tsx scripts/verify.ts",
+    "predev": "npm run precompute",
+    "prebuild": "npm run precompute",
+    "dev": "next dev",
+    "build": "next build",
+    "build:cf": "npm run precompute && npx @cloudflare/next-on-pages",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "framer-motion": "^11.18.2",
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-zoom-pan-pinch": "^3.7.0",
+    "recharts": "2.12.7"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.10",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.19",
+    "postcss": "8.4.39",
+    "tailwindcss": "3.4.7",
+    "tsx": "4.19.0",
+    "typescript": "5.5.3"
+  }
+}
