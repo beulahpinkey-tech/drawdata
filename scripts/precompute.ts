@@ -28,7 +28,7 @@
  * To refresh: drop new rows into the CSV files and run `npm run ingest`.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { parsePick, parsePowerball, parseMegaMillions } from "../lib/ingest/parsers";
 import { CURRENT_PB_ERA } from "../lib/ingest/eras";
@@ -54,8 +54,37 @@ const NATIONAL_CSV_DIR = join(ROOT, "data");
 const OUT_DIR = join(ROOT, "lib", "data");
 mkdirSync(OUT_DIR, { recursive: true });
 
-function load(name: string, dir = CSV_DIR) {
-  return readFileSync(join(dir, name), "utf8");
+/**
+ * Resolve a CSV by trying multiple filename and location variants.
+ * The Wisconsin Lottery / Mega Millions downloads ship with a few naming
+ * conventions ("pick-3.csv", "pick-3_history.csv", "pick3.csv", etc.) and
+ * users sometimes drop national-game files under data/wi/. We accept all
+ * common variants in either directory so the ingest never breaks just
+ * because someone renamed a file.
+ */
+function findCsv(canonical: string, aliases: string[] = []): { path: string; tried: string[] } {
+  const filenames = Array.from(new Set([canonical, ...aliases]));
+  const dirs = [CSV_DIR, NATIONAL_CSV_DIR, ROOT];
+  const tried: string[] = [];
+  for (const dir of dirs) {
+    for (const name of filenames) {
+      const p = join(dir, name);
+      tried.push(p);
+      if (existsSync(p)) return { path: p, tried };
+    }
+  }
+  return { path: "", tried };
+}
+
+function loadCsv(canonical: string, aliases: string[] = []): { raw: string; path: string } {
+  const { path, tried } = findCsv(canonical, aliases);
+  if (!path) {
+    console.error(
+      `\n  Could not find ${canonical}. Tried:\n    ${tried.join("\n    ")}\n`,
+    );
+    process.exit(1);
+  }
+  return { raw: readFileSync(path, "utf8"), path };
 }
 
 function writeJson(name: string, obj: unknown) {
@@ -160,18 +189,33 @@ console.log(rule());
 console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
-console.log("\nReading from data/wi/ (state) and data/ (national) …");
-const p3raw = load("pick3.csv");
-const p4raw = load("pick4.csv");
-const pbraw = load("powerball.csv");
-const mmraw = load("megamillions.csv", NATIONAL_CSV_DIR);
+console.log("\nReading CSVs (data/wi/, data/, project root all checked) …");
+const p3csv = loadCsv("pick3.csv", ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"]);
+const p4csv = loadCsv("pick4.csv", ["pick-4.csv", "pick-4_history.csv", "pick_4.csv"]);
+const pbcsv = loadCsv("powerball.csv", ["powerball_history.csv", "powerball-history.csv"]);
+const mmcsv = loadCsv("megamillions.csv", [
+  "mega-millions.csv",
+  "mega_millions.csv",
+  "megamillions_history.csv",
+  "mega-millions_history.csv",
+]);
+console.log(`  pick3        ← ${p3csv.path}`);
+console.log(`  pick4        ← ${p4csv.path}`);
+console.log(`  powerball    ← ${pbcsv.path}`);
+console.log(`  megamillions ← ${mmcsv.path}`);
 
-const p3stat = statSync(join(CSV_DIR, "pick3.csv"));
-const p4stat = statSync(join(CSV_DIR, "pick4.csv"));
-const pbstat = statSync(join(CSV_DIR, "powerball.csv"));
-const mmstat = statSync(join(NATIONAL_CSV_DIR, "megamillions.csv"));
+const p3raw = p3csv.raw;
+const p4raw = p4csv.raw;
+const pbraw = pbcsv.raw;
+const mmraw = mmcsv.raw;
+
 const latestCsvMtime = new Date(
-  Math.max(p3stat.mtimeMs, p4stat.mtimeMs, pbstat.mtimeMs, mmstat.mtimeMs),
+  Math.max(
+    statSync(p3csv.path).mtimeMs,
+    statSync(p4csv.path).mtimeMs,
+    statSync(pbcsv.path).mtimeMs,
+    statSync(mmcsv.path).mtimeMs,
+  ),
 ).toISOString();
 
 console.log("\nParsing …");
