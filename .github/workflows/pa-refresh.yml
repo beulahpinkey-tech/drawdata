@@ -36,19 +36,19 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6  # runs on node24 (Node 20 actions deprecated)
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6  # runs on node24
         with:
-          node-version: "20"
+          node-version: "22"  # current LTS
           cache: "npm"
 
       # Persist .cache/pa across runs. First run = full history fetch
       # (~200 API calls, ~1 min). Every subsequent run hits the cache
       # for old years and only fetches the current year (~4 calls, ~2s).
       - name: Restore PA year cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5  # runs on node24
         with:
           path: .cache/pa
           key: pa-fetch-cache-${{ github.run_id }}
