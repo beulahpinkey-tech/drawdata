@@ -1,0 +1,77 @@
+name: PA Lottery daily refresh
+
+# Fires twice a day, shortly after each Pennsylvania Pick 3 / Pick 4
+# drawing, fetches that day's draws from the PA Lottery JSON endpoint,
+# regenerates aggregates, and pushes if anything changed. Cloudflare
+# Pages auto-rebuilds on the push.
+#
+# Times are UTC (GitHub Actions cron has no timezone). Conversions:
+#   19:30 UTC = 1:30 PM CST (winter) / 2:30 PM CDT (summer)
+#               — ~1 hour after PA Day draw (1:35 PM ET / 12:35 PM CT)
+#   02:30 UTC = 8:30 PM CST (previous day, winter) / 9:30 PM CDT (summer)
+#               — ~2.5 hours after PA Evening draw (6:59 PM ET / 5:59 PM CT)
+#
+# Note GitHub schedules drift up to ~15 minutes under load, so the wait
+# margins above are deliberate. Pre-draw fires would return yesterday's
+# data and waste a build.
+
+on:
+  schedule:
+    - cron: "30 19 * * *"  # 1:30 PM CST — after PA Day draw
+    - cron: "30 2 * * *"   # 8:30 PM CST (prev day) — after PA Evening draw
+  workflow_dispatch:        # manual trigger from the Actions tab
+
+permissions:
+  contents: write  # needed to push the refresh commit back to main
+
+concurrency:
+  # Don't pile up runs if a refresh is mid-flight; cancel any older
+  # queued run in favor of the newest one.
+  group: pa-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # Persist .cache/pa across runs. First run = full history fetch
+      # (~200 API calls, ~1 min). Every subsequent run hits the cache
+      # for old years and only fetches the current year (~4 calls, ~2s).
+      - name: Restore PA year cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/pa
+          key: pa-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            pa-fetch-cache-
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Fetch latest PA draws
+        run: npm run fetch:pa
+
+      - name: Regenerate JSON aggregates
+        run: npm run ingest
+
+      - name: Commit + push if anything changed
+        run: |
+          git config user.name "drawdata-bot"
+          git config user.email "drawdata-bot@users.noreply.github.com"
+          git add data/pa lib/data || true
+          if git diff --cached --quiet; then
+            echo "No new PA draws — nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore(pa): refresh draws $(date -u +%Y-%m-%d_%H%MZ)"
+          git push
