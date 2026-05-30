@@ -5,8 +5,9 @@ import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { pairFrequency } from "@/lib/analytics/digits";
 import { StreamSelect } from "@/components/StreamSelect";
 import { NumberBall } from "@/components/NumberBall";
+import type { Game } from "@/lib/types";
 
-export function PairsView({ game }: { game: "pick3" | "pick4" }) {
+export function PairsView({ game }: { game: Game }) {
   const { draws, loading } = useGameDraws(game);
   const [stream, setStream] = useState<"combined" | "midday" | "evening">("combined");
 
@@ -27,7 +28,7 @@ export function PairsView({ game }: { game: "pick3" | "pick4" }) {
   // expected count for any specific pair {a,b} with a != b under uniform digits:
   // P(both a and b appear in a draw) = 1 - 2*(9/10)^P + (8/10)^P
   // P(double {a,a}) = different math but we skip displaying it
-  const P = game === "pick3" ? 3 : 4;
+  const P = game.endsWith("pick3") ? 3 : 4;
   const pAB = 1 - 2 * Math.pow(0.9, P) + Math.pow(0.8, P);
   const expected = totalDraws * pAB;
 

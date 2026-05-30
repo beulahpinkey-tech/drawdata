@@ -1,0 +1,26 @@
+{
+  "skill_name": "drawdata-3d-motion",
+  "evals": [
+    {
+      "id": 1,
+      "name": "tilt-home-game-cards",
+      "prompt": "the game cards on the home page look kinda flat — can u give them a hover tilt thing like those parallax-y cards? keep the existing stagger animation in tact tho and dont break the link click",
+      "expected_output": "Mode B JSX patch wrapping the home page game cards (in app/page.tsx, inside StaggerItem) with a CSS-3D tilt-on-hover behavior. Likely creates components/motion/TiltCard.tsx or a useTiltHover hook. Must respect prefers-reduced-motion, keep the existing Link interactive, not break the StaggerGroup/StaggerItem stagger.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "hero-scene-home",
+      "prompt": "i want the home page hero (the big amber/dark area at the top) to feel more cinematic — like a subtle 3d scene living behind the heading text. amber + teal accents, must respect reduced motion, and obviously don't slow the page down too much (its a static page).",
+      "expected_output": "Mode A R3F component at components/3d/HomeHero.tsx with an OrbitCamera + a focal torus or sphere in amber + drifting teal particle field. Must be lazy-loaded via next/dynamic in app/page.tsx with ssr: false. Must list the npm install for three / @react-three/fiber / @react-three/drei. Must include reduced-motion short-circuit. Performance: dpr capped at 1.5, particles ≤ 200.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "lab-idle-glow-orb",
+      "prompt": "you know how the formula lab page just sits there before you click backtest? add a really subtle floating glow orb to that empty state. amber, very low key, just give the eye somewhere to land while you're reading the rule builder. its gotta disappear once the result panel renders.",
+      "expected_output": "Mode A R3F component at components/3d/IdleGlow.tsx — single sphere + point light + drei <Float>, no particles, no bloom. Mounted only when no result is present in app/lab/LabView.tsx (conditional render). Lazy-loaded. Reduced-motion safe. Should also include a static SVG fallback for reduced-motion users instead of completely vanishing.",
+      "files": []
+    }
+  ]
+}

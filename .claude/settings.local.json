@@ -31,7 +31,16 @@
       "Bash(curl -s http://localhost:3000/picker)",
       "Bash(curl -s http://localhost:3000/megamillions)",
       "Bash(curl -s http://localhost:3000/pick4)",
-      "Bash(curl -s http://localhost:3000/pick4/pairs)"
+      "Bash(curl -s http://localhost:3000/pick4/pairs)",
+      "Bash(curl -s \"https://www.palottery.pa.gov/Custom/uploadedfiles/winning-numbers-history/PastWinningNumbers.ashx?g=32&y=2026\")",
+      "Bash(curl -sv \"https://www.palottery.pa.gov/Custom/uploadedfiles/winning-numbers-history/PastWinningNumbers.ashx?g=33&y=2026\")",
+      "Bash(awk -F'-' '{print $1}')",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -L http://localhost:3000__TRACKED_VAR__)",
+      "Bash(curl -s http://localhost:3000/pa-pick3)",
+      "Bash(curl -s http://localhost:3000/wi-pick3)",
+      "Bash(curl -sI -L http://localhost:3000/pick3)",
+      "Bash(mkdir -p \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/references\" \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/scripts\" \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/assets\" && echo \"ok\")",
+      "Bash(node -e \"const p = require\\('./package.json'\\); const all = {...p.dependencies, ...p.devDependencies}; ['three', '@react-three/fiber', '@react-three/drei', '@types/three'].forEach\\(d => console.log\\(d.padEnd\\(24\\), all[d] ? '✓ ' + all[d] : '✗ missing'\\)\\);\")"
     ]
   }
 }

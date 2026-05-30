@@ -49,22 +49,22 @@ import {
 import type { Draw, ParseReport } from "../lib/types";
 
 const ROOT = process.cwd();
-const CSV_DIR = join(ROOT, "data", "wi");
 const NATIONAL_CSV_DIR = join(ROOT, "data");
 const OUT_DIR = join(ROOT, "lib", "data");
 mkdirSync(OUT_DIR, { recursive: true });
 
 /**
- * Resolve a CSV by trying multiple filename and location variants.
- * The Wisconsin Lottery / Mega Millions downloads ship with a few naming
- * conventions ("pick-3.csv", "pick-3_history.csv", "pick3.csv", etc.) and
- * users sometimes drop national-game files under data/wi/. We accept all
- * common variants in either directory so the ingest never breaks just
- * because someone renamed a file.
+ * Resolve a CSV by trying multiple filename variants within a list of
+ * candidate directories (state dir → national dir → project root).
+ * Tolerant of variants like "pick-3.csv" vs "pick3.csv" because Lottery
+ * downloads ship with several conventions.
  */
-function findCsv(canonical: string, aliases: string[] = []): { path: string; tried: string[] } {
+function findCsv(
+  canonical: string,
+  aliases: string[],
+  dirs: string[],
+): { path: string; tried: string[] } {
   const filenames = Array.from(new Set([canonical, ...aliases]));
-  const dirs = [CSV_DIR, NATIONAL_CSV_DIR, ROOT];
   const tried: string[] = [];
   for (const dir of dirs) {
     for (const name of filenames) {
@@ -76,13 +76,21 @@ function findCsv(canonical: string, aliases: string[] = []): { path: string; tri
   return { path: "", tried };
 }
 
-function loadCsv(canonical: string, aliases: string[] = []): { raw: string; path: string } {
-  const { path, tried } = findCsv(canonical, aliases);
+function loadCsv(
+  canonical: string,
+  aliases: string[],
+  dirs: string[],
+  required: boolean,
+): { raw: string; path: string } | null {
+  const { path, tried } = findCsv(canonical, aliases, dirs);
   if (!path) {
-    console.error(
-      `\n  Could not find ${canonical}. Tried:\n    ${tried.join("\n    ")}\n`,
-    );
-    process.exit(1);
+    if (required) {
+      console.error(
+        `\n  Could not find ${canonical}. Tried:\n    ${tried.join("\n    ")}\n`,
+      );
+      process.exit(1);
+    }
+    return null;
   }
   return { raw: readFileSync(path, "utf8"), path };
 }
@@ -189,128 +197,161 @@ console.log(rule());
 console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
-console.log("\nReading CSVs (data/wi/, data/, project root all checked) …");
-const p3csv = loadCsv("pick3.csv", ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"]);
-const p4csv = loadCsv("pick4.csv", ["pick-4.csv", "pick-4_history.csv", "pick_4.csv"]);
-const pbcsv = loadCsv("powerball.csv", ["powerball_history.csv", "powerball-history.csv"]);
-const mmcsv = loadCsv("megamillions.csv", [
-  "mega-millions.csv",
-  "mega_millions.csv",
-  "megamillions_history.csv",
-  "mega-millions_history.csv",
-]);
-console.log(`  pick3        ← ${p3csv.path}`);
-console.log(`  pick4        ← ${p4csv.path}`);
+// ─── State-scoped pick games ────────────────────────────────────────────
+type StateCfg = { code: "wi" | "pa"; label: string };
+const STATES: StateCfg[] = [
+  { code: "wi", label: "Wisconsin" },
+  { code: "pa", label: "Pennsylvania" },
+];
+
+const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];
+const PICK4_ALIASES = ["pick-4.csv", "pick-4_history.csv", "pick_4.csv"];
+
+type LoadedPick = {
+  state: StateCfg;
+  game: "pick3" | "pick4";
+  csv: { path: string; raw: string };
+};
+
+console.log("\nReading state CSVs …");
+const stateLoaded: LoadedPick[] = [];
+for (const s of STATES) {
+  const stateDir = join(ROOT, "data", s.code);
+  const p3 = loadCsv("pick3.csv", PICK3_ALIASES, [stateDir], false);
+  const p4 = loadCsv("pick4.csv", PICK4_ALIASES, [stateDir], false);
+  if (!p3 || !p4) {
+    console.log(`  ${s.code.toUpperCase()} skipped (missing pick3 or pick4 in ${stateDir})`);
+    continue;
+  }
+  stateLoaded.push({ state: s, game: "pick3", csv: p3 });
+  stateLoaded.push({ state: s, game: "pick4", csv: p4 });
+  console.log(`  ${s.code.toUpperCase()} pick3 ← ${p3.path}`);
+  console.log(`  ${s.code.toUpperCase()} pick4 ← ${p4.path}`);
+}
+
+console.log("\nReading national CSVs …");
+const pbcsv = loadCsv(
+  "powerball.csv",
+  ["powerball_history.csv", "powerball-history.csv"],
+  [join(ROOT, "data", "wi"), NATIONAL_CSV_DIR, ROOT],
+  true,
+)!;
+const mmcsv = loadCsv(
+  "megamillions.csv",
+  ["mega-millions.csv", "mega_millions.csv", "megamillions_history.csv", "mega-millions_history.csv"],
+  [join(ROOT, "data", "wi"), NATIONAL_CSV_DIR, ROOT],
+  true,
+)!;
 console.log(`  powerball    ← ${pbcsv.path}`);
 console.log(`  megamillions ← ${mmcsv.path}`);
 
-const p3raw = p3csv.raw;
-const p4raw = p4csv.raw;
-const pbraw = pbcsv.raw;
-const mmraw = mmcsv.raw;
-
 const latestCsvMtime = new Date(
   Math.max(
-    statSync(p3csv.path).mtimeMs,
-    statSync(p4csv.path).mtimeMs,
+    ...stateLoaded.map((l) => statSync(l.csv.path).mtimeMs),
     statSync(pbcsv.path).mtimeMs,
     statSync(mmcsv.path).mtimeMs,
   ),
 ).toISOString();
 
 console.log("\nParsing …");
-const { draws: p3, report: r3 } = parsePick(p3raw, "pick3");
-const { draws: p4, report: r4 } = parsePick(p4raw, "pick4");
-const { draws: pb, report: rPb } = parsePowerball(pbraw);
-const { draws: mm, report: rMm } = parseMegaMillions(mmraw);
+type ParsedPick = {
+  state: StateCfg;
+  game: "pick3" | "pick4";
+  draws: Draw[];
+  report: ParseReport;
+};
+const parsedPicks: ParsedPick[] = stateLoaded.map((l) => {
+  const { draws, report } = parsePick(l.csv.raw, l.game);
+  return { state: l.state, game: l.game, draws, report };
+});
+const { draws: pb, report: rPb } = parsePowerball(pbcsv.raw);
+const { draws: mm, report: rMm } = parseMegaMillions(mmcsv.raw);
 
 console.log("\nValidation report:");
-reportFor("pick3", r3);
-reportFor("pick4", r4);
+for (const p of parsedPicks) reportFor(`${p.state.code}-${p.game}`, p.report);
 reportFor("powerball", rPb);
 reportFor("megamillions", rMm);
 
 const errors: string[] = [];
-if (p3.length === 0) errors.push("Pick 3 produced zero draws");
-if (p4.length === 0) errors.push("Pick 4 produced zero draws");
-if (pb.length === 0) errors.push("Powerball produced zero draws");
-if (mm.length === 0) errors.push("Mega Millions produced zero draws");
-// chronological monotonic check
-for (const [game, set] of [
-  ["pick3", p3],
-  ["pick4", p4],
-  ["powerball", pb],
-  ["megamillions", mm],
-] as const) {
-  for (let i = 1; i < set.length; i++) {
-    if (set[i].date < set[i - 1].date) {
-      errors.push(`${game}: dates out of order at index ${i} (${set[i - 1].date} → ${set[i].date})`);
+for (const p of parsedPicks) {
+  if (p.draws.length === 0) errors.push(`${p.state.code}-${p.game}: zero draws`);
+  for (let i = 1; i < p.draws.length; i++) {
+    if (p.draws[i].date < p.draws[i - 1].date) {
+      errors.push(`${p.state.code}-${p.game}: dates out of order at index ${i}`);
       break;
     }
   }
 }
+if (pb.length === 0) errors.push("powerball: zero draws");
+if (mm.length === 0) errors.push("megamillions: zero draws");
 if (errors.length) {
   console.error("\nValidation failures:\n  " + errors.join("\n  "));
   process.exit(1);
 }
 
 console.log("\nWriting JSON aggregates to lib/data/ …");
-writeJson("pick3.json", { game: "pick3", draws: p3, report: r3 });
-writeJson("pick4.json", { game: "pick4", draws: p4, report: r4 });
+for (const p of parsedPicks) {
+  const slug = `${p.state.code}-${p.game}`;
+  writeJson(`${slug}.json`, { game: slug, draws: p.draws, report: p.report });
+  writeJson(
+    `${slug}.agg.json`,
+    aggregatePick(p.draws, p.game === "pick3" ? 3 : 4, slug),
+  );
+}
 writeJson("powerball.json", { game: "powerball", draws: pb, report: rPb });
 writeJson("megamillions.json", { game: "megamillions", draws: mm, report: rMm });
-
-writeJson("pick3.agg.json", aggregatePick(p3, 3, "pick3"));
-writeJson("pick4.agg.json", aggregatePick(p4, 4, "pick4"));
 writeJson("powerball.agg.json", aggregateBallGame(pb, CURRENT_PB_ERA, "powerball"));
 writeJson("megamillions.agg.json", aggregateBallGame(mm, CURRENT_MM_ERA, "megamillions"));
 
-const meta = {
+const meta: Record<string, unknown> = {
   generatedAt: new Date().toISOString(),
   lastCsvUpdated: latestCsvMtime,
-  source: "Wisconsin Lottery (public draw history). Not affiliated.",
-  pick3: {
-    count: p3.length,
-    countMidday: p3.filter((d) => d.stream === "midday").length,
-    countEvening: p3.filter((d) => d.stream === "evening").length,
-    countOther: p3.filter((d) => d.stream === "other").length,
-    earliest: r3.dateRange[0],
-    latest: r3.dateRange[1],
-    latestDraw: p3[p3.length - 1] ?? null,
-    skipped: r3.skipped,
-  },
-  pick4: {
-    count: p4.length,
-    countMidday: p4.filter((d) => d.stream === "midday").length,
-    countEvening: p4.filter((d) => d.stream === "evening").length,
-    countOther: p4.filter((d) => d.stream === "other").length,
-    earliest: r4.dateRange[0],
-    latest: r4.dateRange[1],
-    latestDraw: p4[p4.length - 1] ?? null,
-    skipped: r4.skipped,
-  },
-  powerball: {
-    count: pb.length,
-    earliest: rPb.dateRange[0],
-    latest: rPb.dateRange[1],
-    latestDraw: pb[pb.length - 1] ?? null,
-    currentEra: CURRENT_PB_ERA,
-    skipped: rPb.skipped,
-  },
-  megamillions: {
-    count: mm.length,
-    earliest: rMm.dateRange[0],
-    latest: rMm.dateRange[1],
-    latestDraw: mm[mm.length - 1] ?? null,
-    currentEra: CURRENT_MM_ERA,
-    eras: MEGAMILLIONS_ERAS,
-    skipped: rMm.skipped,
-  },
+  source: "Wisconsin Lottery + Pennsylvania Lottery + multi-state. Not affiliated.",
+  states: STATES.reduce<Record<string, unknown>>((acc, s) => {
+    acc[s.code] = { code: s.code, label: s.label, available: parsedPicks.some((p) => p.state.code === s.code) };
+    return acc;
+  }, {}),
+};
+for (const p of parsedPicks) {
+  const slug = `${p.state.code}-${p.game}`;
+  (meta as any)[slug] = {
+    state: p.state.code,
+    stateLabel: p.state.label,
+    game: p.game,
+    count: p.draws.length,
+    countMidday: p.draws.filter((d) => d.stream === "midday").length,
+    countEvening: p.draws.filter((d) => d.stream === "evening").length,
+    countOther: p.draws.filter((d) => d.stream === "other").length,
+    earliest: p.report.dateRange[0],
+    latest: p.report.dateRange[1],
+    latestDraw: p.draws[p.draws.length - 1] ?? null,
+    skipped: p.report.skipped,
+  };
+}
+(meta as any).powerball = {
+  count: pb.length,
+  earliest: rPb.dateRange[0],
+  latest: rPb.dateRange[1],
+  latestDraw: pb[pb.length - 1] ?? null,
+  currentEra: CURRENT_PB_ERA,
+  skipped: rPb.skipped,
+};
+(meta as any).megamillions = {
+  count: mm.length,
+  earliest: rMm.dateRange[0],
+  latest: rMm.dateRange[1],
+  latestDraw: mm[mm.length - 1] ?? null,
+  currentEra: CURRENT_MM_ERA,
+  eras: MEGAMILLIONS_ERAS,
+  skipped: rMm.skipped,
 };
 writeJson("meta.json", meta);
 
 console.log(`\n${rule()}`);
 console.log("Done.");
 console.log(`  data freshness (latest CSV mtime): ${latestCsvMtime}`);
-console.log(`  total draws: pick3=${p3.length}  pick4=${p4.length}  powerball=${pb.length}  megamillions=${mm.length}`);
+const pickSummary = parsedPicks
+  .map((p) => `${p.state.code}-${p.game}=${p.draws.length}`)
+  .join("  ");
+console.log(`  total draws: ${pickSummary}  powerball=${pb.length}  megamillions=${mm.length}`);
 console.log(rule());

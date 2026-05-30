@@ -16,16 +16,29 @@ export function CheckView({ game }: { game: Game }) {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const mod = (await (game === "pick3"
-        ? import("@/lib/data/pick3.json")
-        : game === "pick4"
-        ? import("@/lib/data/pick4.json")
-        : game === "megamillions"
-        ? import("@/lib/data/megamillions.json")
-        : import("@/lib/data/powerball.json"))) as unknown as DrawsModule;
+      let mod: any;
+      switch (game) {
+        case "wi-pick3":
+          mod = await import("@/lib/data/wi-pick3.json");
+          break;
+        case "wi-pick4":
+          mod = await import("@/lib/data/wi-pick4.json");
+          break;
+        case "pa-pick3":
+          mod = await import("@/lib/data/pa-pick3.json");
+          break;
+        case "pa-pick4":
+          mod = await import("@/lib/data/pa-pick4.json");
+          break;
+        case "megamillions":
+          mod = await import("@/lib/data/megamillions.json");
+          break;
+        case "powerball":
+          mod = await import("@/lib/data/powerball.json");
+          break;
+      }
       if (cancelled) return;
-      // current era only for ball games
-      const all = mod.default.draws ?? (mod as any).draws;
+      const all = mod.default?.draws ?? (mod as any).draws;
       if (game === "powerball") {
         setDraws(all.filter((d: Draw) => d.era === "2015-10-07"));
       } else if (game === "megamillions") {
@@ -55,7 +68,7 @@ export function CheckView({ game }: { game: Game }) {
     const redPool = game === "megamillions" ? 24 : 26;
     return <BallGameChecker draws={draws} game={game} whitePool={pool} redPool={redPool} />;
   }
-  return <DigitChecker draws={draws} positions={game === "pick3" ? 3 : 4} />;
+  return <DigitChecker draws={draws} positions={game.endsWith("pick3") ? 3 : 4} />;
 }
 
 function DigitChecker({ draws, positions }: { draws: Draw[]; positions: number }) {

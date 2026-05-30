@@ -22,7 +22,7 @@ export default function PositionalPage({ params }: { params: { game: string } })
           every slot should look like 0–9 picked from a hat — about 10% each, with sample noise.
           Any heat pattern you can see by eye is almost certainly within that noise band.
         </HonestyNote>
-        <PositionalView game={game as "pick3" | "pick4"} agg={agg} />
+        <PositionalView game={game} agg={agg} />
       </div>
     </>
   );

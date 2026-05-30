@@ -52,7 +52,7 @@ export function GapsView({ game, agg }: { game: Game; agg: any }) {
   }
 
   const slice = agg[stream] ?? agg.combined;
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   // For digit games: prob a specific digit appears in a draw of `positions` digits ≈ 1 - (9/10)^positions
   const p = 1 - Math.pow(0.9, positions);
   return (

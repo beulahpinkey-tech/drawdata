@@ -18,7 +18,7 @@ export default function CarryoverPage({ params }: { params: { game: string } }) 
           are popular player concepts. They&rsquo;re fun to look at — but the observed rates here will
           match the chance baseline almost exactly. Past draws don&rsquo;t pull on the next one.
         </HonestyNote>
-        <CarryoverView game={game as "pick3" | "pick4"} />
+        <CarryoverView game={game} />
       </div>
     </>
   );

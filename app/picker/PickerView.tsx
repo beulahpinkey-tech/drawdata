@@ -40,12 +40,15 @@ export function PickerView() {
 
   const handleStateClick = (s: StateGame) => {
     if (s.status === "available") {
-      // Wisconsin → default to Pick 3 overview
-      writeActiveGame("pick3");
-      router.push("/pick3");
-    } else {
-      setWaitlistState(s);
+      const slug =
+        s.abbr === "WI" ? "wi-pick3" : s.abbr === "PA" ? "pa-pick3" : null;
+      if (slug) {
+        writeActiveGame(slug as any);
+        router.push(`/${slug}`);
+        return;
+      }
     }
+    setWaitlistState(s);
   };
 
   return (

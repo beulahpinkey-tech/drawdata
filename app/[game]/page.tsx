@@ -19,13 +19,13 @@ export default function GameOverviewPage({ params }: Props) {
   if (isBallGame(game)) {
     return <BallGameOverview game={game} agg={agg} m={m} />;
   }
-  return <PickOverview game={game as "pick3" | "pick4"} agg={agg} m={m} />;
+  return <PickOverview game={game} agg={agg} m={m} />;
 }
 
-function PickOverview({ game, agg, m }: { game: "pick3" | "pick4"; agg: any; m: any }) {
+function PickOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
   const combined = agg.combined;
   const counts: number[] = combined.allPositions;
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const totalDigits = counts.reduce((a, b) => a + b, 0);
   const expected = totalDigits / 10;
   const maxIdx = counts.indexOf(Math.max(...counts));
@@ -87,7 +87,7 @@ function PickOverview({ game, agg, m }: { game: "pick3" | "pick4"; agg: any; m: 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="panel p-6">
             <div className="text-[11px] uppercase tracking-[0.18em] text-dim font-mono">Draw shapes</div>
-            <h2 className="font-display text-[22px] mt-1">{game === "pick3" ? "Three-digit" : "Four-digit"} patterns</h2>
+            <h2 className="font-display text-[22px] mt-1">{positions === 3 ? "Three-digit" : "Four-digit"} patterns</h2>
             <div className="mt-4 space-y-3">
               {[
                 ["all_diff", "All distinct"],

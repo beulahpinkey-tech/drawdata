@@ -10,9 +10,11 @@ type Props = {
   compact?: boolean;
 };
 
-const GAMES: { id: "pick3" | "pick4" | "powerball" | "megamillions"; label: string; tag: string; group: "wi" | "national" }[] = [
-  { id: "pick3", label: "Wisconsin Pick 3", tag: "3-digit", group: "wi" },
-  { id: "pick4", label: "Wisconsin Pick 4", tag: "4-digit", group: "wi" },
+const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "powerball" | "megamillions"; label: string; tag: string; group: "wi" | "pa" | "national" }[] = [
+  { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit", group: "wi" },
+  { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit", group: "wi" },
+  { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit", group: "pa" },
+  { id: "pa-pick4", label: "Pennsylvania Pick 4", tag: "4-digit", group: "pa" },
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", group: "national" },
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", group: "national" },
 ];
@@ -76,8 +78,20 @@ export function GameSwitcher({ currentGame, storedGame, currentView }: Props) {
             />
           ))}
           <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Wisconsin state games</div>
+          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Wisconsin</div>
           {GAMES.filter((g) => g.group === "wi").map((g) => (
+            <GameRow
+              key={g.id}
+              g={g}
+              active={g.id === effective}
+              onGameRoute={onGameRoute}
+              currentView={currentView}
+              onSelect={() => setOpen(false)}
+            />
+          ))}
+          <div className="my-1 h-px bg-edge" />
+          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Pennsylvania</div>
+          {GAMES.filter((g) => g.group === "pa").map((g) => (
             <GameRow
               key={g.id}
               g={g}

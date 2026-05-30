@@ -6,6 +6,7 @@
     "precompute": "tsx scripts/precompute.ts",
     "ingest": "tsx scripts/precompute.ts",
     "verify": "tsx scripts/verify.ts",
+    "fetch:pa": "tsx scripts/fetch-pa.ts",
     "predev": "npm run precompute",
     "prebuild": "npm run precompute",
     "dev": "next dev",
@@ -16,17 +17,21 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "framer-motion": "^11.18.2",
     "next": "14.2.15",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-zoom-pan-pinch": "^3.7.0",
-    "recharts": "2.12.7"
+    "recharts": "2.12.7",
+    "three": "^0.169.0"
   },
   "devDependencies": {
     "@types/node": "20.14.10",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
+    "@types/three": "^0.169.0",
     "autoprefixer": "10.4.19",
     "postcss": "8.4.39",
     "tailwindcss": "3.4.7",

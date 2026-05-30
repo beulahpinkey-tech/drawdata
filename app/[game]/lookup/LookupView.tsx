@@ -6,11 +6,13 @@ import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { numberLookup, digitalRoot } from "@/lib/analytics/digits";
 import { NumberBall } from "@/components/NumberBall";
 
-export function LookupView({ game }: { game: "pick3" | "pick4" }) {
+import type { Game } from "@/lib/types";
+
+export function LookupView({ game }: { game: Game }) {
   const { draws, loading } = useGameDraws(game);
   const router = useRouter();
   const search = useSearchParams();
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const urlN = search.get("n");
   const initial = parseUrl(urlN, positions);
   const [digits, setDigits] = useState<number[]>(initial);

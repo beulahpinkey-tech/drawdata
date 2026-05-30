@@ -1,19 +1,23 @@
 import Link from "next/link";
 import { META } from "@/lib/data";
 import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
+import { HeroVideoBackground } from "@/components/HeroVideoBackground";
 
-const GAMES: { id: "pick3" | "pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
-  { id: "pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "A small, dense universe: 1,000 outcomes, two draws a day, decades of history." },
-  { id: "pick4", label: "Wisconsin Pick 4", tag: "4-digit · twice daily", blurb: "10,000 outcomes, twice daily — enough draws to watch the geometry of randomness emerge." },
-  { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", blurb: "A vast outcome space (~292M). The current 5/69+1/26 era began Oct 2015; older eras are tagged separately." },
-  { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National ball game. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras are tagged separately." },
+const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
+  { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
+  { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit · twice daily", blurb: "Wisconsin Lottery's 10,000-outcome game. History since 1997." },
+  { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit · twice daily", blurb: "Pennsylvania Pick 3. The deepest record on the site — back to 1977." },
+  { id: "pa-pick4", label: "Pennsylvania Pick 4", tag: "4-digit · twice daily", blurb: "Pennsylvania Pick 4. 23k+ draws since 1980." },
+  { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", blurb: "Multi-state. Current 5/69+1/26 era began Oct 2015; older eras tagged separately." },
+  { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras tagged separately." },
 ];
 
 export default function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
-      <section className="bg-radial-amber relative overflow-hidden rounded-2xl border border-edge p-8 sm:p-14">
-        <div className="max-w-3xl">
+      <section className="relative overflow-hidden rounded-2xl border border-edge p-8 sm:p-14 min-h-[420px]">
+        <HeroVideoBackground />
+        <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-dim font-mono mb-4">
             <span className="h-1.5 w-1.5 rounded-full bg-cool" />
             a data observatory
@@ -40,7 +44,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <StaggerGroup className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" delay={0.05}>
+      <StaggerGroup className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" delay={0.05}>
         {GAMES.map((g) => {
           const m = (META as any)[g.id];
           return (

@@ -17,7 +17,15 @@ import { readActiveGame, writeActiveGame } from "@/lib/clientState";
 import { CountUp } from "@/components/motion/primitives";
 import { ShowmoreInteraction } from "@/components/ShowmoreInteraction";
 
-type GamePick = "pick3" | "pick4";
+type GamePick = "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4";
+const ALL_PICKS: GamePick[] = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4"];
+const PICK_LABELS: Record<GamePick, string> = {
+  "wi-pick3": "WI Pick 3",
+  "wi-pick4": "WI Pick 4",
+  "pa-pick3": "PA Pick 3",
+  "pa-pick4": "PA Pick 4",
+};
+const isPick = (s: any): s is GamePick => ALL_PICKS.includes(s as GamePick);
 
 export function LabView() {
   const router = useRouter();
@@ -25,12 +33,12 @@ export function LabView() {
   const urlGame = searchParams.get("game");
   const fromGame = searchParams.get("from"); // e.g., "powerball" — show a notice
 
-  // Initial game: URL ?game= (digit games only), else last selected (if digit), else pick3.
+  // Initial game: URL ?game= (digit games only), else last selected (if digit), else wi-pick3.
   const initialGame: GamePick = (() => {
-    if (urlGame === "pick3" || urlGame === "pick4") return urlGame;
+    if (isPick(urlGame)) return urlGame as GamePick;
     const stored = typeof window !== "undefined" ? readActiveGame() : null;
-    if (stored === "pick3" || stored === "pick4") return stored;
-    return "pick3";
+    if (isPick(stored)) return stored as GamePick;
+    return "wi-pick3";
   })();
   const [game, setGame] = useState<GamePick>(initialGame);
   const [showFromPowerballNotice, setShowFromPowerballNotice] = useState(fromGame === "powerball");
@@ -54,10 +62,21 @@ export function LabView() {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const mod: any =
-        game === "pick3"
-          ? await import("@/lib/data/pick3.json")
-          : await import("@/lib/data/pick4.json");
+      let mod: any;
+      switch (game) {
+        case "wi-pick3":
+          mod = await import("@/lib/data/wi-pick3.json");
+          break;
+        case "wi-pick4":
+          mod = await import("@/lib/data/wi-pick4.json");
+          break;
+        case "pa-pick3":
+          mod = await import("@/lib/data/pa-pick3.json");
+          break;
+        case "pa-pick4":
+          mod = await import("@/lib/data/pa-pick4.json");
+          break;
+      }
       if (cancelled) return;
       setDraws(mod.draws ?? mod.default?.draws);
       setLoading(false);
@@ -67,7 +86,7 @@ export function LabView() {
     };
   }, [game]);
 
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
 
   // Reset rule whenever game changes — defaults to "shift k=1, all positions → same positions".
   const [steps, setSteps] = useState<RuleStep[]>(() => makeDefaultRule(positions));
@@ -113,7 +132,7 @@ export function LabView() {
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-[12px] text-dim font-mono uppercase tracking-[0.16em]">game</span>
         <div className="inline-flex items-center rounded-md border border-edge p-0.5 bg-white/[0.02]">
-          {(["pick3", "pick4"] as GamePick[]).map((g) => (
+          {ALL_PICKS.map((g) => (
             <button
               key={g}
               onClick={() => setGame(g)}
@@ -121,7 +140,7 @@ export function LabView() {
                 game === g ? "bg-white/[0.08] text-text" : "text-dim hover:text-text"
               }`}
             >
-              {g === "pick3" ? "Pick 3 (3 digits)" : "Pick 4 (4 digits)"}
+              {PICK_LABELS[g]}
             </button>
           ))}
         </div>
@@ -643,7 +662,7 @@ function HalfCard({
 }
 
 function ShareCard({ result, rule }: { result: BacktestResult; rule: Rule }) {
-  const summary = `Tested a ${rule.game === "pick3" ? "Pick 3" : "Pick 4"} rule (${rule.steps.length} step${rule.steps.length > 1 ? "s" : ""}).
+  const summary = `Tested a ${PICK_LABELS[rule.game as GamePick] ?? rule.game} rule (${rule.steps.length} step${rule.steps.length > 1 ? "s" : ""}).
 Straight hit rate: ${(result.straightRate * 100).toFixed(2)}% vs ${(result.straightChance * 100).toFixed(2)}% chance.
 Verdict: ${Math.abs(result.straightRate - result.straightChance) < 0.005 ? "no edge" : "noise"}.`;
   const copy = () => navigator.clipboard?.writeText(summary);

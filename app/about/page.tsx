@@ -33,24 +33,29 @@ export default function AboutPage() {
           processed at build time by <code className="font-mono text-text bg-white/[0.04] px-1.5 py-0.5 rounded">npm run ingest</code>:
         </p>
         <ul className="mt-3 space-y-2 text-[13px]">
-          <li>
-            <strong className="text-text">Wisconsin Pick 3</strong> — {META.pick3.count.toLocaleString()} draws, {META.pick3.earliest} → {META.pick3.latest}.{" "}
-            {META.pick3.skipped > 0 && <span className="text-dim">({META.pick3.skipped} malformed rows skipped)</span>}
-          </li>
-          <li>
-            <strong className="text-text">Wisconsin Pick 4</strong> — {META.pick4.count.toLocaleString()} draws, {META.pick4.earliest} → {META.pick4.latest}.{" "}
-            {META.pick4.skipped > 0 && <span className="text-dim">({META.pick4.skipped} malformed rows skipped)</span>}
-          </li>
-          <li>
-            <strong className="text-text">Powerball</strong> — {META.powerball.count.toLocaleString()} draws, {META.powerball.earliest} → {META.powerball.latest}.{" "}
-            {META.powerball.skipped > 0 && <span className="text-dim">({META.powerball.skipped} malformed rows skipped)</span>}
-          </li>
-          <li>
-            <strong className="text-text">Mega Millions</strong> — {(META as any).megamillions?.count?.toLocaleString() ?? "—"} draws,{" "}
-            {(META as any).megamillions?.earliest} → {(META as any).megamillions?.latest}.{" "}
-            <span className="text-dim">Same draws everywhere (national game); Wisconsin started selling in 2010, hence the start date.</span>
-          </li>
+          {[
+            { slug: "wi-pick3", label: "Wisconsin Pick 3" },
+            { slug: "wi-pick4", label: "Wisconsin Pick 4" },
+            { slug: "pa-pick3", label: "Pennsylvania Pick 3" },
+            { slug: "pa-pick4", label: "Pennsylvania Pick 4" },
+            { slug: "powerball", label: "Powerball" },
+            { slug: "megamillions", label: "Mega Millions" },
+          ].map(({ slug, label }) => {
+            const m = (META as any)[slug];
+            if (!m) return null;
+            return (
+              <li key={slug}>
+                <strong className="text-text">{label}</strong> — {m.count.toLocaleString()} draws,{" "}
+                {m.earliest} → {m.latest}.
+                {m.skipped > 0 && <span className="text-dim"> ({m.skipped} malformed rows skipped)</span>}
+              </li>
+            );
+          })}
         </ul>
+        <p className="mt-3 text-dim text-[13px]">
+          Mega Millions is a national game (same draws everywhere); Wisconsin started selling in 2010,
+          hence the start date there. Pennsylvania&rsquo;s Pick 3 has the deepest record — back to 1977.
+        </p>
         <p className="mt-3 text-dim">
           Pick 3 and Pick 4 are Wisconsin state-scoped games. Powerball is multi-state; its drawing
           matrix has changed seven times since 1992.

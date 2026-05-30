@@ -52,7 +52,7 @@ export function FrequencyView({
     );
   }
 
-  return <PickFrequency game={game as "pick3" | "pick4"} agg={agg} stream={stream} setStream={setStream} />;
+  return <PickFrequency game={game} agg={agg} stream={stream} setStream={setStream} />;
 }
 
 function PickFrequency({
@@ -61,12 +61,12 @@ function PickFrequency({
   stream,
   setStream,
 }: {
-  game: "pick3" | "pick4";
+  game: Game;
   agg: any;
   stream: "combined" | "midday" | "evening";
   setStream: (s: "combined" | "midday" | "evening") => void;
 }) {
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const slice = agg[stream] ?? agg.combined;
   const counts: number[] = slice.allPositions;
   const totalDigits = counts.reduce((a, b) => a + b, 0);
@@ -121,7 +121,7 @@ function RollingWindowPanel({
   game,
   stream,
 }: {
-  game: "pick3" | "pick4";
+  game: Game;
   stream: "combined" | "midday" | "evening";
 }) {
   const { draws, loading } = useGameDraws(game);
@@ -134,7 +134,7 @@ function RollingWindowPanel({
   }, [draws, stream]);
 
   const result = useMemo(() => rollingDigitFrequency(filtered, windowSize), [filtered, windowSize]);
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const exp = (result.draws * positions) / 10;
   const data = result.counts.map((v, i) => ({ label: String(i), value: v, expected: exp }));
 

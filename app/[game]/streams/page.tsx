@@ -19,7 +19,7 @@ export default function StreamsPage({ params }: { params: { game: string } }) {
           Midday and Evening are two <strong>independent</strong> drawings, even though they share a date.
           Differences you see here are sample noise — neither stream &ldquo;runs hotter&rdquo; than the other.
         </HonestyNote>
-        <StreamsView game={game as "pick3" | "pick4"} agg={agg} />
+        <StreamsView game={game} agg={agg} />
       </div>
     </>
   );

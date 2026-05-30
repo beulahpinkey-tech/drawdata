@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import type { Draw, Game } from "@/lib/types";
 
 /**
- * Lazy-load full draws for the requested game. The JSON is ~1MB so we keep it
- * out of the initial bundle; pages that need it use this hook.
+ * Lazy-load full draws for the requested game slug. JSON is ~1–2 MB so
+ * we keep it out of the initial bundle and import it dynamically.
  */
 export function useGameDraws(game: Game): {
   draws: Draw[] | null;
@@ -17,14 +17,27 @@ export function useGameDraws(game: Game): {
     let cancelled = false;
     setLoading(true);
     (async () => {
-      const mod: any =
-        game === "pick3"
-          ? await import("@/lib/data/pick3.json")
-          : game === "pick4"
-          ? await import("@/lib/data/pick4.json")
-          : game === "megamillions"
-          ? await import("@/lib/data/megamillions.json")
-          : await import("@/lib/data/powerball.json");
+      let mod: any;
+      switch (game) {
+        case "wi-pick3":
+          mod = await import("@/lib/data/wi-pick3.json");
+          break;
+        case "wi-pick4":
+          mod = await import("@/lib/data/wi-pick4.json");
+          break;
+        case "pa-pick3":
+          mod = await import("@/lib/data/pa-pick3.json");
+          break;
+        case "pa-pick4":
+          mod = await import("@/lib/data/pa-pick4.json");
+          break;
+        case "megamillions":
+          mod = await import("@/lib/data/megamillions.json");
+          break;
+        case "powerball":
+          mod = await import("@/lib/data/powerball.json");
+          break;
+      }
       if (cancelled) return;
       let all: Draw[] = mod.draws ?? mod.default?.draws;
       if (game === "powerball") {

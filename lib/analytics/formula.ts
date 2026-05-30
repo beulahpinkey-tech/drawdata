@@ -31,12 +31,12 @@ export type RuleStep = {
 };
 
 export type Rule = {
-  game: "pick3" | "pick4";
+  game: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4";
   steps: RuleStep[];
   target: TargetMode;
 };
 
-const positionsFor = (g: "pick3" | "pick4") => (g === "pick3" ? 3 : 4);
+const positionsFor = (g: string) => (g.endsWith("pick3") ? 3 : 4);
 
 /** Generate a multiset of candidate next-draws (as arrays of digits). */
 export function generateCandidates(rule: Rule, prev: number[]): number[][] {

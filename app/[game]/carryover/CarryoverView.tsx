@@ -6,7 +6,9 @@ import { carryoverAnalysis, mirrorCarryover, mirrorDigit } from "@/lib/analytics
 import { StreamSelect } from "@/components/StreamSelect";
 import { NumberBall } from "@/components/NumberBall";
 
-export function CarryoverView({ game }: { game: "pick3" | "pick4" }) {
+import type { Game } from "@/lib/types";
+
+export function CarryoverView({ game }: { game: Game }) {
   const { draws, loading } = useGameDraws(game);
   const [stream, setStream] = useState<"combined" | "midday" | "evening">("combined");
 

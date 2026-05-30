@@ -2,7 +2,9 @@
 
 import { FrequencyBars } from "@/components/charts/FrequencyBars";
 
-export function StreamsView({ game, agg }: { game: "pick3" | "pick4"; agg: any }) {
+import type { Game } from "@/lib/types";
+
+export function StreamsView({ game, agg }: { game: Game; agg: any }) {
   const m = agg.midday;
   const e = agg.evening;
   if (!m || !e) {
@@ -12,7 +14,7 @@ export function StreamsView({ game, agg }: { game: "pick3" | "pick4"; agg: any }
       </div>
     );
   }
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const mTotal = m.allPositions.reduce((a: number, b: number) => a + b, 0);
   const eTotal = e.allPositions.reduce((a: number, b: number) => a + b, 0);
   const mExp = mTotal / 10;

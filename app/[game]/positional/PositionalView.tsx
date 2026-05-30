@@ -9,10 +9,12 @@ import { boxTypeBreakdown, rootSumDistribution } from "@/lib/analytics/digits";
 import { ChartZoom } from "@/components/motion/ChartZoom";
 import { ChartPanelActions } from "@/components/ChartPanelActions";
 
-export function PositionalView({ game, agg }: { game: "pick3" | "pick4"; agg: any }) {
+import type { Game } from "@/lib/types";
+
+export function PositionalView({ game, agg }: { game: Game; agg: any }) {
   const [stream, setStream] = useState<"combined" | "midday" | "evening">("combined");
   const slice = agg[stream] ?? agg.combined;
-  const positions = game === "pick3" ? 3 : 4;
+  const positions = game.endsWith("pick3") ? 3 : 4;
   const maxSum = positions * 9;
   const { draws, loading } = useGameDraws(game);
 
@@ -49,7 +51,7 @@ export function PositionalView({ game, agg }: { game: "pick3" | "pick4"; agg: an
           <ChartPanelActions
             ctx={{
               panelId: `${game}-heatmap-${stream}`,
-              title: `${game === "pick3" ? "Pick 3" : "Pick 4"} positional heatmap (${stream})`,
+              title: `${positions === 3 ? "Pick 3" : "Pick 4"} positional heatmap (${stream})`,
               csv: () => {
                 const header = ["position", "digit0", "digit1", "digit2", "digit3", "digit4", "digit5", "digit6", "digit7", "digit8", "digit9"];
                 const rows = slice.freqByPosition.map((r: any) => [`P${r.position + 1}`, ...r.counts]);
@@ -75,7 +77,7 @@ export function PositionalView({ game, agg }: { game: "pick3" | "pick4"; agg: an
             <ChartPanelActions
               ctx={{
                 panelId: `${game}-sums-${stream}`,
-                title: `${game === "pick3" ? "Pick 3" : "Pick 4"} digit sums (${stream})`,
+                title: `${positions === 3 ? "Pick 3" : "Pick 4"} digit sums (${stream})`,
                 csv: () => {
                   const rows = [["sum", "count"]];
                   for (let s = 0; s <= maxSum; s++) rows.push([String(s), String(slice.sums[s] ?? 0)]);
@@ -161,7 +163,7 @@ export function PositionalView({ game, agg }: { game: "pick3" | "pick4"; agg: an
         <div className="panel p-6">
           <div className="text-[11px] uppercase tracking-[0.18em] text-dim font-mono">Box-type breakdown</div>
           <h2 className="font-display text-[22px] mt-1">
-            {game === "pick3" ? "Pick 3 box types" : "Pick 4 box types"}
+            {positions === 3 ? "Pick 3 box types" : "Pick 4 box types"}
           </h2>
           <p className="mt-1 text-[12px] text-dim">
             Observed share vs the theoretical share under uniform random digits.
