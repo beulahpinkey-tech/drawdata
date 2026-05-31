@@ -7,6 +7,8 @@
     "ingest": "tsx scripts/precompute.ts",
     "verify": "tsx scripts/verify.ts",
     "fetch:pa": "tsx scripts/fetch-pa.ts",
+    "fetch:mm": "tsx scripts/fetch-mm.ts",
+    "fetch:all": "npm run fetch:pa && npm run fetch:mm",
     "predev": "npm run precompute",
     "prebuild": "npm run precompute",
     "dev": "next dev",
