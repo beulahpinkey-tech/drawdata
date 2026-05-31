@@ -40,7 +40,10 @@
       "Bash(curl -s http://localhost:3000/wi-pick3)",
       "Bash(curl -sI -L http://localhost:3000/pick3)",
       "Bash(mkdir -p \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/references\" \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/scripts\" \"C:/Users/owlsl/OneDrive/Desktop/DrawData/.claude/skills/drawdata-3d-motion/assets\" && echo \"ok\")",
-      "Bash(node -e \"const p = require\\('./package.json'\\); const all = {...p.dependencies, ...p.devDependencies}; ['three', '@react-three/fiber', '@react-three/drei', '@types/three'].forEach\\(d => console.log\\(d.padEnd\\(24\\), all[d] ? '✓ ' + all[d] : '✗ missing'\\)\\);\")"
+      "Bash(node -e \"const p = require\\('./package.json'\\); const all = {...p.dependencies, ...p.devDependencies}; ['three', '@react-three/fiber', '@react-three/drei', '@types/three'].forEach\\(d => console.log\\(d.padEnd\\(24\\), all[d] ? '✓ ' + all[d] : '✗ missing'\\)\\);\")",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.blog)"
     ]
   }
 }

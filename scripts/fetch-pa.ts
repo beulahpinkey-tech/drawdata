@@ -89,9 +89,19 @@ function parseDotNetDate(s: string): { iso: string; ddmmyyyy: string } {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Past years' data is immutable — once 2014's draws are recorded they
+// never change, so caching saves us 49 HTTP calls per run. The CURRENT
+// year is the opposite: new draws appear in it daily, so we must never
+// serve it from cache or we'll silently freeze at whatever was in there
+// when the cache was first populated. (This was a real bug — the live
+// site stuck at May 29 because the May-30 cron read May-28 data from
+// the cache and exited.)
+const CURRENT_YEAR = new Date().getUTCFullYear();
+
 async function fetchYear(ep: Endpoint, year: number, attempt = 1): Promise<RawDraw[]> {
   const cachePath = join(CACHE_DIR, `${ep.g}-${year}.json`);
-  if (!FORCE && existsSync(cachePath)) {
+  const isCurrentYear = year === CURRENT_YEAR;
+  if (!FORCE && !isCurrentYear && existsSync(cachePath)) {
     return JSON.parse(readFileSync(cachePath, "utf8"));
   }
   const url = `${BASE}?g=${ep.g}&y=${year}`;
@@ -106,7 +116,9 @@ async function fetchYear(ep: Endpoint, year: number, attempt = 1): Promise<RawDr
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     const data = await res.json();
     if (!Array.isArray(data)) throw new Error("response is not a JSON array");
-    writeFileSync(cachePath, JSON.stringify(data));
+    // Only cache immutable past years; never persist the current-year
+    // file or the next run will read it back instead of hitting the API.
+    if (!isCurrentYear) writeFileSync(cachePath, JSON.stringify(data));
     return data;
   } catch (err: any) {
     if (attempt < 3) {

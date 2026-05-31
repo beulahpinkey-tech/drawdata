@@ -167,6 +167,19 @@ export function parseMegaMillions(raw: string): {
   draws: Draw[];
   report: ParseReport;
 } {
+  // Format sanity check. The "Numerical Order" export from the WI Lottery
+  // strips the Mega Ball column entirely — every row ends up with just
+  // 5 white numbers, and the parser would silently skip every row as
+  // "missing-num". Fail loudly instead so the operator immediately knows
+  // they downloaded the wrong export.
+  if (/numerical\s*order/i.test(raw.slice(0, 200))) {
+    throw new Error(
+      "megamillions.csv looks like the WI Lottery's 'Numerical Order' " +
+        "export — that variant omits the Mega Ball column. Re-download " +
+        "the 'Order Drawn' export (or pull from megamillions.com directly), " +
+        "rename to megamillions.csv, and re-run.",
+    );
+  }
   const rows = parseCsv(raw);
   const draws: Draw[] = [];
   const skippedReasons: Record<string, number> = {};

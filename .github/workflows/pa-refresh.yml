@@ -1,7 +1,8 @@
-name: PA Lottery daily refresh
+name: Lottery daily refresh
 
 # Fires twice a day, shortly after each Pennsylvania Pick 3 / Pick 4
-# drawing, fetches that day's draws from the PA Lottery JSON endpoint,
+# drawing, fetches that day's PA draws from the PA Lottery JSON endpoint
+# AND a fresh Mega Millions full history from the NY Open Data feed,
 # regenerates aggregates, and pushes if anything changed. Cloudflare
 # Pages auto-rebuilds on the push.
 #
@@ -61,6 +62,9 @@ jobs:
       - name: Fetch latest PA draws
         run: npm run fetch:pa
 
+      - name: Fetch latest Mega Millions (NY Open Data)
+        run: npm run fetch:mm
+
       - name: Regenerate JSON aggregates
         run: npm run ingest
 
@@ -68,10 +72,10 @@ jobs:
         run: |
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
-          git add data/pa lib/data || true
+          git add data/pa data/wi/megamillions.csv lib/data || true
           if git diff --cached --quiet; then
-            echo "No new PA draws — nothing to commit."
+            echo "No new PA / MM draws — nothing to commit."
             exit 0
           fi
-          git commit -m "chore(pa): refresh draws $(date -u +%Y-%m-%d_%H%MZ)"
+          git commit -m "chore: refresh PA + MM draws $(date -u +%Y-%m-%d_%H%MZ)"
           git push
