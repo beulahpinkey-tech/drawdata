@@ -70,6 +70,7 @@ jobs:
 
       - name: Commit + push if anything changed
         run: |
+          set -e
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
           git add data/pa data/wi/megamillions.csv lib/data || true
@@ -78,4 +79,25 @@ jobs:
             exit 0
           fi
           git commit -m "chore: refresh PA + MM draws $(date -u +%Y-%m-%d_%H%MZ)"
-          git push
+
+          # Push with retry. The remote can move forward mid-run from a
+          # manual trigger, an in-flight scheduled run, or you pushing
+          # local changes — without this, the bot loses its fresh data
+          # to a "fetch first" rejection and we wait for the next cron.
+          # Rebasing onto remote is safe: our commit only touches
+          # generated data files; other commits don't normally collide.
+          for i in 1 2 3 4 5; do
+            if git push; then
+              echo "Pushed on attempt $i"
+              exit 0
+            fi
+            echo "Push rejected on attempt $i — rebasing onto remote and retrying"
+            sleep $((i * 2))
+            git pull --rebase origin main || {
+              echo "Rebase failed — likely a real conflict on data files."
+              echo "Manual intervention needed."
+              exit 1
+            }
+          done
+          echo "All 5 push attempts failed; bailing"
+          exit 1
