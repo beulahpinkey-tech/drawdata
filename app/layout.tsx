@@ -7,10 +7,41 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
 
 export const metadata: Metadata = {
-  title: "DrawData — Lottery History, Observed",
+  metadataBase: new URL("https://drawdata.pages.dev"),
+  title: {
+    default: "DrawData — Pick 3, Pick 4, Powerball & Mega Millions History",
+    template: "%s — DrawData",
+  },
   description:
-    "Descriptive analytics for Pick 3, Pick 4, and Powerball draw history. For analysis and entertainment only — lottery draws are random and independent.",
-  metadataBase: new URL("https://drawdata.example.com"),
+    "Free interactive analytics on every Powerball, Mega Millions, Pick 3 and Pick 4 draw from Wisconsin, Pennsylvania, and New Jersey. Frequency, gaps, sums, pairs, and a transparent Formula Lab — descriptive only, no predictions.",
+  keywords: [
+    "powerball history",
+    "mega millions history",
+    "pick 3 numbers",
+    "pick 4 numbers",
+    "lottery analytics",
+    "lottery frequency",
+    "pick 3 history pennsylvania",
+    "pick 3 history new jersey",
+    "wisconsin lottery pick 3",
+    "powerball winning numbers",
+    "mega millions winning numbers",
+  ],
+  authors: [{ name: "DrawData" }],
+  openGraph: {
+    type: "website",
+    title: "DrawData — Lottery Draw Analytics",
+    description:
+      "Descriptive analytics for Powerball, Mega Millions, and state Pick 3 / Pick 4 games. Frequency, gaps, sums, pairs, and a transparent backtester.",
+    siteName: "DrawData",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DrawData — Lottery Draw Analytics",
+    description:
+      "Powerball, Mega Millions, Pick 3 and Pick 4 history with frequency, gaps, and an honest formula backtester.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({

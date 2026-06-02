@@ -16,6 +16,7 @@ export type StateGame = {
 export const STATE_GAMES: StateGame[] = [
   { state: "Wisconsin", abbr: "WI", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
   { state: "Pennsylvania", abbr: "PA", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
+  { state: "New Jersey", abbr: "NJ", pick3Name: "Pick-3", pick4Name: "Pick-4", status: "available" },
 
   { state: "California", abbr: "CA", pick3Name: "Daily 3", pick4Name: "Daily 4", status: "waitlist" },
   { state: "Texas", abbr: "TX", pick3Name: "Pick 3", pick4Name: "Daily 4", status: "waitlist" },

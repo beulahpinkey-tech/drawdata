@@ -41,7 +41,10 @@ export function PickerView() {
   const handleStateClick = (s: StateGame) => {
     if (s.status === "available") {
       const slug =
-        s.abbr === "WI" ? "wi-pick3" : s.abbr === "PA" ? "pa-pick3" : null;
+        s.abbr === "WI" ? "wi-pick3" :
+        s.abbr === "PA" ? "pa-pick3" :
+        s.abbr === "NJ" ? "nj-pick3" :
+        null;
       if (slug) {
         writeActiveGame(slug as any);
         router.push(`/${slug}`);

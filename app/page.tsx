@@ -3,11 +3,13 @@ import { META } from "@/lib/data";
 import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
 import { HeroVideoBackground } from "@/components/HeroVideoBackground";
 
-const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
+const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
   { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit · twice daily", blurb: "Wisconsin Lottery's 10,000-outcome game. History since 1997." },
   { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit · twice daily", blurb: "Pennsylvania Pick 3. The deepest record on the site — back to 1977." },
   { id: "pa-pick4", label: "Pennsylvania Pick 4", tag: "4-digit · twice daily", blurb: "Pennsylvania Pick 4. 23k+ draws since 1980." },
+  { id: "nj-pick3", label: "New Jersey Pick 3", tag: "3-digit · twice daily", blurb: "New Jersey Pick-3. Midday 12:59 PM / Evening 10:57 PM ET." },
+  { id: "nj-pick4", label: "New Jersey Pick 4", tag: "4-digit · twice daily", blurb: "New Jersey Pick-4. Twice-daily 4-digit game." },
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", blurb: "Multi-state. Current 5/69+1/26 era began Oct 2015; older eras tagged separately." },
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras tagged separately." },
 ];

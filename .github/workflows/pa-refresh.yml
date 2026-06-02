@@ -8,18 +8,23 @@ name: Lottery daily refresh
 #
 # Times are UTC (GitHub Actions cron has no timezone). Conversions:
 #   19:30 UTC = 1:30 PM CST (winter) / 2:30 PM CDT (summer)
-#               — ~1 hour after PA Day draw (1:35 PM ET / 12:35 PM CT)
-#   02:30 UTC = 8:30 PM CST (previous day, winter) / 9:30 PM CDT (summer)
-#               — ~2.5 hours after PA Evening draw (6:59 PM ET / 5:59 PM CT)
+#               — after both midday draws: PA 1:35 PM ET, NJ 12:59 PM ET
+#   04:30 UTC = 10:30 PM CST (prev day, winter) / 11:30 PM CDT (summer)
+#               — after all three evening draws: PA 6:59 PM ET, NJ 10:57 PM ET,
+#                 and whatever WI was uploaded manually before midnight
 #
-# Note GitHub schedules drift up to ~15 minutes under load, so the wait
-# margins above are deliberate. Pre-draw fires would return yesterday's
-# data and waste a build.
+# The evening cron used to fire at 02:30 UTC but that was 1 hour BEFORE
+# NJ's 10:57 PM ET / 03:57 UTC evening draw — we'd ship yesterday's NJ
+# data every cycle. Moved to 04:30 UTC to catch all three states.
+#
+# GitHub schedules drift up to ~15 minutes under load, so the buffers
+# above are deliberate. Pre-draw fires return yesterday's data and waste
+# a build.
 
 on:
   schedule:
-    - cron: "30 19 * * *"  # 1:30 PM CST — after PA Day draw
-    - cron: "30 2 * * *"   # 8:30 PM CST (prev day) — after PA Evening draw
+    - cron: "30 19 * * *"  # midday cron: after PA + NJ day draws
+    - cron: "30 4 * * *"   # evening cron: after PA + NJ evening draws
   workflow_dispatch:        # manual trigger from the Actions tab
 
 permissions:
@@ -49,18 +54,51 @@ jobs:
       # (~200 API calls, ~1 min). Every subsequent run hits the cache
       # for old years and only fetches the current year (~4 calls, ~2s).
       - name: Restore PA year cache
-        uses: actions/cache@v5  # runs on node24
+        uses: actions/cache@v5
         with:
           path: .cache/pa
           key: pa-fetch-cache-${{ github.run_id }}
           restore-keys: |
             pa-fetch-cache-
 
+      - name: Restore NJ year cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/nj
+          key: nj-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            nj-fetch-cache-
+
+      - name: Restore WI page cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/wi
+          key: wi-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            wi-fetch-cache-
+
+      - name: Restore Powerball year cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/powerball
+          key: powerball-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            powerball-fetch-cache-
+
       - name: Install deps
         run: npm ci --no-audit --no-fund
 
       - name: Fetch latest PA draws
         run: npm run fetch:pa
+
+      - name: Fetch latest NJ draws
+        run: npm run fetch:nj
+
+      - name: Fetch latest WI draws (scrapes wilottery.com)
+        run: npm run fetch:wi
+
+      - name: Fetch latest Powerball (PA Lottery JSON, g=12)
+        run: npm run fetch:powerball
 
       - name: Fetch latest Mega Millions (NY Open Data)
         run: npm run fetch:mm
@@ -73,12 +111,12 @@ jobs:
           set -e
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
-          git add data/pa data/wi/megamillions.csv lib/data || true
+          git add data/pa data/nj data/wi lib/data || true
           if git diff --cached --quiet; then
-            echo "No new PA / MM draws — nothing to commit."
+            echo "No new WI / PA / NJ / MM / PB draws — nothing to commit."
             exit 0
           fi
-          git commit -m "chore: refresh PA + MM draws $(date -u +%Y-%m-%d_%H%MZ)"
+          git commit -m "chore: refresh WI + PA + NJ + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
 
           # Push with retry. The remote can move forward mid-run from a
           # manual trigger, an in-flight scheduled run, or you pushing

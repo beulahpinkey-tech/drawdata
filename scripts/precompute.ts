@@ -198,10 +198,11 @@ console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
 // ─── State-scoped pick games ────────────────────────────────────────────
-type StateCfg = { code: "wi" | "pa"; label: string };
+type StateCfg = { code: "wi" | "pa" | "nj"; label: string };
 const STATES: StateCfg[] = [
   { code: "wi", label: "Wisconsin" },
   { code: "pa", label: "Pennsylvania" },
+  { code: "nj", label: "New Jersey" },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];
@@ -347,9 +348,91 @@ for (const p of parsedPicks) {
 };
 writeJson("meta.json", meta);
 
+// ─── Freshness + budget guards ───────────────────────────────────
+// Loud failures here mean a fetcher silently broke (cache poisoned, API
+// schema drifted, scraper regex stopped matching) before stale data
+// gets pushed to production. We bail BEFORE writing meta.json so the
+// build dies and the bot's commit is rejected.
+const STALE_DAYS = 7;
+const today = new Date().toISOString().slice(0, 10);
+const daysBetween = (a: string, b: string) =>
+  Math.floor((Date.parse(b) - Date.parse(a)) / 86_400_000);
+
+const freshnessFailures: string[] = [];
+const freshnessChecks: { slug: string; latest: string; ageDays: number }[] = [];
+for (const p of parsedPicks) {
+  const latest = p.report.dateRange[1];
+  const age = daysBetween(latest, today);
+  freshnessChecks.push({ slug: `${p.state.code}-${p.game}`, latest, ageDays: age });
+  if (age > STALE_DAYS) {
+    freshnessFailures.push(
+      `${p.state.code}-${p.game}: latest=${latest}, ${age} days old (cap ${STALE_DAYS}). Fetcher likely broken.`,
+    );
+  }
+}
+{
+  const latestPb = rPb.dateRange[1];
+  const agePb = daysBetween(latestPb, today);
+  freshnessChecks.push({ slug: "powerball", latest: latestPb, ageDays: agePb });
+  // Powerball draws Mon/Wed/Sat — up to 4 days between draws — give it 8.
+  if (agePb > STALE_DAYS + 1) {
+    freshnessFailures.push(`powerball: latest=${latestPb}, ${agePb} days old.`);
+  }
+  const latestMm = rMm.dateRange[1];
+  const ageMm = daysBetween(latestMm, today);
+  freshnessChecks.push({ slug: "megamillions", latest: latestMm, ageDays: ageMm });
+  // Mega Millions draws Tue/Fri — same buffer.
+  if (ageMm > STALE_DAYS + 1) {
+    freshnessFailures.push(`megamillions: latest=${latestMm}, ${ageMm} days old.`);
+  }
+}
+console.log("\nFreshness check (cap: 7-8 days):");
+for (const c of freshnessChecks) {
+  const mark = c.ageDays > STALE_DAYS + 1 ? "✗" : "✓";
+  console.log(`  ${mark} ${c.slug.padEnd(14)} latest=${c.latest}  ${c.ageDays} days old`);
+}
+if (freshnessFailures.length > 0) {
+  console.error(
+    "\nFRESHNESS FAILURES — refusing to write meta.json. " +
+      "A fetcher is probably broken; check the bot's last run log.\n  " +
+      freshnessFailures.join("\n  "),
+  );
+  process.exit(1);
+}
+
+// File-size budget. The current shape uses ~25 MB total; alert at 100
+// MB so we have time to compress / archive before hitting GitHub's
+// hard limits (5 GB repo soft cap, 100 MB single-file soft cap).
+const SIZE_WARNINGS: string[] = [];
+const FILE_WARN_BYTES = 50 * 1024 * 1024;    // 50 MB single file
+const TOTAL_WARN_BYTES = 100 * 1024 * 1024;  // 100 MB across lib/data/
+let dataTotal = 0;
+import { readdirSync as _readdir, statSync as _stat } from "node:fs";
+for (const f of _readdir(OUT_DIR)) {
+  const s = _stat(join(OUT_DIR, f));
+  if (!s.isFile()) continue;
+  dataTotal += s.size;
+  if (s.size > FILE_WARN_BYTES) {
+    SIZE_WARNINGS.push(
+      `${f}: ${(s.size / 1024 / 1024).toFixed(1)} MB > ${FILE_WARN_BYTES / 1024 / 1024} MB cap`,
+    );
+  }
+}
+if (dataTotal > TOTAL_WARN_BYTES) {
+  SIZE_WARNINGS.push(
+    `lib/data/ total: ${(dataTotal / 1024 / 1024).toFixed(1)} MB > ` +
+      `${TOTAL_WARN_BYTES / 1024 / 1024} MB cap`,
+  );
+}
+if (SIZE_WARNINGS.length > 0) {
+  console.warn("\nSIZE BUDGET WARNINGS (still writing, but investigate):");
+  for (const w of SIZE_WARNINGS) console.warn(`  ⚠ ${w}`);
+}
+
 console.log(`\n${rule()}`);
 console.log("Done.");
 console.log(`  data freshness (latest CSV mtime): ${latestCsvMtime}`);
+console.log(`  lib/data/ total: ${(dataTotal / 1024 / 1024).toFixed(2)} MB`);
 const pickSummary = parsedPicks
   .map((p) => `${p.state.code}-${p.game}=${p.draws.length}`)
   .join("  ");

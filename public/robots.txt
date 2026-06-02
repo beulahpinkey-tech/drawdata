@@ -1,12 +1,13 @@
 # DrawData — descriptive lottery history. Most of the site is fine to crawl.
 # Two exceptions:
 #   1) The decorative hero loop: it's a background animation, not content.
-#      Telling Google not to index it stops the "no thumbnail" Search
-#      Console warning and prevents weird "watch this video" results.
-#   2) The age-gate / picker bounce: not useful to search engines.
+#   2) Internal /api/ if any exist.
 
 User-agent: *
 Allow: /
 
 # Decorative hero video — do not index.
 Disallow: /hero-balls.mp4
+
+# Sitemap for indexing every game + analytics route.
+Sitemap: https://drawdata.pages.dev/sitemap.xml

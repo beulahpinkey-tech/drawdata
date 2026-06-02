@@ -20,7 +20,7 @@ const NAV_FULL = [
   { href: "lookup", label: "Lookup", pickOnly: true },
 ];
 
-const GAMES = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "powerball", "megamillions"];
+const GAMES = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "powerball", "megamillions"];
 
 export function Header() {
   const pathname = usePathname() || "/";
@@ -41,7 +41,7 @@ export function Header() {
   // The "effective" game used for non-game pages (Lab/About) — falls back to last selected.
   const effectiveGame = urlGame ?? storedGame;
   // Build Lab link with ?game= so the Lab respects context.
-  const isPick = effectiveGame && /^(wi|pa)-pick[34]$/.test(effectiveGame);
+  const isPick = effectiveGame && /^(wi|pa|nj)-pick[34]$/.test(effectiveGame);
   const labHref = isPick
     ? `/lab?game=${effectiveGame}`
     : effectiveGame === "powerball" || effectiveGame === "megamillions"
@@ -133,7 +133,7 @@ export function Header() {
         </div>
         {urlGame && (
           <div className="hidden md:flex h-10 items-center gap-1 overflow-x-auto border-t border-edge -mx-4 px-4 sm:-mx-6 sm:px-6">
-            {NAV_FULL.filter((n) => !n.pickOnly || /^(wi|pa)-pick[34]$/.test(urlGame!)).map((n) => {
+            {NAV_FULL.filter((n) => !n.pickOnly || /^(wi|pa|nj)-pick[34]$/.test(urlGame!)).map((n) => {
               const href = `/${urlGame}/${n.href === "overview" ? "" : n.href}`.replace(/\/$/, "");
               const active = currentView === n.href;
               return (
