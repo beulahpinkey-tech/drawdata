@@ -1,0 +1,13 @@
+# Cloudflare Pages headers file.
+# https://developers.cloudflare.com/pages/configuration/headers/
+
+# Tell crawlers not to index the decorative hero video (belt-and-braces
+# alongside robots.txt; some indexers honor one but not the other).
+# Also a sensible long cache TTL since the file rarely changes.
+/hero-balls.mp4
+  X-Robots-Tag: noindex, noimageindex
+  Cache-Control: public, max-age=2592000, immutable
+
+# Poster SVG: long cache, same theming as the video.
+/hero-balls-poster.svg
+  Cache-Control: public, max-age=2592000, immutable

@@ -44,11 +44,15 @@ export function HeroVideoBackground() {
       <video
         ref={ref}
         src="/hero-balls.mp4"
+        poster="/hero-balls-poster.svg"
         autoPlay={!reduce}
         muted
         loop
         playsInline
         preload="auto"
+        // Decorative: never indexed as a video result, paired with
+        // X-Robots-Tag in public/_headers and a Disallow in robots.txt.
+        aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover"
       />
       {/* Darken pass — keeps text legible over the bright balls. */}
