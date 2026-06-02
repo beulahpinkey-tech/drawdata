@@ -5,7 +5,7 @@ import { META } from "@/lib/data";
 // Next.js sitemap. Re-generated on every deploy.
 // Surfaces every public route so Google indexes the whole site.
 
-const BASE = "https://drawdata.pages.dev";
+const BASE = "https://draw-data.com";
 
 const SUBROUTES = [
   "", // overview

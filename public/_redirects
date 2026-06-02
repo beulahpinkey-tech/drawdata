@@ -1,0 +1,10 @@
+# Cloudflare Pages redirects file.
+# https://developers.cloudflare.com/pages/configuration/redirects/
+#
+# Force the pages.dev subdomain to 301 to the canonical custom domain.
+# Without this, Google sees the same site at two URLs and splits the
+# ranking signal between them (and may pick either one as canonical).
+https://drawdata.pages.dev/*  https://draw-data.com/:splat  301
+http://draw-data.com/*        https://draw-data.com/:splat  301
+http://www.draw-data.com/*    https://draw-data.com/:splat  301
+https://www.draw-data.com/*   https://draw-data.com/:splat  301

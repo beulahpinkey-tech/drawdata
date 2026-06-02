@@ -7,7 +7,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://drawdata.pages.dev"),
+  metadataBase: new URL("https://draw-data.com"),
   title: {
     default: "DrawData — Pick 3, Pick 4, Powerball & Mega Millions History",
     template: "%s — DrawData",

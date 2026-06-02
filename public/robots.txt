@@ -10,4 +10,4 @@ Allow: /
 Disallow: /hero-balls.mp4
 
 # Sitemap for indexing every game + analytics route.
-Sitemap: https://drawdata.pages.dev/sitemap.xml
+Sitemap: https://draw-data.com/sitemap.xml

@@ -55,7 +55,7 @@ async function main() {
     headers: {
       accept: "application/json",
       "user-agent":
-        "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://drawdata.pages.dev)",
+        "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://draw-data.com)",
     },
   });
   if (!res.ok) {

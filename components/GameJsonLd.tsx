@@ -1,7 +1,7 @@
 import { META, GAME_LABELS, GAME_BLURB } from "@/lib/data";
 import type { Game } from "@/lib/types";
 
-const BASE = "https://drawdata.pages.dev";
+const BASE = "https://draw-data.com";
 
 /**
  * Emits a JSON-LD <script> describing this game's draw history as a
@@ -55,7 +55,7 @@ export function GameJsonLd({ game }: { game: Game }) {
         contentUrl: `${BASE}/${game}`,
       },
     ],
-    citation: "https://drawdata.pages.dev/about",
+    citation: "https://draw-data.com/about",
     measurementTechnique: "Aggregation of official lottery draw history",
     size: { "@type": "QuantitativeValue", value: count, unitText: "draws" },
   };

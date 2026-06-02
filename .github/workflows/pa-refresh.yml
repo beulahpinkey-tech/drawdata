@@ -1,30 +1,42 @@
 name: Lottery daily refresh
 
-# Fires twice a day, shortly after each Pennsylvania Pick 3 / Pick 4
-# drawing, fetches that day's PA draws from the PA Lottery JSON endpoint
-# AND a fresh Mega Millions full history from the NY Open Data feed,
-# regenerates aggregates, and pushes if anything changed. Cloudflare
-# Pages auto-rebuilds on the push.
+# Single workflow, fires twice a day, refreshes ALL FIVE data sources
+# in one run:
 #
-# Times are UTC (GitHub Actions cron has no timezone). Conversions:
-#   19:30 UTC = 1:30 PM CST (winter) / 2:30 PM CDT (summer)
-#               — after both midday draws: PA 1:35 PM ET, NJ 12:59 PM ET
-#   04:30 UTC = 10:30 PM CST (prev day, winter) / 11:30 PM CDT (summer)
-#               — after all three evening draws: PA 6:59 PM ET, NJ 10:57 PM ET,
-#                 and whatever WI was uploaded manually before midnight
+#   1. fetch:pa         — PA Pick 3 / Pick 4 from palottery.pa.gov JSON
+#   2. fetch:nj         — NJ Pick 3 / Pick 4 from njlottery.com JSON
+#   3. fetch:wi         — WI Pick 3 / Pick 4 scraped from wilottery.com
+#   4. fetch:powerball  — Powerball from PA endpoint (g=12), merges
+#                         with existing CSV to preserve 1992-2002 history
+#   5. fetch:mm         — Mega Millions from data.ny.gov Open Data
 #
-# The evening cron used to fire at 02:30 UTC but that was 1 hour BEFORE
-# NJ's 10:57 PM ET / 03:57 UTC evening draw — we'd ship yesterday's NJ
-# data every cycle. Moved to 04:30 UTC to catch all three states.
+# After fetching, npm run ingest regenerates JSON aggregates and runs
+# freshness + size guards (fail if any dataset is >7 days stale or any
+# file >50 MB). If aggregates changed, the bot commits and pushes —
+# Cloudflare Pages auto-rebuilds.
 #
-# GitHub schedules drift up to ~15 minutes under load, so the buffers
-# above are deliberate. Pre-draw fires return yesterday's data and waste
-# a build.
+# Cron times (UTC, with 0-15 min jitter added in-job below):
+#   19:17 UTC  — after midday draws (PA 1:35 PM ET, NJ 12:59 PM ET)
+#   04:43 UTC  — after evening draws (PA 6:59 PM ET, NJ 10:57 PM ET)
+#
+# Manual override: workflow_dispatch lets you trigger from the Actions
+# tab any time, skipping jitter so a human waiting for fresh data
+# doesn't sit through a 15-min sleep.
+#
+# Filename is "pa-refresh.yml" for historical reasons — keeping it to
+# preserve GitHub workflow run history. The display name above is
+# what shows in the UI.
 
 on:
   schedule:
-    - cron: "30 19 * * *"  # midday cron: after PA + NJ day draws
-    - cron: "30 4 * * *"   # evening cron: after PA + NJ evening draws
+    # Two fires per day to catch midday and evening draws. The MINUTE
+    # values use a non-round number (17, 43) instead of 00 or 30 to
+    # avoid the on-the-hour spike when half the world's cron jobs fire.
+    # Combined with the 0-15min in-job jitter below, our actual hit
+    # times spread across a ~30-min window — visibly organic to any
+    # rate limiter looking at us.
+    - cron: "17 19 * * *"  # midday window: after PA (1:35 PM ET) + NJ (12:59 PM ET) day draws
+    - cron: "43 4 * * *"   # evening window: after PA (6:59 PM ET) + NJ (10:57 PM ET) evening draws
   workflow_dispatch:        # manual trigger from the Actions tab
 
 permissions:
@@ -87,6 +99,28 @@ jobs:
 
       - name: Install deps
         run: npm ci --no-audit --no-fund
+
+      # Random 0-15 minute jitter before any fetcher runs.
+      # Two reasons:
+      #  1. Polite-citizen pattern — without jitter, thousands of GH
+      #     Actions workflows fire at the same minute and overload the
+      #     same upstream APIs. Spreading us across a 15-min window is
+      #     standard SaaS hygiene (Netflix's "split-brain prevention",
+      #     Heroku's startup-time randomization, etc.).
+      #  2. Avoids the cleanest possible bot fingerprint at the source
+      #     ("requests at 19:30:00.000Z every day for 6 months"). Any
+      #     reasonable rate limiter will pattern-match that. Jitter
+      #     makes us look like a person glancing at the API at an
+      #     organic time, not a sync'd bot.
+      # Manual runs (workflow_dispatch) skip jitter so a human waiting
+      # for fresh data doesn't sit through it.
+      - name: Jitter (scheduled runs only)
+        if: github.event_name == 'schedule'
+        run: |
+          DELAY=$((RANDOM % 900))
+          echo "Sleeping ${DELAY}s (~$((DELAY / 60)) min) before fetching."
+          echo "This spreads our load across the 19:30/04:30 cron window."
+          sleep "$DELAY"
 
       - name: Fetch latest PA draws
         run: npm run fetch:pa

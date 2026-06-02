@@ -109,7 +109,7 @@ async function fetchYear(ep: Endpoint, year: number, attempt = 1): Promise<RawDr
     const res = await fetch(url, {
       headers: {
         "user-agent":
-          "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://drawdata.pages.dev)",
+          "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://draw-data.com)",
         accept: "application/json",
       },
     });
