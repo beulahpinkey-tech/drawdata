@@ -198,11 +198,12 @@ console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
 // ─── State-scoped pick games ────────────────────────────────────────────
-type StateCfg = { code: "wi" | "pa" | "nj"; label: string };
+type StateCfg = { code: "wi" | "pa" | "nj" | "tx"; label: string };
 const STATES: StateCfg[] = [
   { code: "wi", label: "Wisconsin" },
   { code: "pa", label: "Pennsylvania" },
   { code: "nj", label: "New Jersey" },
+  { code: "tx", label: "Texas" },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];

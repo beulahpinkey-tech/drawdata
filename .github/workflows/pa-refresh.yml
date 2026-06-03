@@ -1,14 +1,17 @@
 name: Lottery daily refresh
 
-# Single workflow, fires twice a day, refreshes ALL FIVE data sources
+# Single workflow, fires twice a day, refreshes ALL SIX data sources
 # in one run:
 #
 #   1. fetch:pa         — PA Pick 3 / Pick 4 from palottery.pa.gov JSON
 #   2. fetch:nj         — NJ Pick 3 / Pick 4 from njlottery.com JSON
 #   3. fetch:wi         — WI Pick 3 / Pick 4 scraped from wilottery.com
-#   4. fetch:powerball  — Powerball from PA endpoint (g=12), merges
+#   4. fetch:tx         — TX Pick 3 / Daily 4 from texaslottery.com CSV
+#                         exports (Day → Midday, Night → Evening; Morning
+#                         + Evening intra-day draws are skipped)
+#   5. fetch:powerball  — Powerball from PA endpoint (g=12), merges
 #                         with existing CSV to preserve 1992-2002 history
-#   5. fetch:mm         — Mega Millions from data.ny.gov Open Data
+#   6. fetch:mm         — Mega Millions from data.ny.gov Open Data
 #
 # After fetching, npm run ingest regenerates JSON aggregates and runs
 # freshness + size guards (fail if any dataset is >7 days stale or any
@@ -89,6 +92,14 @@ jobs:
           restore-keys: |
             wi-fetch-cache-
 
+      - name: Restore TX CSV cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/tx
+          key: tx-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            tx-fetch-cache-
+
       - name: Restore Powerball year cache
         uses: actions/cache@v5
         with:
@@ -131,6 +142,9 @@ jobs:
       - name: Fetch latest WI draws (scrapes wilottery.com)
         run: npm run fetch:wi
 
+      - name: Fetch latest TX draws (texaslottery.com CSV exports)
+        run: npm run fetch:tx
+
       - name: Fetch latest Powerball (PA Lottery JSON, g=12)
         run: npm run fetch:powerball
 
@@ -145,12 +159,12 @@ jobs:
           set -e
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
-          git add data/pa data/nj data/wi lib/data || true
+          git add data/pa data/nj data/wi data/tx lib/data || true
           if git diff --cached --quiet; then
-            echo "No new WI / PA / NJ / MM / PB draws — nothing to commit."
+            echo "No new WI / PA / NJ / TX / MM / PB draws — nothing to commit."
             exit 0
           fi
-          git commit -m "chore: refresh WI + PA + NJ + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
+          git commit -m "chore: refresh WI + PA + NJ + TX + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
 
           # Push with retry. The remote can move forward mid-run from a
           # manual trigger, an in-flight scheduled run, or you pushing
