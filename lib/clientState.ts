@@ -9,6 +9,8 @@ export type ActiveGame =
   | "pa-pick4"
   | "nj-pick3"
   | "nj-pick4"
+  | "tx-pick3"
+  | "tx-pick4"
   | "powerball"
   | "megamillions";
 
@@ -19,6 +21,8 @@ const VALID = new Set<ActiveGame>([
   "pa-pick4",
   "nj-pick3",
   "nj-pick4",
+  "tx-pick3",
+  "tx-pick4",
   "powerball",
   "megamillions",
 ]);

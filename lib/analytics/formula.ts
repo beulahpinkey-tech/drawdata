@@ -31,7 +31,7 @@ export type RuleStep = {
 };
 
 export type Rule = {
-  game: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4";
+  game: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4";
   steps: RuleStep[];
   target: TargetMode;
 };

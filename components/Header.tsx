@@ -20,7 +20,7 @@ const NAV_FULL = [
   { href: "lookup", label: "Lookup", pickOnly: true },
 ];
 
-const GAMES = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "powerball", "megamillions"];
+const GAMES = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4", "powerball", "megamillions"];
 
 export function Header() {
   const pathname = usePathname() || "/";

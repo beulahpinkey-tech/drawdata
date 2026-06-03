@@ -1,6 +1,6 @@
 // Server-side data accessors. Slug-based: pages pass the game slug
-// ("wi-pick3", "pa-pick4", "nj-pick3", "powerball", "megamillions") and
-// we look up the matching aggregate JSON.
+// ("wi-pick3", "pa-pick4", "nj-pick3", "tx-pick3", "powerball",
+// "megamillions") and we look up the matching aggregate JSON.
 
 import wiPick3 from "./wi-pick3.json";
 import wiPick4 from "./wi-pick4.json";
@@ -8,6 +8,8 @@ import paPick3 from "./pa-pick3.json";
 import paPick4 from "./pa-pick4.json";
 import njPick3 from "./nj-pick3.json";
 import njPick4 from "./nj-pick4.json";
+import txPick3 from "./tx-pick3.json";
+import txPick4 from "./tx-pick4.json";
 import powerball from "./powerball.json";
 import megamillions from "./megamillions.json";
 import wiPick3Agg from "./wi-pick3.agg.json";
@@ -16,6 +18,8 @@ import paPick3Agg from "./pa-pick3.agg.json";
 import paPick4Agg from "./pa-pick4.agg.json";
 import njPick3Agg from "./nj-pick3.agg.json";
 import njPick4Agg from "./nj-pick4.agg.json";
+import txPick3Agg from "./tx-pick3.agg.json";
+import txPick4Agg from "./tx-pick4.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
@@ -31,6 +35,8 @@ export function getDraws(game: Game): Draw[] {
     case "pa-pick4": return (paPick4 as { draws: Draw[] }).draws;
     case "nj-pick3": return (njPick3 as { draws: Draw[] }).draws;
     case "nj-pick4": return (njPick4 as { draws: Draw[] }).draws;
+    case "tx-pick3": return (txPick3 as { draws: Draw[] }).draws;
+    case "tx-pick4": return (txPick4 as { draws: Draw[] }).draws;
     case "megamillions": return (megamillions as { draws: Draw[] }).draws;
     case "powerball": return (powerball as { draws: Draw[] }).draws;
   }
@@ -44,6 +50,8 @@ export function getAgg(game: Game): any {
     case "pa-pick4": return paPick4Agg;
     case "nj-pick3": return njPick3Agg;
     case "nj-pick4": return njPick4Agg;
+    case "tx-pick3": return txPick3Agg;
+    case "tx-pick4": return txPick4Agg;
     case "megamillions": return megamillionsAgg;
     case "powerball": return powerballAgg;
   }
@@ -60,6 +68,8 @@ export const GAME_LABELS: Record<Game, string> = {
   "pa-pick4": "Pennsylvania Pick 4",
   "nj-pick3": "New Jersey Pick 3",
   "nj-pick4": "New Jersey Pick 4",
+  "tx-pick3": "Texas Pick 3",
+  "tx-pick4": "Texas Daily 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -71,6 +81,8 @@ export const GAME_SHORT: Record<Game, string> = {
   "pa-pick4": "Pick 4",
   "nj-pick3": "Pick 3",
   "nj-pick4": "Pick 4",
+  "tx-pick3": "Pick 3",
+  "tx-pick4": "Daily 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -79,6 +91,7 @@ export const STATE_LABEL: Record<string, string> = {
   wi: "Wisconsin",
   pa: "Pennsylvania",
   nj: "New Jersey",
+  tx: "Texas",
 };
 
 export const GAME_BLURB: Record<Game, string> = {
@@ -94,6 +107,10 @@ export const GAME_BLURB: Record<Game, string> = {
     "Three digits, 0–9, drawn twice daily by the New Jersey Lottery (Midday 12:59 PM ET, Evening 10:57 PM ET).",
   "nj-pick4":
     "Four digits, 0–9, drawn twice daily by the New Jersey Lottery. Outcome space: 10,000 combinations.",
+  "tx-pick3":
+    "Three digits, 0–9, drawn by the Texas Lottery. We show the Day (~12:27 PM CT) and Night (~10:12 PM CT) flagship draws.",
+  "tx-pick4":
+    "Four digits, 0–9, drawn by the Texas Lottery (\"Daily 4\"). Day + Night draws shown. Outcome space: 10,000 combinations.",
   powerball:
     "Five white balls (1–69) plus one red Powerball (1–26). Outcome space: 292,201,338 combinations. Multi-state.",
   megamillions:
@@ -105,11 +122,13 @@ export const PICK_GAMES: Game[] = [
   "wi-pick3", "wi-pick4",
   "pa-pick3", "pa-pick4",
   "nj-pick3", "nj-pick4",
+  "tx-pick3", "tx-pick4",
 ];
 export const BALL_GAMES: Game[] = ["powerball", "megamillions"];
 
 export const isDigitGame = (g: Game) =>
   g === "wi-pick3" || g === "wi-pick4" ||
   g === "pa-pick3" || g === "pa-pick4" ||
-  g === "nj-pick3" || g === "nj-pick4";
+  g === "nj-pick3" || g === "nj-pick4" ||
+  g === "tx-pick3" || g === "tx-pick4";
 export const isBallGame = (g: Game) => g === "powerball" || g === "megamillions";

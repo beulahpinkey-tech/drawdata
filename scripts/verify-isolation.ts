@@ -33,7 +33,7 @@ type Draw = {
 
 type GameFile = { game: string; draws: Draw[] };
 
-const PICKS = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4"] as const;
+const PICKS = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4"] as const;
 const BALLS = ["powerball", "megamillions"] as const;
 
 let failures = 0;

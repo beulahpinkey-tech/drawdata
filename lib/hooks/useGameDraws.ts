@@ -37,6 +37,12 @@ export function useGameDraws(game: Game): {
         case "nj-pick4":
           mod = await import("@/lib/data/nj-pick4.json");
           break;
+        case "tx-pick3":
+          mod = await import("@/lib/data/tx-pick3.json");
+          break;
+        case "tx-pick4":
+          mod = await import("@/lib/data/tx-pick4.json");
+          break;
         case "megamillions":
           mod = await import("@/lib/data/megamillions.json");
           break;

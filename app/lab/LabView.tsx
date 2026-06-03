@@ -17,8 +17,8 @@ import { readActiveGame, writeActiveGame } from "@/lib/clientState";
 import { CountUp } from "@/components/motion/primitives";
 import { ShowmoreInteraction } from "@/components/ShowmoreInteraction";
 
-type GamePick = "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4";
-const ALL_PICKS: GamePick[] = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4"];
+type GamePick = "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4";
+const ALL_PICKS: GamePick[] = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4"];
 const PICK_LABELS: Record<GamePick, string> = {
   "wi-pick3": "WI Pick 3",
   "wi-pick4": "WI Pick 4",
@@ -26,6 +26,8 @@ const PICK_LABELS: Record<GamePick, string> = {
   "pa-pick4": "PA Pick 4",
   "nj-pick3": "NJ Pick 3",
   "nj-pick4": "NJ Pick 4",
+  "tx-pick3": "TX Pick 3",
+  "tx-pick4": "TX Daily 4",
 };
 const isPick = (s: any): s is GamePick => ALL_PICKS.includes(s as GamePick);
 
@@ -83,6 +85,12 @@ export function LabView() {
           break;
         case "nj-pick4":
           mod = await import("@/lib/data/nj-pick4.json");
+          break;
+        case "tx-pick3":
+          mod = await import("@/lib/data/tx-pick3.json");
+          break;
+        case "tx-pick4":
+          mod = await import("@/lib/data/tx-pick4.json");
           break;
       }
       if (cancelled) return;
