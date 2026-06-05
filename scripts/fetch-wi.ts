@@ -33,7 +33,24 @@
  *
  * Run:  npm run fetch:wi  [-- --max-pages 600] [-- --force]
  *
- * Writes:  data/wi/pick3.csv  data/wi/pick4.csv  (overwrites)
+ * Writes:  data/wi/pick3.csv  data/wi/pick4.csv
+ *
+ * MERGE, NEVER SHRINK. wilottery.com's pagination has historically been
+ * fragile — it once silently capped at page 0 (~100 rows) for weeks,
+ * and because earlier versions of this script *overwrote* the output
+ * with whatever it scraped, the nightly bot DESTROYED 14k+ rows of
+ * Wisconsin history one commit at a time. Restored from git
+ * (d30668c) on 2026-06-06 and the writer rewritten:
+ *
+ *   - existing data/wi/*.csv is parsed FIRST and seeded into the row set
+ *   - scraped rows are unioned on (date, stream) key — new dates added,
+ *     known dates skipped
+ *   - the file is rewritten only if the merged set is >= the existing
+ *     row count. If a scrape yields fewer rows than what's on disk and
+ *     can't add any new dates, we BAIL and leave the CSV untouched.
+ *
+ * If you ever need to nuke the merge guard for a clean rebuild, pass
+ * --force-shrink (intentionally noisy flag name).
  */
 
 import {
@@ -70,6 +87,7 @@ function argInt(flag: string, fallback: number): number {
 }
 const MAX_PAGES = argInt("--max-pages", 600);
 const FORCE = args.includes("--force");
+const FORCE_SHRINK = args.includes("--force-shrink");
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -155,6 +173,50 @@ function parseHtml(html: string, positions: number): Row[] {
   return out;
 }
 
+/**
+ * Read whatever's already on disk for this game and parse it back into
+ * Row[]. Tolerant: skips title rows, header rows, blank lines.
+ * Returns [] if the file doesn't exist or is unreadable — callers
+ * treat that as "no prior data," not as an error.
+ */
+function loadExistingCsv(path: string, positions: 3 | 4): Row[] {
+  if (!existsSync(path)) return [];
+  let raw: string;
+  try {
+    raw = readFileSync(path, "utf8");
+  } catch {
+    return [];
+  }
+  const out: Row[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line) continue;
+    const cols = line.split(",");
+    const first = cols[0].trim();
+    // Title / header rows don't lead with a DD-MM-YYYY date.
+    const dateM = /^(\d{2})-(\d{2})-(\d{4})$/.exec(first);
+    if (!dateM) continue;
+    const dd = dateM[1], mm = dateM[2], yyyy = dateM[3];
+    const streamRaw = (cols[1] ?? "").trim();
+    const stream: Row["stream"] =
+      streamRaw === "Midday" || streamRaw === "Evening" ? streamRaw : "Midday";
+    const digits: number[] = [];
+    let ok = true;
+    for (let i = 0; i < positions; i++) {
+      const v = parseInt((cols[2 + i] ?? "").trim(), 10);
+      if (!Number.isFinite(v) || v < 0 || v > 9) { ok = false; break; }
+      digits.push(v);
+    }
+    if (!ok) continue;
+    out.push({
+      iso: `${yyyy}-${mm}-${dd}`,
+      ddmmyyyy: `${dd}-${mm}-${yyyy}`,
+      stream,
+      digits,
+    });
+  }
+  return out;
+}
+
 function csvFor(rows: Row[], positions: 3 | 4): string {
   const cols = positions === 3 ? ",,,," : ",,,,,";
   const lines = [
@@ -222,24 +284,66 @@ async function main() {
   console.log(`Cache: ${CACHE_DIR} (max ${MAX_PAGES} pages per game)`);
   const buckets: Record<"pick3" | "pick4", Row[]> = { pick3: [], pick4: [] };
 
-  for (const ep of ENDPOINTS) {
-    process.stdout.write(`  ${ep.game.padEnd(6)} `);
-    const rows = await pullAll(ep);
-    buckets[ep.game] = rows;
-    process.stdout.write(`  ${rows.length.toLocaleString().padStart(7)} draws\n`);
-  }
-
   // Newest first; Evening before Midday on same date (matches the WI
   // export convention used elsewhere in DrawData).
   const sortFn = (a: Row, b: Row) => {
     if (a.iso !== b.iso) return a.iso < b.iso ? 1 : -1;
     return a.stream === "Evening" && b.stream === "Midday" ? -1 : 1;
   };
-  buckets.pick3.sort(sortFn);
-  buckets.pick4.sort(sortFn);
 
-  writeFileSync(join(OUT_DIR, "pick3.csv"), csvFor(buckets.pick3, 3));
-  writeFileSync(join(OUT_DIR, "pick4.csv"), csvFor(buckets.pick4, 4));
+  for (const ep of ENDPOINTS) {
+    const outPath = join(OUT_DIR, `${ep.game}.csv`);
+    const existing = loadExistingCsv(outPath, ep.positions);
+    process.stdout.write(`  ${ep.game.padEnd(6)} (on disk: ${existing.length.toLocaleString().padStart(6)}) `);
+
+    let scraped: Row[] = [];
+    try {
+      scraped = await pullAll(ep);
+    } catch (err: any) {
+      console.warn(`\n  ${ep.game}: scrape failed (${err.message}). Leaving CSV untouched.`);
+      buckets[ep.game] = existing;
+      continue;
+    }
+
+    // Merge: existing seeds the set, scraped adds new (date, stream) keys.
+    // We track `existingUnique` (= existing collapsed by key) separately
+    // from raw `existing.length` so the shrink-guard isn't tricked by
+    // pre-existing duplicate rows on disk into refusing a healthy merge.
+    const seen = new Set<string>();
+    const merged: Row[] = [];
+    for (const r of existing) {
+      const k = `${r.iso}|${r.stream}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(r);
+    }
+    const existingUnique = merged.length;
+    let added = 0;
+    for (const r of scraped) {
+      const k = `${r.iso}|${r.stream}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(r);
+      added++;
+    }
+    merged.sort(sortFn);
+
+    process.stdout.write(`scraped ${scraped.length.toLocaleString().padStart(5)}, added ${added.toLocaleString().padStart(4)} new → ${merged.length.toLocaleString()} total\n`);
+
+    // The merge guard: a healthy run must end with at least as many
+    // UNIQUE (date, stream) keys as we started with. Dedup of duplicate
+    // rows on disk is allowed; loss of history is not.
+    if (!FORCE_SHRINK && merged.length < existingUnique) {
+      console.warn(
+        `  ${ep.game}: merge would SHRINK file (${existingUnique} unique keys → ${merged.length}). REFUSING to write. Pass --force-shrink to override.`,
+      );
+      buckets[ep.game] = existing;
+      continue;
+    }
+
+    writeFileSync(outPath, csvFor(merged, ep.positions));
+    buckets[ep.game] = merged;
+  }
 
   const first3 = buckets.pick3[buckets.pick3.length - 1]?.iso ?? "—";
   const last3 = buckets.pick3[0]?.iso ?? "—";
