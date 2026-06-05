@@ -37,7 +37,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const gamePages: MetadataRoute.Sitemap = [];
   for (const game of ALL_GAMES) {
-    const isPick = /^(wi|pa|nj)-pick[34]$/.test(game);
+    const isPick = /^(wi|pa|nj|tx)-pick[34]$/.test(game);
     const isBall = game === "powerball" || game === "megamillions";
     for (const sub of SUBROUTES) {
       // pick-only subroutes don't apply to ball games

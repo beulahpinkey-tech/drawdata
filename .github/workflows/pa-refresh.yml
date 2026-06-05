@@ -42,8 +42,22 @@ on:
     - cron: "43 4 * * *"   # evening window: after PA (6:59 PM ET) + NJ (10:57 PM ET) evening draws
   workflow_dispatch:        # manual trigger from the Actions tab
 
+# Least-privilege defaults. The job needs `contents: write` to push the
+# refresh commit; everything else (actions/issues/packages/id-token/etc.)
+# is explicitly denied so a hijacked action can't escalate to opening
+# PRs, mutating issues, or minting OIDC tokens against cloud providers.
 permissions:
-  contents: write  # needed to push the refresh commit back to main
+  contents: write
+  actions: none
+  checks: none
+  deployments: none
+  issues: none
+  packages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+  id-token: none
 
 concurrency:
   # Don't pile up runs if a refresh is mid-flight; cancel any older
