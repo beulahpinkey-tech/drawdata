@@ -10,6 +10,8 @@ import njPick3 from "./nj-pick3.json";
 import njPick4 from "./nj-pick4.json";
 import txPick3 from "./tx-pick3.json";
 import txPick4 from "./tx-pick4.json";
+import ncPick3 from "./nc-pick3.json";
+import ncPick4 from "./nc-pick4.json";
 import powerball from "./powerball.json";
 import megamillions from "./megamillions.json";
 import wiPick3Agg from "./wi-pick3.agg.json";
@@ -20,6 +22,8 @@ import njPick3Agg from "./nj-pick3.agg.json";
 import njPick4Agg from "./nj-pick4.agg.json";
 import txPick3Agg from "./tx-pick3.agg.json";
 import txPick4Agg from "./tx-pick4.agg.json";
+import ncPick3Agg from "./nc-pick3.agg.json";
+import ncPick4Agg from "./nc-pick4.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
@@ -37,6 +41,8 @@ export function getDraws(game: Game): Draw[] {
     case "nj-pick4": return (njPick4 as { draws: Draw[] }).draws;
     case "tx-pick3": return (txPick3 as { draws: Draw[] }).draws;
     case "tx-pick4": return (txPick4 as { draws: Draw[] }).draws;
+    case "nc-pick3": return (ncPick3 as { draws: Draw[] }).draws;
+    case "nc-pick4": return (ncPick4 as { draws: Draw[] }).draws;
     case "megamillions": return (megamillions as { draws: Draw[] }).draws;
     case "powerball": return (powerball as { draws: Draw[] }).draws;
   }
@@ -52,6 +58,8 @@ export function getAgg(game: Game): any {
     case "nj-pick4": return njPick4Agg;
     case "tx-pick3": return txPick3Agg;
     case "tx-pick4": return txPick4Agg;
+    case "nc-pick3": return ncPick3Agg;
+    case "nc-pick4": return ncPick4Agg;
     case "megamillions": return megamillionsAgg;
     case "powerball": return powerballAgg;
   }
@@ -70,6 +78,8 @@ export const GAME_LABELS: Record<Game, string> = {
   "nj-pick4": "New Jersey Pick 4",
   "tx-pick3": "Texas Pick 3",
   "tx-pick4": "Texas Daily 4",
+  "nc-pick3": "North Carolina Pick 3",
+  "nc-pick4": "North Carolina Pick 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -83,6 +93,8 @@ export const GAME_SHORT: Record<Game, string> = {
   "nj-pick4": "Pick 4",
   "tx-pick3": "Pick 3",
   "tx-pick4": "Daily 4",
+  "nc-pick3": "Pick 3",
+  "nc-pick4": "Pick 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -92,6 +104,7 @@ export const STATE_LABEL: Record<string, string> = {
   pa: "Pennsylvania",
   nj: "New Jersey",
   tx: "Texas",
+  nc: "North Carolina",
 };
 
 export const GAME_BLURB: Record<Game, string> = {
@@ -111,6 +124,10 @@ export const GAME_BLURB: Record<Game, string> = {
     "Three digits, 0–9, drawn by the Texas Lottery. We show the Day (~12:27 PM CT) and Night (~10:12 PM CT) flagship draws.",
   "tx-pick4":
     "Four digits, 0–9, drawn by the Texas Lottery (\"Daily 4\"). Day + Night draws shown. Outcome space: 10,000 combinations.",
+  "nc-pick3":
+    "Three digits, 0–9, drawn twice daily by the North Carolina Education Lottery. Day + Evening draws since October 2006.",
+  "nc-pick4":
+    "Four digits, 0–9, drawn twice daily by the North Carolina Education Lottery. Day + Evening draws since April 2009.",
   powerball:
     "Five white balls (1–69) plus one red Powerball (1–26). Outcome space: 292,201,338 combinations. Multi-state.",
   megamillions:
@@ -123,6 +140,7 @@ export const PICK_GAMES: Game[] = [
   "pa-pick3", "pa-pick4",
   "nj-pick3", "nj-pick4",
   "tx-pick3", "tx-pick4",
+  "nc-pick3", "nc-pick4",
 ];
 export const BALL_GAMES: Game[] = ["powerball", "megamillions"];
 
@@ -130,5 +148,6 @@ export const isDigitGame = (g: Game) =>
   g === "wi-pick3" || g === "wi-pick4" ||
   g === "pa-pick3" || g === "pa-pick4" ||
   g === "nj-pick3" || g === "nj-pick4" ||
-  g === "tx-pick3" || g === "tx-pick4";
+  g === "tx-pick3" || g === "tx-pick4" ||
+  g === "nc-pick3" || g === "nc-pick4";
 export const isBallGame = (g: Game) => g === "powerball" || g === "megamillions";

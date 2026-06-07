@@ -45,6 +45,7 @@ export function PickerView() {
         s.abbr === "PA" ? "pa-pick3" :
         s.abbr === "NJ" ? "nj-pick3" :
         s.abbr === "TX" ? "tx-pick3" :
+        s.abbr === "NC" ? "nc-pick3" :
         null;
       if (slug) {
         writeActiveGame(slug as any);

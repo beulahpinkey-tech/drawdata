@@ -10,7 +10,7 @@ type Props = {
   compact?: boolean;
 };
 
-const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "powerball" | "megamillions"; label: string; tag: string; group: "wi" | "pa" | "nj" | "tx" | "national" }[] = [
+const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; group: "wi" | "pa" | "nj" | "tx" | "nc" | "national" }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit", group: "wi" },
   { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit", group: "wi" },
   { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit", group: "pa" },
@@ -19,6 +19,8 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
   { id: "nj-pick4", label: "New Jersey Pick 4", tag: "4-digit", group: "nj" },
   { id: "tx-pick3", label: "Texas Pick 3", tag: "3-digit", group: "tx" },
   { id: "tx-pick4", label: "Texas Daily 4", tag: "4-digit", group: "tx" },
+  { id: "nc-pick3", label: "North Carolina Pick 3", tag: "3-digit", group: "nc" },
+  { id: "nc-pick4", label: "North Carolina Pick 4", tag: "4-digit", group: "nc" },
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", group: "national" },
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", group: "national" },
 ];
@@ -120,6 +122,18 @@ export function GameSwitcher({ currentGame, storedGame, currentView }: Props) {
           <div className="my-1 h-px bg-edge" />
           <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Texas</div>
           {GAMES.filter((g) => g.group === "tx").map((g) => (
+            <GameRow
+              key={g.id}
+              g={g}
+              active={g.id === effective}
+              onGameRoute={onGameRoute}
+              currentView={currentView}
+              onSelect={() => setOpen(false)}
+            />
+          ))}
+          <div className="my-1 h-px bg-edge" />
+          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">North Carolina</div>
+          {GAMES.filter((g) => g.group === "nc").map((g) => (
             <GameRow
               key={g.id}
               g={g}

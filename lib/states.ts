@@ -30,7 +30,7 @@ export const STATE_GAMES: StateGame[] = [
   { state: "New Jersey", abbr: "NJ", pick3Name: "Pick-3", pick4Name: "Pick-4", status: "waitlist" },
   { state: "Maryland", abbr: "MD", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
   { state: "Virginia", abbr: "VA", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
-  { state: "North Carolina", abbr: "NC", pick3Name: "Carolina Pick 3", pick4Name: "Carolina Pick 4", status: "waitlist" },
+  { state: "North Carolina", abbr: "NC", pick3Name: "Carolina Pick 3", pick4Name: "Carolina Pick 4", status: "available" },
   { state: "South Carolina", abbr: "SC", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
   { state: "Tennessee", abbr: "TN", pick3Name: "Cash 3", pick4Name: "Cash 4", status: "waitlist" },
   { state: "Connecticut", abbr: "CT", pick3Name: "Play 3", pick4Name: "Play 4", status: "waitlist" },

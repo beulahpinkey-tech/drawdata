@@ -3,7 +3,7 @@ import { META } from "@/lib/data";
 import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
 import { HeroVideoBackground } from "@/components/HeroVideoBackground";
 
-const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
+const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
   { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit · twice daily", blurb: "Wisconsin Lottery's 10,000-outcome game. History since 1997." },
   { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit · twice daily", blurb: "Pennsylvania Pick 3. The deepest record on the site — back to 1977." },
@@ -12,6 +12,8 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
   { id: "nj-pick4", label: "New Jersey Pick 4", tag: "4-digit · twice daily", blurb: "New Jersey Pick-4. Twice-daily 4-digit game." },
   { id: "tx-pick3", label: "Texas Pick 3", tag: "3-digit · Day + Night", blurb: "Texas Lottery Pick 3 (Day + Night). Texas runs four draws daily; we show the two flagship times." },
   { id: "tx-pick4", label: "Texas Daily 4", tag: "4-digit · Day + Night", blurb: "Texas Lottery Daily 4. Same two-draw model as Pick 3 — 11k+ draws since 2007." },
+  { id: "nc-pick3", label: "North Carolina Pick 3", tag: "3-digit · twice daily", blurb: "NC Education Lottery Pick 3. Day + Evening draws — 13k+ records back to October 2006." },
+  { id: "nc-pick4", label: "North Carolina Pick 4", tag: "4-digit · twice daily", blurb: "NC Education Lottery Pick 4. Day + Evening — full history since April 2009." },
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", blurb: "Multi-state. Current 5/69+1/26 era began Oct 2015; older eras tagged separately." },
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras tagged separately." },
 ];

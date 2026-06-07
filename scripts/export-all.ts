@@ -39,7 +39,7 @@ const PER_GAME = join(OUT, "by-game");
 
 mkdirSync(PER_GAME, { recursive: true });
 
-const PICKS = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4"];
+const PICKS = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4", "nc-pick3", "nc-pick4"];
 const BALLS = ["powerball", "megamillions"];
 
 const STATE_FROM_SLUG: Record<string, string> = {
@@ -51,6 +51,8 @@ const STATE_FROM_SLUG: Record<string, string> = {
   "nj-pick4": "NJ",
   "tx-pick3": "TX",
   "tx-pick4": "TX",
+  "nc-pick3": "NC",
+  "nc-pick4": "NC",
   powerball: "US",
   megamillions: "US",
 };
