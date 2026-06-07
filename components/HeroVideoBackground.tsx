@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
 /**
@@ -8,53 +8,80 @@ import { useReducedMotion } from "framer-motion";
  * as an absolute-positioned <video>, with a layered darken + amber grading
  * overlay so the existing heading and CTAs stay readable.
  *
- * Reduced-motion: video is paused and stays on its first frame (which the
- * browser shows via `preload="metadata"`). Users who opt out of motion see
- * a still, not nothing.
+ * Reduced-motion: video is never mounted; users see only the poster.
  *
- * Performance: served from /public/hero-balls.mp4 (~5.6 MB). For the home
- * page only — every other route is unaffected. The video is `preload="auto"`
- * but the section is above the fold so this is the right call; downstream
- * we can transcode to WebM/h.264 multi-source if we want it lighter.
+ * Performance — LCP fix (2026-06-06):
+ *   The original implementation set `preload="auto"` on a 5.8 MB MP4 in
+ *   the hero region. That tanked LCP to 13s P50 / 58s P99 in Cloudflare
+ *   Web Analytics — the browser couldn't measure the largest contentful
+ *   element until it had decided whether the video or the H1 text won,
+ *   and on anything slower than fast 4G the video download blocked that
+ *   decision.
+ *
+ *   New behavior:
+ *   - Until React hydrates, the section renders WITHOUT the <video>.
+ *     The CSS poster background paints instantly and counts as the LCP
+ *     element, so LCP becomes whatever the H1 paint time is (sub-second).
+ *   - After window 'load' (everything else is done), we mount the video
+ *     with `preload="metadata"`. The 5.8 MB transfer happens off the
+ *     critical path; the poster smoothly cross-fades into the video.
+ *   - The CSS poster is a 1 KB SVG. The MP4 only ever loads if the user
+ *     stays on the page long enough for it to matter.
  */
 export function HeroVideoBackground() {
   const ref = useRef<HTMLVideoElement>(null);
   const reduce = useReducedMotion();
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
-    const v = ref.current;
-    if (!v) return;
-    if (reduce) {
-      v.pause();
-      v.currentTime = 0;
+    if (reduce) return; // Reduced motion: never load the video.
+    // Wait for the document to be fully loaded so the video can't
+    // interfere with anything still on the critical path.
+    if (document.readyState === "complete") {
+      setShowVideo(true);
     } else {
-      // Some browsers (esp. Safari iOS) refuse autoplay without an explicit
-      // play() call after the video element mounts. Quiet the rejection
-      // promise — if it fails (e.g. tab is backgrounded), the next user
-      // gesture will start it.
-      v.play().catch(() => {});
+      const onLoad = () => setShowVideo(true);
+      window.addEventListener("load", onLoad, { once: true });
+      return () => window.removeEventListener("load", onLoad);
     }
   }, [reduce]);
+
+  useEffect(() => {
+    if (!showVideo) return;
+    const v = ref.current;
+    if (!v) return;
+    // Safari iOS won't autoplay without an explicit play() call.
+    v.play().catch(() => {});
+  }, [showVideo]);
 
   return (
     <div
       className="absolute inset-0 overflow-hidden rounded-2xl"
       aria-hidden
+      style={{
+        // Paints instantly — no network needed. The SVG is 1 KB and is
+        // the only "background" until/unless the video loads.
+        backgroundImage: "url(/hero-balls-poster.svg)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
-      <video
-        ref={ref}
-        src="/hero-balls.mp4"
-        poster="/hero-balls-poster.svg"
-        autoPlay={!reduce}
-        muted
-        loop
-        playsInline
-        preload="auto"
-        // Decorative: never indexed as a video result, paired with
-        // X-Robots-Tag in public/_headers and a Disallow in robots.txt.
-        aria-hidden="true"
-        className="absolute inset-0 h-full w-full object-cover"
-      />
+      {showVideo && (
+        <video
+          ref={ref}
+          src="/hero-balls.mp4"
+          poster="/hero-balls-poster.svg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          // Decorative: never indexed as a video result, paired with
+          // X-Robots-Tag in public/_headers and a Disallow in robots.txt.
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
       {/* Darken pass — keeps text legible over the bright balls. */}
       <div className="absolute inset-0 bg-ink/65" />
       {/* Amber radial wash from the top — re-establishes the existing
