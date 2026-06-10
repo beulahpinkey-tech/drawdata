@@ -2,45 +2,186 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --ink: #0E0F13;
-  --panel: #16181F;
-  --panel2: #1C1F28;
-  --text: #ECE9E0;
-  --dim: #928F85;
-  --edge: rgba(236, 233, 224, 0.08);
-  --accent: #E9B84A;
-  --cool: #5BC8B0;
-  --hot: #E1664C;
+/* ════════════════════════════════════════════════════════════════════
+   DrawData design system — Phase 1
+   ────────────────────────────────────────────────────────────────────
+   Single source of truth for color, type, spacing, radii, shadows,
+   motion. Tokens are ADDITIVE: the legacy short names (--ink, --panel,
+   --accent, --cool, --hot) are kept as aliases pointing at the new
+   role-named tokens, so every existing .tsx (~56 files) keeps working
+   while later phases migrate call sites to the new names.
 
+   Rules of the system:
+     · One brand accent (--accent-brand, amber). One gradient
+       (--gradient-cta) derived from it. Used ONLY on primary CTAs and
+       hero emphasis.
+     · Two semantic data accents (--data-fair teal, --data-divergent
+       coral). Used ONLY inside charts/stats — never on chrome.
+     · Four radii: sm 8, md 14, lg 24, pill 999. No others.
+     · Fluid type via clamp(). No more arbitrary text-[42px] values.
+     · One easing (--ease-premium), four durations.
+   ════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─── Surfaces (warm-tonal off-black; preserves DrawData's
+         observatory/almanac feel vs the brief's cool-blue defaults) */
+  --bg-base:     #0E0F13;   /* page bg */
+  --bg-elevated: #16181F;   /* card top */
+  --bg-surface:  #1C1F28;   /* card bottom (used in panel gradient) */
+
+  /* ─── Text */
+  --text-primary:   #ECE9E0;                        /* headlines, key copy */
+  --text-secondary: rgba(236, 233, 224, 0.64);      /* body */
+  --text-tertiary:  rgba(236, 233, 224, 0.40);      /* meta / captions when muted */
+  --text-quiet:     rgba(236, 233, 224, 0.12);      /* footer wordmark */
+
+  /* ─── Hairlines */
+  --edge-default: rgba(236, 233, 224, 0.08);
+  --edge-hover:   rgba(236, 233, 224, 0.12);
+
+  /* ─── Brand accent ramp (amber)
+         Derived from the existing --accent #E9B84A so brand identity
+         is preserved. 100 (palest tint) → 900 (deepest shade). */
+  --accent-100: #FDF4DC;
+  --accent-200: #FAE5AE;
+  --accent-300: #F4D27F;
+  --accent-400: #ECC25C;
+  --accent-500: #E9B84A;   /* base — the historical --accent */
+  --accent-600: #C99A31;
+  --accent-700: #A57C21;
+  --accent-800: #7E5E18;
+  --accent-900: #4F3B0F;
+  --accent-brand: var(--accent-500);
+
+  /* Single gradient — primary CTAs + hero emphasis only. */
+  --gradient-cta: linear-gradient(135deg, var(--accent-600), var(--accent-400));
+
+  /* ─── Semantic data accents (chart use only) */
+  --data-fair:      #5BC8B0;   /* "expected / on-baseline" — teal */
+  --data-divergent: #E1664C;   /* "off-baseline / outlier" — coral */
+
+  /* ─── Legacy aliases (KEEP — call sites in 56 files use these) */
+  --ink:    var(--bg-base);
+  --panel:  var(--bg-elevated);
+  --panel2: var(--bg-surface);
+  --text:   var(--text-primary);
+  --dim:    var(--text-tertiary);
+  --edge:   var(--edge-default);
+  --accent: var(--accent-brand);
+  --cool:   var(--data-fair);
+  --hot:    var(--data-divergent);
+
+  /* ════════ Typography ════════ */
+
+  /* Self-hostable name (next/font path) and CDN name (current path)
+     share the same family — switching the loader later won't touch the
+     stack here. opsz is supplied via font-optical-sizing on display. */
   --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-body: "Hanken Grotesk", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-body:    "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace;
+
+  /* Fluid scale — clamp(min, vw, max). Tuned for DrawData's
+     editorial feel (tighter headlines, generous body line-height). */
+  --text-hero:    clamp(2.75rem, 7vw, 6.5rem);
+  --text-h1:      clamp(2.25rem, 5vw, 4rem);
+  --text-h2:      clamp(2rem, 4.5vw, 3.75rem);
+  --text-h3:      clamp(1.35rem, 2.2vw, 1.875rem);
+  --text-h4:      clamp(1.125rem, 1.6vw, 1.375rem);
+  --text-body:    clamp(1rem, 1.1vw, 1.125rem);
+  --text-small:   0.875rem;
+  --text-caption: 0.8125rem;
+
+  /* Tracking — kerning units */
+  --tracking-hero:    -0.03em;
+  --tracking-headline:-0.02em;
+  --tracking-body:    0em;
+  --tracking-caption: 0.06em;   /* uppercase eyebrows */
+  --tracking-data:    0.18em;   /* mono labels above stats */
+
+  /* Line heights */
+  --leading-hero:     1.02;
+  --leading-headline: 1.08;
+  --leading-body:     1.65;
+  --leading-tight:    1.18;
+
+  /* ════════ Spacing & layout ════════ */
+
+  /* 8px base unit — every spacing token is a multiple. */
+  --space-1:  0.5rem;   /*  8px */
+  --space-2:  1rem;     /* 16px */
+  --space-3:  1.5rem;   /* 24px */
+  --space-4:  2rem;     /* 32px */
+  --space-5:  3rem;     /* 48px */
+  --space-6:  4rem;     /* 64px */
+  --space-7:  6rem;     /* 96px */
+  --space-8:  8rem;     /* 128px */
+
+  /* Section vertical rhythm: ≥80px on mobile, scaling with viewport. */
+  --section-y: clamp(5rem, 12vh, 10rem);
+
+  /* Containers */
+  --container-narrow: 1200px;
+  --container-wide:   1400px;
+  --container-prose:  65ch;
+
+  /* ════════ Radii — exactly four ════════ */
+  --r-sm:   8px;
+  --r-md:   14px;
+  --r-lg:   24px;
+  --r-pill: 999px;
+
+  /* ════════ Shadows (dark-theme discipline: borders + inset highlight,
+     never heavy drop shadows) ════════ */
+  --shadow-card:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-panel:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 20px 60px rgba(0, 0, 0, 0.35);
+  --shadow-modal:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 80px rgba(0, 0, 0, 0.55);
+  --shadow-glow-brand:
+    0 0 0 1px rgba(233, 184, 74, 0.15),
+    0 8px 40px rgba(233, 184, 74, 0.08);
+
+  /* ════════ Motion ════════ */
+  --ease-premium:  cubic-bezier(0.22, 1, 0.36, 1);   /* the ONE easing */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1); /* reserved: hero-only spring punch */
+  --dur-micro:     150ms;
+  --dur-standard:  300ms;
+  --dur-entrance:  600ms;
+  --dur-hero:      900ms;
+
+  /* Stagger increment for child entrances. */
+  --stagger-step:  60ms;
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   Base resets + globals
+   ════════════════════════════════════════════════════════════════════ */
+
 html {
-  /* So anchor links land below the sticky header. Both modes covered: */
-  /* native fragment scroll uses scroll-padding-top; element-targeted */
-  /* scrollIntoView uses scroll-margin-top on the target itself. */
+  /* So anchor links land below the sticky header. Both modes covered:
+     native fragment scroll uses scroll-padding-top; element-targeted
+     scrollIntoView uses scroll-margin-top on the target itself. */
   scroll-padding-top: 7rem;
   scroll-behavior: smooth;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
+  html { scroll-behavior: auto; }
 }
 
-[id] {
-  scroll-margin-top: 7rem;
-}
+[id] { scroll-margin-top: 7rem; }
 
 html,
 body {
-  background: var(--ink);
-  color: var(--text);
+  background: var(--bg-base);
+  color: var(--text-primary);
   font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -52,24 +193,25 @@ body {
   left: 1rem;
   z-index: 1000;
   padding: 0.75rem 1.25rem;
-  background: var(--accent);
-  color: var(--ink);
+  background: var(--accent-brand);
+  color: var(--bg-base);
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   text-decoration: none;
-  transition: top 0.18s ease-out;
+  transition: top var(--dur-micro) var(--ease-premium);
 }
 .skip-link:focus {
   top: 1rem;
-  outline: 2px solid var(--text);
+  outline: 2px solid var(--text-primary);
   outline-offset: 2px;
 }
 
-/* Consistent focus-visible ring for keyboard users. */
+/* Consistent focus-visible ring for keyboard users. Brief spec:
+   2px accent outline, 2px offset on EVERY interactive element. */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-brand);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
 }
 button:focus-visible,
 a:focus-visible {
@@ -80,19 +222,19 @@ body {
   background-image:
     radial-gradient(ellipse 60% 40% at 85% 0%, rgba(91, 200, 176, 0.05), transparent 60%),
     radial-gradient(ellipse 80% 50% at 15% 10%, rgba(233, 184, 74, 0.06), transparent 60%),
-    linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px),
-    linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
-    var(--ink);
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    var(--bg-base);
   background-size: auto, auto, 32px 32px, 32px 32px, auto;
   min-height: 100vh;
 }
 
 ::selection {
   background: rgba(233, 184, 74, 0.35);
-  color: var(--text);
+  color: var(--text-primary);
 }
 
-/* Subtle grain overlay */
+/* Subtle grain overlay (preserves existing texture) */
 .grain::before {
   content: "";
   position: fixed;
@@ -104,44 +246,234 @@ body {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
+/* ════════════════════════════════════════════════════════════════════
+   Component primitives (existing names preserved; values upgraded)
+   ════════════════════════════════════════════════════════════════════ */
+
 .panel {
-  background: linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
-  border: 1px solid var(--edge);
-  border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
-    0 20px 60px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+  border: 1px solid var(--edge-default);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-panel);
+  transition:
+    border-color var(--dur-standard) var(--ease-premium),
+    transform var(--dur-standard) var(--ease-premium);
 }
 
 .panel-inner {
   background: rgba(0, 0, 0, 0.18);
-  border: 1px solid var(--edge);
-  border-radius: 10px;
+  border: 1px solid var(--edge-default);
+  border-radius: var(--r-sm);
 }
 
 .divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--edge), transparent);
+  background: linear-gradient(90deg, transparent, var(--edge-default), transparent);
 }
 
 .kbd {
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 4px; /* exception: keyboard glyph; tiny inline element */
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--edge);
-  color: var(--dim);
+  border: 1px solid var(--edge-default);
+  color: var(--text-tertiary);
 }
 
-/* Recharts overrides for dark theme */
+/* ════════════════════════════════════════════════════════════════════
+   Typography utilities (use these instead of arbitrary text-[Npx])
+   ════════════════════════════════════════════════════════════════════ */
+
+.t-hero {
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  line-height: var(--leading-hero);
+  letter-spacing: var(--tracking-hero);
+  font-weight: 600;
+  /* Fraunces opsz: push toward 144 for headlines (more dramatic
+     stroke contrast). Browsers without opsz support ignore this. */
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144;
+}
+.t-h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  line-height: var(--leading-headline);
+  letter-spacing: var(--tracking-headline);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 96;
+}
+.t-h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  line-height: var(--leading-headline);
+  letter-spacing: var(--tracking-headline);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 72;
+}
+.t-h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+.t-h4 {
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+  line-height: var(--leading-tight);
+  font-weight: 500;
+}
+.t-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+.t-small {
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.t-caption {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-caption);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.t-data-label {
+  /* The mono "DIGIT FREQUENCY" / "DRAWS ON FILE" eyebrow above stats. */
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;     /* 11px */
+  line-height: 1;
+  letter-spacing: var(--tracking-data);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Tabular numerals — apply to EVERY number rendered on the site.
+   Lines stats up vertically, kills count-up jitter. */
+.tabular,
+.tabular-nums,
+[class*="t-stat"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+.t-stat {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Section rhythm
+   ════════════════════════════════════════════════════════════════════ */
+
+.section {
+  padding-block: var(--section-y);
+}
+.container-narrow {
+  max-width: var(--container-narrow);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+.container-wide {
+  max-width: var(--container-wide);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+.container-prose {
+  max-width: var(--container-prose);
+  margin-inline: auto;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Buttons — primary + ghost. Use these for new CTAs; existing
+   inline-styled buttons keep working until Phase 4 migrates them.
+   ════════════════════════════════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform var(--dur-micro) var(--ease-premium),
+    filter var(--dur-micro) var(--ease-premium),
+    background-position var(--dur-standard) var(--ease-premium),
+    border-color var(--dur-micro) var(--ease-premium);
+}
+.btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  color: var(--bg-base);
+  background: var(--gradient-cta);
+  background-size: 200% 200%;
+  background-position: 0% 0%;
+  border: 1px solid transparent;
+}
+.btn-primary:hover { background-position: 100% 100%; }
+.btn-ghost {
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--edge-default);
+}
+.btn-ghost:hover { border-color: var(--edge-hover); background: rgba(255, 255, 255, 0.03); }
+
+/* ════════════════════════════════════════════════════════════════════
+   Animated underline — apply to text links in prose / nav.
+   ════════════════════════════════════════════════════════════════════ */
+
+.link-underline {
+  position: relative;
+  text-decoration: none;
+  display: inline;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-size: 0% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size var(--dur-standard) var(--ease-premium);
+}
+.link-underline:hover { background-size: 100% 1px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   Reduced motion — non-negotiable. Disable every transition and
+   transform-based animation. Entrances become instant.
+   ════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Recharts overrides for dark theme (preserved)
+   ════════════════════════════════════════════════════════════════════ */
+
 .recharts-cartesian-axis-tick text {
-  fill: var(--dim) !important;
+  fill: var(--text-tertiary) !important;
   font-family: var(--font-mono);
   font-size: 11px;
 }
 .recharts-cartesian-grid line {
   stroke: rgba(255, 255, 255, 0.05) !important;
 }
-.recharts-tooltip-wrapper {
-  outline: none;
-}
+.recharts-tooltip-wrapper { outline: none; }
