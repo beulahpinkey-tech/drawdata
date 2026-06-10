@@ -7,7 +7,9 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 // Aligned with ShowmoreInteraction spec — same spring across the app.
 export const spring: Transition = { type: "spring", bounce: 0.4, duration: 1 };
-export const ease: Transition = { duration: 0.28, ease: [0.16, 1, 0.3, 1] };
+// Phase 3: ease tuple = the same curve as --ease-premium
+// (cubic-bezier(0.22, 1, 0.36, 1)). One easing across the whole site.
+export const ease: Transition = { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
 
 export function useMotion() {
   const reduce = useReducedMotion();
@@ -155,5 +157,86 @@ export function CountUp({
     </span>
   );
 }
+
+/**
+ * ScrollReveal — viewport-triggered entrance for further-down sections.
+ *
+ * Phase 3 spec: every section's children fade-up 24px with 60ms stagger,
+ * triggered at 20% viewport visibility, once only. Use this for sections
+ * BELOW the fold; use <StaggerGroup> for above-the-fold groups that
+ * should animate on initial mount.
+ *
+ * One element at a time pattern: wrap the section in <ScrollReveal>,
+ * and the element fades up when 20% of it enters the viewport. For
+ * stagger across children, pass `stagger` and wrap each child in
+ * <ScrollReveal.Item>.
+ *
+ * Reduced motion: instant, no transform.
+ */
+export function ScrollReveal({
+  children,
+  className,
+  stagger = false,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  stagger?: boolean;
+  delay?: number;
+}) {
+  const { reduce } = useMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  const variants: Variants = stagger
+    ? {
+        hidden: { opacity: 0 },
+        show: {
+          opacity: 1,
+          transition: { staggerChildren: 0.06, delayChildren: delay },
+        },
+      }
+    : {
+        hidden: { opacity: 0, y: 24 },
+        show: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay },
+        },
+      };
+  return (
+    <motion.div
+      className={className}
+      variants={variants}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+ScrollReveal.Item = function ScrollRevealItem({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const { reduce } = useMotion();
+  if (reduce) return <div className={className}>{children}</div>;
+  const variants: Variants = {
+    hidden: { opacity: 0, y: 24 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+  return (
+    <motion.div className={className} variants={variants}>
+      {children}
+    </motion.div>
+  );
+};
 
 export { motion, AnimatePresence };

@@ -260,6 +260,18 @@ body {
     transform var(--dur-standard) var(--ease-premium);
 }
 
+/* .card-hover — opt-in modifier for interactive cards.
+   Phase 3 spec: lift -4px, brighten border, 300ms. NO 3D tilt. */
+.card-hover { will-change: transform, border-color; }
+.card-hover:hover {
+  border-color: var(--edge-hover);
+  transform: translateY(-4px);
+}
+.card-hover:focus-visible {
+  border-color: var(--edge-hover);
+  transform: translateY(-4px);
+}
+
 .panel-inner {
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid var(--edge-default);
