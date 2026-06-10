@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { META } from "@/lib/data";
 import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
-import { HeroVideoBackground } from "@/components/HeroVideoBackground";
+import { SignatureDataViz } from "@/components/hero/SignatureDataViz";
 
 const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
@@ -21,18 +21,18 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
 export default function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
-      <section className="relative overflow-hidden rounded-2xl border border-edge p-8 sm:p-14 min-h-[420px]">
-        <HeroVideoBackground />
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-dim font-mono mb-4">
-            <span className="h-1.5 w-1.5 rounded-full bg-cool" />
-            a data observatory
+      <section className="relative overflow-hidden rounded-lg border border-hairline p-8 sm:p-14 min-h-[520px] sm:min-h-[560px]">
+        <SignatureDataViz />
+        <div className="relative z-10 max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-data-label text-fg-tertiary mb-5">
+            <span className="h-1.5 w-1.5 rounded-pill bg-data-fair" />
+            A DATA OBSERVATORY
           </div>
-          <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95] tracking-tight">
+          <h1 className="t-hero text-fg-primary">
             Decades of draws.<br />
-            <span className="text-accent">No predictions.</span>
+            <span className="text-brand-500">No predictions.</span>
           </h1>
-          <p className="mt-6 text-dim text-[17px] max-w-2xl leading-relaxed">
+          <p className="mt-6 text-fg-secondary text-body max-w-2xl leading-body">
             DrawData turns public lottery history into an interactive, honest data
             instrument. Powerball winning numbers since 1992. Mega Millions since 2002.
             Pick 3 and Pick 4 results from Wisconsin, Pennsylvania, New Jersey, Texas,
@@ -42,11 +42,11 @@ export default function HomePage() {
             randomness is randomness.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="/powerball" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-accent text-ink font-medium text-sm hover:bg-accent/90 transition-colors">
+            <Link href="/powerball" className="btn btn-primary">
               Open the data
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L7 3m4 4l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
-            <Link href="/lab" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-edge text-text hover:bg-white/[0.04] transition-colors text-sm">
+            <Link href="/lab" className="btn btn-ghost">
               Try the Formula Lab
             </Link>
           </div>
