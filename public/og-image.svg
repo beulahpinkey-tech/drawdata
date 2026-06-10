@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#1c1f28"/>
+      <stop offset="60%" stop-color="#16181f"/>
+      <stop offset="100%" stop-color="#0e0f13"/>
+    </radialGradient>
+    <radialGradient id="amber" cx="50%" cy="0%" r="60%">
+      <stop offset="0%" stop-color="#e9b84a" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#e9b84a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ball-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e9b84a"/>
+      <stop offset="100%" stop-color="#b38320"/>
+    </linearGradient>
+    <linearGradient id="ball-b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5bc8b0"/>
+      <stop offset="100%" stop-color="#2f8978"/>
+    </linearGradient>
+    <linearGradient id="ball-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e1664c"/>
+      <stop offset="100%" stop-color="#8d3624"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#amber)"/>
+  <!-- decorative balls -->
+  <g opacity="0.85">
+    <circle cx="950" cy="180" r="68" fill="url(#ball-a)"/>
+    <circle cx="1060" cy="320" r="52" fill="url(#ball-b)"/>
+    <circle cx="930" cy="430" r="60" fill="url(#ball-c)"/>
+    <circle cx="820" cy="280" r="44" fill="url(#ball-a)" opacity="0.6"/>
+    <circle cx="1080" cy="150" r="34" fill="url(#ball-b)" opacity="0.5"/>
+  </g>
+  <!-- eyebrow -->
+  <text x="80" y="120" font-family="JetBrains Mono, ui-monospace, monospace" font-size="20" fill="#928f85" letter-spacing="3" font-weight="500">
+    A DATA OBSERVATORY
+  </text>
+  <!-- title -->
+  <text x="80" y="240" font-family="Fraunces, Georgia, serif" font-size="84" fill="#ece9e0" font-weight="600">
+    Decades of draws.
+  </text>
+  <text x="80" y="334" font-family="Fraunces, Georgia, serif" font-size="84" fill="#e9b84a" font-weight="600">
+    No predictions.
+  </text>
+  <!-- subtitle -->
+  <text x="80" y="410" font-family="Hanken Grotesk, system-ui, sans-serif" font-size="26" fill="#928f85" font-weight="400">
+    Powerball · Mega Millions · Pick 3 · Pick 4
+  </text>
+  <text x="80" y="448" font-family="Hanken Grotesk, system-ui, sans-serif" font-size="26" fill="#928f85" font-weight="400">
+    Wisconsin · Pennsylvania · New Jersey · Texas · North Carolina
+  </text>
+  <!-- url -->
+  <text x="80" y="560" font-family="JetBrains Mono, ui-monospace, monospace" font-size="22" fill="#5bc8b0" font-weight="500" letter-spacing="1">
+    draw-data.com
+  </text>
+</svg>

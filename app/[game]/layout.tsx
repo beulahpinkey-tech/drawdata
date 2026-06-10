@@ -17,7 +17,60 @@ export default function GameLayout({
   params: { game: string };
 }) {
   if (!GAMES.has(params.game)) notFound();
-  return <>{children}</>;
+  const slug = params.game;
+  const label = (GAME_LABELS as any)[slug] ?? slug;
+  const blurb = (GAME_BLURB as any)[slug] ?? "";
+  const m = (META as any)[slug];
+
+  // schema.org Dataset is THE structured-data type Google looks for
+  // when it wants to surface a "Dataset" rich result. Pure win — it's
+  // free indexability juice as long as the underlying claims are real.
+  // Everything here is derived from META so the numbers stay honest.
+  const datasetJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: `${label} — winning numbers history`,
+    description: blurb,
+    url: `https://draw-data.com/${slug}`,
+    creator: { "@id": "https://draw-data.com/#org" },
+    publisher: { "@id": "https://draw-data.com/#org" },
+    license: "https://creativecommons.org/publicdomain/zero/1.0/",
+    isAccessibleForFree: true,
+    keywords: [
+      label,
+      "lottery",
+      "winning numbers",
+      "draw history",
+      "analytics",
+    ].join(", "),
+    ...(m?.earliest && m?.latest
+      ? {
+          temporalCoverage: `${m.earliest}/${m.latest}`,
+          variableMeasured: "winning digits per draw",
+        }
+      : {}),
+    ...(m?.count
+      ? {
+          distribution: [
+            {
+              "@type": "DataDownload",
+              encodingFormat: "application/json",
+              contentUrl: `https://draw-data.com/lib/data/${slug}.json`,
+            },
+          ],
+        }
+      : {}),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(datasetJsonLd) }}
+      />
+      {children}
+    </>
+  );
 }
 
 export function generateStaticParams() {

@@ -42,14 +42,68 @@ export const metadata: Metadata = {
     description:
       "Descriptive analytics for Powerball, Mega Millions, and state Pick 3 / Pick 4 games. Frequency, gaps, sums, pairs, and a transparent backtester.",
     siteName: "DrawData",
+    url: "https://draw-data.com",
+    locale: "en_US",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "DrawData — Powerball, Mega Millions, Pick 3 & Pick 4 history",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "DrawData — Lottery Draw Analytics",
     description:
       "Powerball, Mega Millions, Pick 3 and Pick 4 history with frequency, gaps, and an honest formula backtester.",
+    images: ["/og-image.svg"],
   },
-  robots: { index: true, follow: true },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+};
+
+// JSON-LD structured data. Two top-level types so Google understands
+// (a) this is a website with a Sitelinks Search Box candidate, and
+// (b) "DrawData" is the publisher behind the data — both improve how
+// our results render in SERPs and feed brand-name disambiguation
+// ("draw-data.com" → this site, not the eponymous Excel template).
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "DrawData",
+  alternateName: ["draw-data.com", "Draw Data"],
+  url: "https://draw-data.com",
+  description:
+    "Free interactive analytics on Powerball, Mega Millions, and state Pick 3 / Pick 4 winning numbers. Descriptive only — no predictions.",
+  publisher: { "@id": "https://draw-data.com/#org" },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://draw-data.com/picker?q={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://draw-data.com/#org",
+  name: "DrawData",
+  url: "https://draw-data.com",
+  logo: "https://draw-data.com/og-image.svg",
+  sameAs: ["https://github.com/beulahpinkey-tech/drawdata"],
+  description:
+    "DrawData publishes descriptive analytics on US lottery draw history — Powerball, Mega Millions, and state Pick 3 / Pick 4 games across Wisconsin, Pennsylvania, New Jersey, Texas, and North Carolina.",
 };
 
 export default function RootLayout({
@@ -69,6 +123,14 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
       <body className="grain">

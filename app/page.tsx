@@ -33,10 +33,13 @@ export default function HomePage() {
             <span className="text-accent">No predictions.</span>
           </h1>
           <p className="mt-6 text-dim text-[17px] max-w-2xl leading-relaxed">
-            DrawData turns public lottery history — Pick 3, Pick 4, and Powerball — into
-            an interactive, honest data instrument. Watch frequencies converge, gaps
-            wander, sums settle into a bell. Test your favorite &ldquo;system&rdquo; in the Formula Lab
-            and see, with your own eyes, why randomness is randomness.
+            DrawData turns public lottery history into an interactive, honest data
+            instrument. Powerball winning numbers since 1992. Mega Millions since 2002.
+            Pick 3 and Pick 4 results from Wisconsin, Pennsylvania, New Jersey, Texas,
+            and North Carolina — a quarter-million draws in all. Watch frequencies
+            converge, gaps wander, sums settle into a bell. Test your favorite
+            &ldquo;system&rdquo; in the Formula Lab and see, with your own eyes, why
+            randomness is randomness.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href="/powerball" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-accent text-ink font-medium text-sm hover:bg-accent/90 transition-colors">
@@ -99,6 +102,66 @@ export default function HomePage() {
             the chance baseline, side by side. Spoiler: they match.
           </p>
           <Link href="/lab" className="mt-4 inline-flex text-[13px] text-accent hover:underline">Test a theory →</Link>
+        </div>
+      </section>
+
+      {/* Crawlable summary section — natural-language sentences seeded
+          with the queries real users actually type ("powerball winning
+          numbers", "pa pick 3 history", "texas daily 4 results", etc.).
+          Not SEO stuffing; it's the legitimate site overview, written
+          to match search intent. Lives below the fold; the visual
+          hierarchy above is unchanged. */}
+      <section className="mt-16 panel p-6 sm:p-8">
+        <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">What's on this site</div>
+        <h2 className="font-display text-[22px] mt-2">Five states, two national games, every draw on record.</h2>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-[14px] text-dim leading-relaxed">
+          <p>
+            <strong className="text-text">Powerball winning numbers</strong> back to the
+            game's first 1992 draw, with separate era tagging through every matrix
+            change (5/55 in 2002, 5/59 in 2009, 5/69 + 1/26 since October 2015).
+          </p>
+          <p>
+            <strong className="text-text">Mega Millions history</strong> since the
+            game launched in 2002, including the April 2025 matrix change to 5/70 +
+            1/24. National draws, sourced from data.ny.gov.
+          </p>
+          <p>
+            <strong className="text-text">Pennsylvania Pick 3 and Pick 4</strong> —
+            the deepest record on the site, every draw since the PA Lottery began
+            them in 1977 / 1980. Midday and Evening streams kept separate.
+          </p>
+          <p>
+            <strong className="text-text">New Jersey Pick-3 and Pick-4</strong>
+            Midday and Evening results since 2015. Pulled directly from
+            njlottery.com.
+          </p>
+          <p>
+            <strong className="text-text">Wisconsin Pick 3 and Pick 4</strong>
+            history from 1992 / 1997 to today. Midday and Evening draws.
+          </p>
+          <p>
+            <strong className="text-text">Texas Pick 3 and Daily 4</strong> — Texas
+            runs four daily draws (Morning, Day, Evening, Night); we expose the two
+            flagship Day + Night times since 1993 / 2007.
+          </p>
+          <p>
+            <strong className="text-text">North Carolina Pick 3 and Pick 4</strong>
+            Day and Evening winning numbers since the NC Education Lottery's first
+            draws in 2006 / 2009.
+          </p>
+          <p>
+            Every dataset feeds the same set of analytics: digit frequency, pair
+            and triple co-occurrence, gap distributions, sums, positional bias,
+            stream comparisons, and a draw-by-draw backtester in the Formula Lab.
+            Nothing predicts the future. Everything describes the past.
+          </p>
+        </div>
+        <div className="mt-6 flex flex-wrap gap-3 text-[13px]">
+          <Link href="/picker" className="text-accent hover:underline">Pick a state →</Link>
+          <span className="text-dim">·</span>
+          <Link href="/about" className="text-accent hover:underline">How DrawData is built</Link>
+          <span className="text-dim">·</span>
+          <Link href="/lab" className="text-accent hover:underline">Try the Formula Lab</Link>
         </div>
       </section>
     </div>
