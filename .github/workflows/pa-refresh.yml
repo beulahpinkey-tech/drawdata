@@ -214,9 +214,51 @@ jobs:
             fi
             echo "Push rejected on attempt $i — rebasing onto remote and retrying"
             sleep $((i * 2))
-            git pull --rebase origin main || {
-              echo "Rebase failed — likely a real conflict on data files."
+            if git pull --rebase origin main; then
+              continue
+            fi
+
+            # Rebase conflict. The historical pain point is lib/data/meta.json:
+            # the file is FULLY DERIVED from the per-state CSVs, but two
+            # concurrent bot runs both write to it, so a rebase sees the
+            # same lines changed in both branches and bails. This loop
+            # cost us 3 days of stalled refreshes once. Self-heal:
+            #   1. If the only conflicted file is meta.json (or aggregates,
+            #      which are also generated), accept the remote version
+            #      ("theirs" during rebase) — discards our generated
+            #      blob — then re-run ingest to regenerate from the
+            #      merged CSVs and continue the rebase.
+            #   2. If anything OUTSIDE the generated files conflicts,
+            #      that's a real human conflict and we still bail.
+            CONFLICTS=$(git diff --name-only --diff-filter=U)
+            echo "Rebase conflicts on:"
+            echo "$CONFLICTS"
+            REAL_CONFLICTS=$(echo "$CONFLICTS" | grep -vE '^lib/data/.*\.json$' || true)
+            if [ -n "$REAL_CONFLICTS" ]; then
+              echo "Non-generated files in conflict:"
+              echo "$REAL_CONFLICTS"
               echo "Manual intervention needed."
+              git rebase --abort || true
+              exit 1
+            fi
+
+            echo "Only generated files in conflict — auto-resolving by accepting theirs + re-ingesting."
+            # During rebase, "theirs" means the commit being rebased ONTO
+            # (= remote main), so this takes the upstream's generated
+            # JSON and discards ours. Then ingest regenerates from the
+            # union of CSVs in the now-merged working tree.
+            for f in $CONFLICTS; do
+              git checkout --theirs -- "$f"
+              git add "$f"
+            done
+            # Regenerate aggregates from the merged CSVs. This makes the
+            # meta.json we ship reflect ALL the data on disk, not just
+            # whichever side won the file checkout above.
+            npm run ingest
+            git add lib/data
+            GIT_EDITOR=true git rebase --continue || {
+              echo "rebase --continue failed even after auto-resolve; bailing"
+              git rebase --abort || true
               exit 1
             }
           done
