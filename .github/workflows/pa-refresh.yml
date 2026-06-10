@@ -71,7 +71,14 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 30 min cap accommodates the worst case on a scheduled run:
+    #   ~15 min jitter (0-899s random) + ~7 min total fetch across
+    #   PA/NJ/WI/TX/NC/PB/MM + ~2 min ingest + ~1 min push. Started
+    #   at 10 min when we had 3 states; grew with TX (8 CSV pulls)
+    #   and NC (2 CSV pulls). Public-repo Actions are unbilled so
+    #   the upper bound here is cosmetic — a stuck run should fail,
+    #   not loop forever, and 30 min gives plenty of headroom.
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v6  # runs on node24 (Node 20 actions deprecated)
