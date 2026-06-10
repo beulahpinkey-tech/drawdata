@@ -60,7 +60,7 @@ export default function HomePage() {
             <StaggerItem key={g.id}>
               <Link
                 href={`/${g.id}`}
-                className="panel p-6 group hover:border-accent/40 transition-colors block h-full"
+                className="panel card-hover p-6 group block h-full"
               >
                 <div className="text-[10px] uppercase tracking-[0.18em] text-dim font-mono">{g.tag}</div>
                 <div className="mt-1 font-display text-[22px] leading-tight">{g.label}</div>

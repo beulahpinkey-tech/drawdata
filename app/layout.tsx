@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "../styles/tokens.css";
 import { Header } from "@/components/Header";
-import { DisclaimerBar } from "@/components/DisclaimerBar";
+import { SiteFooter } from "@/components/SiteFooter";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -139,7 +139,7 @@ export default function RootLayout({
         <div className="relative z-10 flex min-h-screen flex-col">
           <Header />
           <MainWrapper>{children}</MainWrapper>
-          <DisclaimerBar />
+          <SiteFooter />
         </div>
         <CookieConsent />
       </body>
