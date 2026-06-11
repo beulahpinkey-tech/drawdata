@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, TOOLTIP_CURSOR } from "./style";
+import { Chart3D } from "@/components/motion/Chart3D";
 
 type Datum = {
   label: string;
@@ -34,8 +35,9 @@ export function FrequencyBars({
   const minVal = Math.min(...data.map((d) => d.value));
   const expected = data[0]?.expected ?? 0;
   return (
-    <div style={{ width: "100%", height }}>
-      <ResponsiveContainer>
+    <Chart3D>
+      <div style={{ width: "100%", height }}>
+        <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 12, right: 8, left: 4, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="label" interval={0} tickLine={false} axisLine={false} />
@@ -71,7 +73,8 @@ export function FrequencyBars({
             })}
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
-    </div>
+        </ResponsiveContainer>
+      </div>
+    </Chart3D>
   );
 }

@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, TOOLTIP_CURSOR } from "./style";
+import { Chart3D } from "@/components/motion/Chart3D";
 
 export function YearBars({
   data,
@@ -23,8 +24,9 @@ export function YearBars({
   height?: number;
 }) {
   return (
-    <div style={{ width: "100%", height }}>
-      <ResponsiveContainer>
+    <Chart3D>
+      <div style={{ width: "100%", height }}>
+        <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 12, right: 8, left: 0, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="year" tickLine={false} axisLine={false} />
@@ -38,7 +40,8 @@ export function YearBars({
           />
           <Bar dataKey={keyName} radius={[3, 3, 0, 0]} fill="var(--accent)" opacity={0.75} />
         </BarChart>
-      </ResponsiveContainer>
-    </div>
+        </ResponsiveContainer>
+      </div>
+    </Chart3D>
   );
 }
