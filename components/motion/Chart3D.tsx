@@ -27,7 +27,8 @@ import {
 } from "framer-motion";
 
 const SPRING = { stiffness: 320, damping: 22, mass: 0.9 };
-const MAX_TILT = 7; // degrees at the chart's far edge
+const HOVER_TILT = 3.5; // degrees while the cursor glides over the chart
+const PRESS_TILT = 8;   // degrees while pressing — the "push the glass" beat
 
 export function Chart3D({
   children,
@@ -47,17 +48,17 @@ export function Chart3D({
 
   if (reduce) return <div className={className}>{children}</div>;
 
-  const steer = (e: React.PointerEvent) => {
+  const steer = (e: React.PointerEvent, tilt: number) => {
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
     const nx = (e.clientX - r.left) / r.width - 0.5; // −0.5 … 0.5
     const ny = (e.clientY - r.top) / r.height - 0.5;
-    // Press point dips INTO the screen: clicking the right edge
+    // The cursor's side dips INTO the screen: hovering the right edge
     // rotates the plane so the right side recedes (negative Y-rot
     // for positive nx is screen-correct with CSS rotateY).
-    ry.set(nx * 2 * MAX_TILT);
-    rx.set(-ny * 2 * MAX_TILT * 0.6); // less vertical tilt — charts are wide
+    ry.set(nx * 2 * tilt);
+    rx.set(-ny * 2 * tilt * 0.6); // less vertical tilt — charts are wide
   };
 
   const release = () => {
@@ -78,14 +79,27 @@ export function Chart3D({
           willChange: "transform",
         }}
         onPointerDown={(e) => {
-          steer(e);
+          steer(e, PRESS_TILT);
           s.set(0.985);
         }}
         onPointerMove={(e) => {
-          // Only steer while held down — hover stays calm.
-          if (e.buttons > 0) steer(e);
+          // Hover glides the plane gently; pressing deepens the tilt.
+          // Touch devices skip hover (pointermove without buttons
+          // doesn't fire between taps), so they keep press-only.
+          steer(e, e.buttons > 0 ? PRESS_TILT : HOVER_TILT);
         }}
-        onPointerUp={release}
+        onPointerEnter={(e) => {
+          if (e.pointerType === "mouse") steer(e, HOVER_TILT);
+        }}
+        onPointerUp={(e) => {
+          // Mouse: settle back to hover-follow; touch: spring home.
+          if (e.pointerType === "mouse") {
+            s.set(1);
+            steer(e, HOVER_TILT);
+          } else {
+            release();
+          }
+        }}
         onPointerLeave={release}
         onPointerCancel={release}
       >
