@@ -3,6 +3,7 @@ import "../styles/tokens.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BallfieldMount } from "@/components/3d/BallfieldMount";
+import { PanelRevealObserver } from "@/components/motion/PanelRevealObserver";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -140,6 +141,7 @@ export default function RootLayout({
             pointer-events-none — sits behind the z-10 content wrapper
             on every route. Balls reveal one-by-one with scroll. */}
         <BallfieldMount />
+        <PanelRevealObserver />
         <AgeGate />
         <div className="relative z-10 flex min-h-screen flex-col">
           <Header />

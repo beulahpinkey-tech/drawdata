@@ -272,23 +272,31 @@ body {
   transform: translateY(-4px);
 }
 
-/* ── Scroll-driven panel reveal (site-wide, zero JS) ──
-   Every .panel on every route fades-up as it scrolls into view, using
-   CSS scroll-driven animations (animation-timeline: view()). Panels
-   already fully in view at load resolve instantly to the final state.
-   Browsers without support (Safari < 26, Firefox stable) just render
-   panels normally — progressive enhancement, no JS fallback needed
-   because framer-motion covers the marquee sections separately. */
-@supports (animation-timeline: view()) {
-  .panel {
-    animation: panelReveal both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 55%;
+/* ── Scroll-triggered panel reveal (site-wide, all browsers) ──
+   Every .panel on every route fades-up as it scrolls into view.
+   Driven by PanelRevealObserver (IntersectionObserver) which adds
+   `fx-ready` to <html> once JS is live and `.panel-in` to each panel
+   as it enters the viewport. Gating the hidden state on html.fx-ready
+   means no-JS / failed-JS renders panels normally — panels can never
+   be stuck invisible. Replaces the earlier animation-timeline: view()
+   approach, which only ran on the newest Chrome. */
+@media (prefers-reduced-motion: no-preference) {
+  html.fx-ready .panel {
+    opacity: 0.2;
+    transform: translateY(28px) scale(0.985);
+    transition:
+      opacity var(--dur-entrance) var(--ease-premium),
+      transform var(--dur-entrance) var(--ease-premium),
+      border-color var(--dur-standard) var(--ease-premium);
   }
-}
-@keyframes panelReveal {
-  from { opacity: 0.2; transform: translateY(28px) scale(0.985); }
-  to   { opacity: 1;   transform: translateY(0)    scale(1); }
+  html.fx-ready .panel.panel-in {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  /* .card-hover lift must still win after reveal completes. */
+  html.fx-ready .panel.panel-in.card-hover:hover {
+    transform: translateY(-4px);
+  }
 }
 
 /* ── .float-soft — ambient floating bob for stat cards / tiles ──
