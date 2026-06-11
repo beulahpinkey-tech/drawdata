@@ -60,7 +60,9 @@ export function FrequencyBars({
               fontFamily: "var(--font-mono)",
             }}
           />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+          {/* Slow grow-in so the bars visibly "draw" when the panel
+              scroll-reveals into view, instead of popping fully formed. */}
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} animationDuration={900} animationEasing="ease-out">
             {data.map((d, i) => {
               let fill = "rgba(236,233,224,0.55)";
               if (highlightMax && d.value === maxVal) fill = "var(--accent)";

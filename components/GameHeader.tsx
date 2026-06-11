@@ -14,11 +14,11 @@ export function GameHeader({ game, view }: { game: Game; view: string }) {
             {GAME_LABELS[game]} · {view}
           </div>
         </div>
-        <h1 className="mt-2 font-display text-[36px] sm:text-[42px] leading-tight tracking-tight">
+        <h1 className="mt-2 t-h1 text-fg-primary">
           {GAME_LABELS[game]} <span className="text-dim">— {view}</span>
         </h1>
-        <p className="mt-2 text-[14px] text-dim max-w-3xl">{GAME_BLURB[game]}</p>
-        <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-[12px] font-mono text-dim">
+        <p className="mt-3 text-[15px] text-dim max-w-3xl leading-relaxed">{GAME_BLURB[game]}</p>
+        <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-[13px] font-mono text-dim">
           <span>
             <span className="text-text tabular-nums">{m.count.toLocaleString()}</span> draws
           </span>
