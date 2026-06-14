@@ -22,7 +22,7 @@
  *   DD-MM-YYYY, w1, w2, w3, w4, w5, megaball, [multiplier]
  */
 
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 // Socrata API. $limit needs to be larger than the total row count
@@ -40,6 +40,8 @@ type NyRow = {
 const OUT_DIR = join(process.cwd(), "data", "wi");
 const OUT_PATH = join(OUT_DIR, "megamillions.csv");
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function ddmmyyyy(iso: string): string {
   const [y, m, d] = iso.slice(0, 10).split("-");
   return `${d}-${m}-${y}`;
@@ -49,24 +51,66 @@ function pad(s: string): string {
   return s.length === 1 ? "0" + s : s;
 }
 
+/**
+ * Fetch the Socrata feed with retry + backoff. data.ny.gov returns
+ * transient 5xx (notably 503) and the occasional connection reset; a
+ * single hiccup must not take down the whole nightly refresh. Mirrors
+ * the resilience already in fetch-pa.ts / fetch-tx.ts. Throws only
+ * after all attempts are exhausted; the caller decides whether to
+ * hard-fail or fall back to the existing CSV.
+ */
+async function fetchRows(attempt = 1): Promise<NyRow[]> {
+  const MAX = 4;
+  try {
+    const res = await fetch(BASE, {
+      headers: {
+        accept: "application/json",
+        "user-agent":
+          "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://draw-data.com)",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    const data = (await res.json()) as NyRow[];
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error("response was empty or not an array");
+    }
+    return data;
+  } catch (err: any) {
+    if (attempt < MAX) {
+      const wait = 800 * attempt; // 0.8s, 1.6s, 2.4s
+      console.warn(`  attempt ${attempt}/${MAX} failed (${err.message}); retrying in ${wait}ms …`);
+      await sleep(wait);
+      return fetchRows(attempt + 1);
+    }
+    throw err;
+  }
+}
+
 async function main() {
   console.log("Fetching Mega Millions history from NY Open Data …");
-  const res = await fetch(BASE, {
-    headers: {
-      accept: "application/json",
-      "user-agent":
-        "DrawData/1.0 (Wisconsin-Pennsylvania-lottery-analytics; +https://draw-data.com)",
-    },
-  });
-  if (!res.ok) {
-    console.error(`  HTTP ${res.status} ${res.statusText}`);
+
+  let rows: NyRow[];
+  try {
+    rows = await fetchRows();
+  } catch (err: any) {
+    // All retries exhausted. Mega Millions is a national game refreshed
+    // within ~24h, so a single missed cycle is harmless — keep yesterday's
+    // CSV and exit 0 so the rest of the refresh (PA/NJ/WI/TX/NC/PB) still
+    // commits. The ingest freshness guard will fail loudly if MM goes
+    // genuinely stale (>7-8 days), so a dead source still surfaces — it
+    // just doesn't abort a run where everything else succeeded.
+    if (existsSync(OUT_PATH)) {
+      console.warn(`  NY Open Data unreachable after retries (${err.message}).`);
+      console.warn(`  Keeping existing ${OUT_PATH} — Mega Millions left at last-known-good.`);
+      console.warn(`  (Ingest's freshness guard will catch it if this persists past ~7 days.)`);
+      return;
+    }
+    // No existing data at all — nothing to fall back to. Hard-fail.
+    console.error(`  NY Open Data unreachable after retries and no existing CSV to fall back to.`);
+    console.error(`  ${err.message}`);
     process.exit(1);
   }
-  const rows = (await res.json()) as NyRow[];
-  if (!Array.isArray(rows) || rows.length === 0) {
-    console.error("  Response was empty or not an array.");
-    process.exit(1);
-  }
+
   console.log(`  fetched ${rows.length.toLocaleString()} draws`);
 
   // Convert to our canonical CSV format. Title + header rows up top so
