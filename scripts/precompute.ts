@@ -306,10 +306,44 @@ writeJson("megamillions.json", { game: "megamillions", draws: mm, report: rMm })
 writeJson("powerball.agg.json", aggregateBallGame(pb, CURRENT_PB_ERA, "powerball"));
 writeJson("megamillions.agg.json", aggregateBallGame(mm, CURRENT_MM_ERA, "megamillions"));
 
+// ─── Freshness computation (drives the stale flags embedded in meta) ──
+// We FLAG stale datasets rather than aborting the whole build: a single
+// broken upstream (e.g. PA's endpoint started returning HTTP 500 in 2026)
+// must not freeze the healthy sources from shipping. Stale datasets keep
+// serving last-known-good, are marked `stale: true` in meta, and are
+// logged loudly below — visible, not silent — but the build still
+// succeeds so the bot commits the fresh data for everything else.
+const STALE_DAYS = 7;
+const today = new Date().toISOString().slice(0, 10);
+const daysBetween = (a: string, b: string) =>
+  Math.floor((Date.parse(b) - Date.parse(a)) / 86_400_000);
+
+type FreshCheck = { slug: string; latest: string; ageDays: number; stale: boolean };
+const freshnessChecks: FreshCheck[] = [];
+const staleSlugs = new Set<string>();
+function recordFreshness(slug: string, latest: string, cap: number): number {
+  const ageDays = daysBetween(latest, today);
+  if (ageDays > cap) staleSlugs.add(slug);
+  freshnessChecks.push({ slug, latest, ageDays, stale: ageDays > cap });
+  return ageDays;
+}
+const ageBySlug: Record<string, number> = {};
+for (const p of parsedPicks) {
+  const slug = `${p.state.code}-${p.game}`;
+  ageBySlug[slug] = recordFreshness(slug, p.report.dateRange[1], STALE_DAYS);
+}
+// Powerball Mon/Wed/Sat, Mega Millions Tue/Fri — up to 4 days between
+// draws, so give the ball games one extra day of slack.
+ageBySlug["powerball"] = recordFreshness("powerball", rPb.dateRange[1], STALE_DAYS + 1);
+ageBySlug["megamillions"] = recordFreshness("megamillions", rMm.dateRange[1], STALE_DAYS + 1);
+
 const meta: Record<string, unknown> = {
   generatedAt: new Date().toISOString(),
   lastCsvUpdated: latestCsvMtime,
   source: "Wisconsin Lottery + Pennsylvania Lottery + multi-state. Not affiliated.",
+  // Slugs whose latest draw is older than the staleness cap. Empty in
+  // the healthy case. The site can read this to badge a paused dataset.
+  stale: Array.from(staleSlugs),
   states: STATES.reduce<Record<string, unknown>>((acc, s) => {
     acc[s.code] = { code: s.code, label: s.label, available: parsedPicks.some((p) => p.state.code === s.code) };
     return acc;
@@ -329,6 +363,8 @@ for (const p of parsedPicks) {
     latest: p.report.dateRange[1],
     latestDraw: p.draws[p.draws.length - 1] ?? null,
     skipped: p.report.skipped,
+    stale: staleSlugs.has(slug),
+    ageDays: ageBySlug[slug] ?? null,
   };
 }
 (meta as any).powerball = {
@@ -338,6 +374,8 @@ for (const p of parsedPicks) {
   latestDraw: pb[pb.length - 1] ?? null,
   currentEra: CURRENT_PB_ERA,
   skipped: rPb.skipped,
+  stale: staleSlugs.has("powerball"),
+  ageDays: ageBySlug["powerball"] ?? null,
 };
 (meta as any).megamillions = {
   count: mm.length,
@@ -347,59 +385,31 @@ for (const p of parsedPicks) {
   currentEra: CURRENT_MM_ERA,
   eras: MEGAMILLIONS_ERAS,
   skipped: rMm.skipped,
+  stale: staleSlugs.has("megamillions"),
+  ageDays: ageBySlug["megamillions"] ?? null,
 };
 writeJson("meta.json", meta);
 
-// ─── Freshness + budget guards ───────────────────────────────────
-// Loud failures here mean a fetcher silently broke (cache poisoned, API
-// schema drifted, scraper regex stopped matching) before stale data
-// gets pushed to production. We bail BEFORE writing meta.json so the
-// build dies and the bot's commit is rejected.
-const STALE_DAYS = 7;
-const today = new Date().toISOString().slice(0, 10);
-const daysBetween = (a: string, b: string) =>
-  Math.floor((Date.parse(b) - Date.parse(a)) / 86_400_000);
-
-const freshnessFailures: string[] = [];
-const freshnessChecks: { slug: string; latest: string; ageDays: number }[] = [];
-for (const p of parsedPicks) {
-  const latest = p.report.dateRange[1];
-  const age = daysBetween(latest, today);
-  freshnessChecks.push({ slug: `${p.state.code}-${p.game}`, latest, ageDays: age });
-  if (age > STALE_DAYS) {
-    freshnessFailures.push(
-      `${p.state.code}-${p.game}: latest=${latest}, ${age} days old (cap ${STALE_DAYS}). Fetcher likely broken.`,
-    );
-  }
-}
-{
-  const latestPb = rPb.dateRange[1];
-  const agePb = daysBetween(latestPb, today);
-  freshnessChecks.push({ slug: "powerball", latest: latestPb, ageDays: agePb });
-  // Powerball draws Mon/Wed/Sat — up to 4 days between draws — give it 8.
-  if (agePb > STALE_DAYS + 1) {
-    freshnessFailures.push(`powerball: latest=${latestPb}, ${agePb} days old.`);
-  }
-  const latestMm = rMm.dateRange[1];
-  const ageMm = daysBetween(latestMm, today);
-  freshnessChecks.push({ slug: "megamillions", latest: latestMm, ageDays: ageMm });
-  // Mega Millions draws Tue/Fri — same buffer.
-  if (ageMm > STALE_DAYS + 1) {
-    freshnessFailures.push(`megamillions: latest=${latestMm}, ${ageMm} days old.`);
-  }
-}
+// ─── Freshness report ─────────────────────────────────────────────
+// Computed above (staleSlugs / freshnessChecks) and already embedded in
+// meta.json. Here we just PRINT it. Stale datasets are flagged loudly
+// but do NOT fail the build: shipping the 5 healthy sources beats
+// freezing everything because one upstream (e.g. PA in 2026) went down.
+// The stale dataset keeps serving last-known-good and is badged via
+// meta.stale so the site/operator can see it's paused.
 console.log("\nFreshness check (cap: 7-8 days):");
 for (const c of freshnessChecks) {
-  const mark = c.ageDays > STALE_DAYS + 1 ? "✗" : "✓";
-  console.log(`  ${mark} ${c.slug.padEnd(14)} latest=${c.latest}  ${c.ageDays} days old`);
+  console.log(`  ${c.stale ? "✗" : "✓"} ${c.slug.padEnd(14)} latest=${c.latest}  ${c.ageDays} days old`);
 }
-if (freshnessFailures.length > 0) {
-  console.error(
-    "\nFRESHNESS FAILURES — refusing to write meta.json. " +
-      "A fetcher is probably broken; check the bot's last run log.\n  " +
-      freshnessFailures.join("\n  "),
+if (staleSlugs.size > 0) {
+  console.warn(
+    `\n⚠️  STALE DATASETS (${staleSlugs.size}) — serving last-known-good, flagged in meta.stale:\n  ` +
+      freshnessChecks
+        .filter((c) => c.stale)
+        .map((c) => `${c.slug}: latest=${c.latest}, ${c.ageDays} days old — upstream fetcher likely down.`)
+        .join("\n  ") +
+      `\n  Healthy datasets still shipped. Fix the fetcher to clear this.`,
   );
-  process.exit(1);
 }
 
 // File-size budget. The current shape uses ~25 MB total; alert at 100
