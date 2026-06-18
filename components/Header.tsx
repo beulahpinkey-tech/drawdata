@@ -91,6 +91,16 @@ export function Header() {
             />
             <nav className="hidden lg:flex items-center gap-1 text-sm text-dim">
               <Link
+                href="/explore"
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  pathname.startsWith("/explore")
+                    ? "text-accent bg-white/[0.04]"
+                    : "hover:text-text"
+                }`}
+              >
+                Explorer
+              </Link>
+              <Link
                 href={labHref}
                 className={`px-3 py-1.5 rounded-md transition-colors ${
                   pathname.startsWith("/lab")
@@ -99,6 +109,16 @@ export function Header() {
                 }`}
               >
                 Formula Lab
+              </Link>
+              <Link
+                href="/patterns"
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  pathname.startsWith("/patterns")
+                    ? "text-accent bg-white/[0.04]"
+                    : "hover:text-text"
+                }`}
+              >
+                Patterns
               </Link>
               <Link
                 href="/contact"

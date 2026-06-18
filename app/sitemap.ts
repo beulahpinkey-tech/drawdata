@@ -28,7 +28,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, lastModified, changeFrequency: "daily", priority: 1.0 },
     { url: `${BASE}/picker`, lastModified, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/explore`, lastModified, changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/lab`, lastModified, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/patterns`, lastModified, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/about`, lastModified, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/contact`, lastModified, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacy`, lastModified, changeFrequency: "yearly", priority: 0.2 },
