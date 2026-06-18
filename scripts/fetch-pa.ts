@@ -66,6 +66,7 @@ function argInt(flag: string, fallback: number): number {
 const START_YEAR = argInt("--from", DEFAULT_START);
 const END_YEAR = argInt("--to", new Date().getUTCFullYear());
 const FORCE = args.includes("--force"); // re-fetch even if cached
+const FORCE_SHRINK = args.includes("--force-shrink"); // allow merge to shrink (clean rebuild)
 
 type RawDraw = {
   drawingGameID: number;
@@ -142,6 +143,46 @@ function csvFor(rows: Row[], positions: 3 | 4): string {
   return lines.join("\n") + "\n";
 }
 
+/**
+ * Parse the already-committed CSV back into Row[]. Tolerant: skips
+ * title/header/blank lines (anything not leading with DD-MM-YYYY).
+ * Returns [] if absent/unreadable. This is the basis of the
+ * merge-not-shrink guard below.
+ */
+function loadExisting(path: string, positions: 3 | 4): Row[] {
+  if (!existsSync(path)) return [];
+  let raw: string;
+  try {
+    raw = readFileSync(path, "utf8");
+  } catch {
+    return [];
+  }
+  const out: Row[] = [];
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line) continue;
+    const cols = line.split(",");
+    const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(cols[0].trim());
+    if (!m) continue;
+    const streamRaw = (cols[1] ?? "").trim();
+    const stream: Row["stream"] = streamRaw === "Evening" ? "Evening" : "Midday";
+    const digits: number[] = [];
+    let ok = true;
+    for (let i = 0; i < positions; i++) {
+      const v = parseInt((cols[2 + i] ?? "").trim(), 10);
+      if (!Number.isFinite(v) || v < 0 || v > 9) { ok = false; break; }
+      digits.push(v);
+    }
+    if (!ok) continue;
+    out.push({
+      iso: `${m[3]}-${m[2]}-${m[1]}`,
+      ddmmyyyy: `${m[1]}-${m[2]}-${m[3]}`,
+      stream,
+      digits,
+    });
+  }
+  return out;
+}
+
 async function main() {
   console.log(
     `Fetching PA Pick 3 / Pick 4 history (${START_YEAR}…${END_YEAR})${FORCE ? " [FORCE refetch]" : ""}`,
@@ -196,19 +237,58 @@ async function main() {
     if (a.iso !== b.iso) return a.iso < b.iso ? 1 : -1;
     return a.stream === "Evening" && b.stream === "Midday" ? -1 : 1;
   };
-  buckets.pick3.sort(sortFn);
-  buckets.pick4.sort(sortFn);
 
-  writeFileSync(join(OUT_DIR, "pick3.csv"), csvFor(buckets.pick3, 3));
-  writeFileSync(join(OUT_DIR, "pick4.csv"), csvFor(buckets.pick4, 4));
+  // MERGE, NEVER SHRINK. PA's PastWinningNumbers.ashx is intermittent —
+  // it returns HTTP 500 for stretches (the whole of 2026 at times). The
+  // old code OVERWROTE the CSV with whatever it managed to fetch, so a
+  // run that only got cached ≤2025 years would silently regress the
+  // committed file from (e.g.) 2026-06-12 back to 2025-12-31 — the same
+  // history-destroying bug we already fixed for Wisconsin. Now we seed
+  // from the committed CSV and union the fetched rows on top by
+  // (date, stream) key, and refuse to write a file with fewer unique
+  // rows than we started with. Pass --force-shrink to override for an
+  // intentional clean rebuild.
+  for (const game of ["pick3", "pick4"] as const) {
+    const positions = game === "pick3" ? 3 : 4;
+    const outPath = join(OUT_DIR, `${game}.csv`);
+    const existing = loadExisting(outPath, positions);
 
-  const first3 = buckets.pick3[buckets.pick3.length - 1]?.iso ?? "—";
-  const last3 = buckets.pick3[0]?.iso ?? "—";
-  const first4 = buckets.pick4[buckets.pick4.length - 1]?.iso ?? "—";
-  const last4 = buckets.pick4[0]?.iso ?? "—";
+    const seen = new Set<string>();
+    const merged: Row[] = [];
+    for (const r of existing) {
+      const k = `${r.iso}|${r.stream}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(r);
+    }
+    const existingUnique = merged.length;
+    let added = 0;
+    for (const r of buckets[game]) {
+      const k = `${r.iso}|${r.stream}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(r);
+      added++;
+    }
+    merged.sort(sortFn);
 
-  console.log(`\nWrote ${OUT_DIR}/pick3.csv  (${buckets.pick3.length.toLocaleString()} draws, ${first3} → ${last3})`);
-  console.log(`Wrote ${OUT_DIR}/pick4.csv  (${buckets.pick4.length.toLocaleString()} draws, ${first4} → ${last4})`);
+    if (!FORCE_SHRINK && merged.length < existingUnique) {
+      console.warn(
+        `  ${game}: merge would SHRINK (${existingUnique} → ${merged.length}); ` +
+          `PA endpoint likely down this run. REFUSING to write — keeping committed CSV. ` +
+          `(--force-shrink to override.)`,
+      );
+      continue;
+    }
+    writeFileSync(outPath, csvFor(merged, positions));
+    const last = merged[0]?.iso ?? "—";
+    const first = merged[merged.length - 1]?.iso ?? "—";
+    console.log(
+      `Wrote ${outPath}  (${merged.length.toLocaleString()} draws, ${first} → ${last}; ` +
+        `${added.toLocaleString()} new, ${existingUnique.toLocaleString()} preserved)`,
+    );
+  }
+
   console.log(`\nDone. Re-run any time; cached years won't be re-fetched.`);
   console.log(`To force a refresh: npm run fetch:pa -- --force`);
 }
