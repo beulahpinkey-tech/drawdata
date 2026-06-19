@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/og-image.svg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "DrawData — Powerball, Mega Millions, Pick 3 & Pick 4 history",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     title: "DrawData — Lottery Draw Analytics",
     description:
       "Powerball, Mega Millions, Pick 3 and Pick 4 history with frequency, gaps, and an honest formula backtester.",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -112,7 +112,7 @@ const organizationJsonLd = {
   "@id": "https://draw-data.com/#org",
   name: "DrawData",
   url: "https://draw-data.com",
-  logo: "https://draw-data.com/og-image.svg",
+  logo: "https://draw-data.com/og-image.png",
   sameAs: ["https://github.com/beulahpinkey-tech/drawdata"],
   description:
     "DrawData publishes descriptive analytics on US lottery draw history — Powerball, Mega Millions, and state Pick 3 / Pick 4 games across Wisconsin, Pennsylvania, New Jersey, Texas, and North Carolina.",
