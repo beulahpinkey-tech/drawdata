@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE, TOOLTIP_CURSOR } from "./style";
+import { Chart3D } from "@/components/motion/Chart3D";
 
 export function SumDistribution({
   dist,
@@ -29,8 +30,9 @@ export function SumDistribution({
     data.push({ sum: s, count: dist[s] ?? 0 });
   }
   return (
-    <div style={{ width: "100%", height }}>
-      <ResponsiveContainer>
+    <Chart3D>
+      <div style={{ width: "100%", height }}>
+        <ResponsiveContainer>
         <BarChart data={data} margin={{ top: 12, right: 8, left: 4, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="sum" tickLine={false} axisLine={false} interval={Math.floor(maxSum / 20) || 1} />
@@ -60,7 +62,8 @@ export function SumDistribution({
             ))}
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
-    </div>
+        </ResponsiveContainer>
+      </div>
+    </Chart3D>
   );
 }

@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { META } from "@/lib/data";
-import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
+import { ScrollReveal } from "@/components/motion/primitives";
 import { HeroVideoBackground } from "@/components/HeroVideoBackground";
+import { Magnet } from "@/components/motion/Magnet";
+import { AnimatedText } from "@/components/motion/AnimatedText";
+import { GameStack, type GameGroup } from "@/components/home/GameStack";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
@@ -18,21 +22,69 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras tagged separately." },
 ];
 
+// Sticky-stack grouping: National first, then the five states in the
+// order they shipped. Counts/dates resolved server-side from META so
+// the client component receives plain props (no META in the bundle).
+const GROUP_DEFS: { key: string; title: string; ids: string[] }[] = [
+  { key: "national", title: "National games", ids: ["powerball", "megamillions"] },
+  { key: "wi", title: "Wisconsin", ids: ["wi-pick3", "wi-pick4"] },
+  { key: "pa", title: "Pennsylvania", ids: ["pa-pick3", "pa-pick4"] },
+  { key: "nj", title: "New Jersey", ids: ["nj-pick3", "nj-pick4"] },
+  { key: "tx", title: "Texas", ids: ["tx-pick3", "tx-pick4"] },
+  { key: "nc", title: "North Carolina", ids: ["nc-pick3", "nc-pick4"] },
+];
+
 export default function HomePage() {
+  const groups: GameGroup[] = GROUP_DEFS.map((def) => ({
+    key: def.key,
+    title: def.title,
+    games: def.ids.map((id) => {
+      const g = GAMES.find((x) => x.id === id)!;
+      const m = (META as any)[id];
+      return {
+        id: g.id,
+        label: g.label,
+        tag: g.tag,
+        blurb: g.blurb,
+        count: m?.count ?? 0,
+        earliest: m?.earliest ?? "—",
+        latest: m?.latest ?? "—",
+      };
+    }),
+  }));
+
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
-      <section className="relative overflow-hidden rounded-2xl border border-edge p-8 sm:p-14 min-h-[420px]">
+    // Wider, screen-percentage layout: 94% of the viewport (so the hero
+    // rectangle box scales with the screen) capped at 1600px on large
+    // displays — up from the old fixed ~1280px (max-w-7xl).
+    <div className="mx-auto w-[94%] max-w-[1600px] py-10 sm:py-14">
+      {/* Hero — the lottery-ball video plays behind, giving the balls
+          the user wants; a LEFT-weighted scrim darkens only the text
+          column so the headline stays crisp while the balls show
+          clearly on the right. Fixes the original overlap without
+          losing the balls. */}
+      <section className="relative overflow-hidden rounded-lg border border-hairline p-8 sm:p-14 min-h-[480px] sm:min-h-[520px]">
         <HeroVideoBackground />
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-dim font-mono mb-4">
-            <span className="h-1.5 w-1.5 rounded-full bg-cool" />
-            a data observatory
+        {/* Readability scrim: strong on the text (left) side, fading to
+            transparent on the right so the balls read clearly there. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(100deg, rgba(14,15,19,0.94) 0%, rgba(14,15,19,0.86) 34%, rgba(14,15,19,0.40) 62%, rgba(14,15,19,0.05) 100%)",
+          }}
+        />
+        <div className="relative z-10 max-w-2xl">
+          <div className="inline-flex items-center gap-2 text-data-label text-fg-tertiary mb-5">
+            <span className="h-1.5 w-1.5 rounded-pill bg-data-fair" />
+            A DATA OBSERVATORY
           </div>
-          <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95] tracking-tight">
+          <h1 className="t-hero text-fg-primary">
             Decades of draws.<br />
-            <span className="text-accent">No predictions.</span>
+            <span className="text-brand-500">No predictions.</span>
           </h1>
-          <p className="mt-6 text-dim text-[17px] max-w-2xl leading-relaxed">
+          <p className="mt-6 text-fg-secondary text-body max-w-2xl leading-body">
             DrawData turns public lottery history into an interactive, honest data
             instrument. Powerball winning numbers since 1992. Mega Millions since 2002.
             Pick 3 and Pick 4 results from Wisconsin, Pennsylvania, New Jersey, Texas,
@@ -42,68 +94,54 @@ export default function HomePage() {
             randomness is randomness.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="/powerball" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-accent text-ink font-medium text-sm hover:bg-accent/90 transition-colors">
-              Open the data
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L7 3m4 4l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </Link>
-            <Link href="/lab" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-edge text-text hover:bg-white/[0.04] transition-colors text-sm">
-              Try the Formula Lab
-            </Link>
+            <Magnet padding={120} strength={4}>
+              <Link href="/powerball" className="btn btn-primary">
+                Open the data
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L7 3m4 4l-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </Link>
+            </Magnet>
+            <Magnet padding={120} strength={5}>
+              <Link href="/lab" className="btn btn-ghost">
+                Try the Formula Lab
+              </Link>
+            </Magnet>
           </div>
         </div>
       </section>
 
-      <StaggerGroup className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" delay={0.05}>
-        {GAMES.map((g) => {
-          const m = (META as any)[g.id];
-          return (
-            <StaggerItem key={g.id}>
-              <Link
-                href={`/${g.id}`}
-                className="panel p-6 group hover:border-accent/40 transition-colors block h-full"
-              >
-                <div className="text-[10px] uppercase tracking-[0.18em] text-dim font-mono">{g.tag}</div>
-                <div className="mt-1 font-display text-[22px] leading-tight">{g.label}</div>
-                <p className="mt-3 text-[13px] text-dim leading-relaxed">{g.blurb}</p>
-                <div className="mt-5 flex items-end justify-between">
-                  <div>
-                    <div className="font-mono text-[11px] text-dim">draws on file</div>
-                    <div className="font-display text-[28px] tabular-nums leading-none">{m.count.toLocaleString()}</div>
-                  </div>
-                  <div className="text-[11px] text-dim font-mono text-right">
-                    {m.earliest}<br />→ {m.latest}
-                  </div>
-                </div>
-                <div className="mt-5 inline-flex items-center gap-1 text-[12px] text-accent">
-                  Explore <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                </div>
-              </Link>
-            </StaggerItem>
-          );
-        })}
-      </StaggerGroup>
+      {/* Game deck — sticky stacking cards. Each state pins and scales
+          back as the next scrolls over it. */}
+      <div className="mt-12">
+        <GameStack groups={groups} />
+      </div>
 
-      <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="panel p-6">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">Principle</div>
-          <h2 className="font-display text-[22px] mt-2">Descriptive, not predictive.</h2>
-          <p className="mt-3 text-[14px] text-dim leading-relaxed">
-            Every chart in DrawData shows you what <em className="text-text not-italic">has happened</em>.
-            No chart, ranking, or tool here is designed to tell you what <em className="text-text not-italic">will</em>.
-            Lottery draws are independent and random — the past does not pull on the future.
-          </p>
-        </div>
-        <div className="panel p-6">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-accent font-mono">Centerpiece</div>
-          <h2 className="font-display text-[22px] mt-2">The Formula Lab.</h2>
-          <p className="mt-3 text-[14px] text-dim leading-relaxed">
-            Compose a transformation rule from the previous draw — shifts, mirrors, anchors —
-            and backtest it across every consecutive draw. See the empirical hit rate beside
-            the chance baseline, side by side. Spoiler: they match.
-          </p>
-          <Link href="/lab" className="mt-4 inline-flex text-[13px] text-accent hover:underline">Test a theory →</Link>
-        </div>
-      </section>
+      {/* Dormant ad slot (renders nothing until AdSense is approved +
+          NEXT_PUBLIC_ADSENSE_CLIENT is set). Placed between content
+          sections, never in the hero or the data tools. */}
+      <AdSlot slot="home-mid" />
+
+      <ScrollReveal>
+        <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="panel p-6">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">Principle</div>
+            <h2 className="font-display text-[22px] mt-2">Descriptive, not predictive.</h2>
+            <AnimatedText
+              className="mt-3 text-[14px] text-dim leading-relaxed"
+              text="Every chart in DrawData shows you what has happened. No chart, ranking, or tool here is designed to tell you what will. Lottery draws are independent and random — the past does not pull on the future."
+            />
+          </div>
+          <div className="panel p-6">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-accent font-mono">Centerpiece</div>
+            <h2 className="font-display text-[22px] mt-2">The Formula Lab.</h2>
+            <p className="mt-3 text-[14px] text-dim leading-relaxed">
+              Compose a transformation rule from the previous draw — shifts, mirrors, anchors —
+              and backtest it across every consecutive draw. See the empirical hit rate beside
+              the chance baseline, side by side. Spoiler: they match.
+            </p>
+            <Link href="/lab" className="mt-4 inline-flex text-[13px] text-accent hover:underline">Test a theory →</Link>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* Crawlable summary section — natural-language sentences seeded
           with the queries real users actually type ("powerball winning
@@ -111,59 +149,61 @@ export default function HomePage() {
           Not SEO stuffing; it's the legitimate site overview, written
           to match search intent. Lives below the fold; the visual
           hierarchy above is unchanged. */}
-      <section className="mt-16 panel p-6 sm:p-8">
-        <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">What's on this site</div>
-        <h2 className="font-display text-[22px] mt-2">Five states, two national games, every draw on record.</h2>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-[14px] text-dim leading-relaxed">
-          <p>
-            <strong className="text-text">Powerball winning numbers</strong> back to the
-            game's first 1992 draw, with separate era tagging through every matrix
-            change (5/55 in 2002, 5/59 in 2009, 5/69 + 1/26 since October 2015).
-          </p>
-          <p>
-            <strong className="text-text">Mega Millions history</strong> since the
-            game launched in 2002, including the April 2025 matrix change to 5/70 +
-            1/24. National draws, sourced from data.ny.gov.
-          </p>
-          <p>
-            <strong className="text-text">Pennsylvania Pick 3 and Pick 4</strong> —
-            the deepest record on the site, every draw since the PA Lottery began
-            them in 1977 / 1980. Midday and Evening streams kept separate.
-          </p>
-          <p>
-            <strong className="text-text">New Jersey Pick-3 and Pick-4</strong>
-            Midday and Evening results since 2015. Pulled directly from
-            njlottery.com.
-          </p>
-          <p>
-            <strong className="text-text">Wisconsin Pick 3 and Pick 4</strong>
-            history from 1992 / 1997 to today. Midday and Evening draws.
-          </p>
-          <p>
-            <strong className="text-text">Texas Pick 3 and Daily 4</strong> — Texas
-            runs four daily draws (Morning, Day, Evening, Night); we expose the two
-            flagship Day + Night times since 1993 / 2007.
-          </p>
-          <p>
-            <strong className="text-text">North Carolina Pick 3 and Pick 4</strong>
-            Day and Evening winning numbers since the NC Education Lottery's first
-            draws in 2006 / 2009.
-          </p>
-          <p>
-            Every dataset feeds the same set of analytics: digit frequency, pair
-            and triple co-occurrence, gap distributions, sums, positional bias,
-            stream comparisons, and a draw-by-draw backtester in the Formula Lab.
-            Nothing predicts the future. Everything describes the past.
-          </p>
-        </div>
-        <div className="mt-6 flex flex-wrap gap-3 text-[13px]">
-          <Link href="/picker" className="text-accent hover:underline">Pick a state →</Link>
-          <span className="text-dim">·</span>
-          <Link href="/about" className="text-accent hover:underline">How DrawData is built</Link>
-          <span className="text-dim">·</span>
-          <Link href="/lab" className="text-accent hover:underline">Try the Formula Lab</Link>
-        </div>
-      </section>
+      <ScrollReveal>
+        <section className="mt-16 panel p-6 sm:p-8">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">What's on this site</div>
+          <h2 className="font-display text-[22px] mt-2">Five states, two national games, every draw on record.</h2>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-[14px] text-dim leading-relaxed">
+            <p>
+              <strong className="text-text">Powerball winning numbers</strong> back to the
+              game's first 1992 draw, with separate era tagging through every matrix
+              change (5/55 in 2002, 5/59 in 2009, 5/69 + 1/26 since October 2015).
+            </p>
+            <p>
+              <strong className="text-text">Mega Millions history</strong> since the
+              game launched in 2002, including the April 2025 matrix change to 5/70 +
+              1/24. National draws, sourced from data.ny.gov.
+            </p>
+            <p>
+              <strong className="text-text">Pennsylvania Pick 3 and Pick 4</strong> —
+              the deepest record on the site, every draw since the PA Lottery began
+              them in 1977 / 1980. Midday and Evening streams kept separate.
+            </p>
+            <p>
+              <strong className="text-text">New Jersey Pick-3 and Pick-4</strong>
+              Midday and Evening results since 2015. Pulled directly from
+              njlottery.com.
+            </p>
+            <p>
+              <strong className="text-text">Wisconsin Pick 3 and Pick 4</strong>
+              history from 1992 / 1997 to today. Midday and Evening draws.
+            </p>
+            <p>
+              <strong className="text-text">Texas Pick 3 and Daily 4</strong> — Texas
+              runs four daily draws (Morning, Day, Evening, Night); we expose the two
+              flagship Day + Night times since 1993 / 2007.
+            </p>
+            <p>
+              <strong className="text-text">North Carolina Pick 3 and Pick 4</strong>
+              Day and Evening winning numbers since the NC Education Lottery's first
+              draws in 2006 / 2009.
+            </p>
+            <p>
+              Every dataset feeds the same set of analytics: digit frequency, pair
+              and triple co-occurrence, gap distributions, sums, positional bias,
+              stream comparisons, and a draw-by-draw backtester in the Formula Lab.
+              Nothing predicts the future. Everything describes the past.
+            </p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3 text-[13px]">
+            <Link href="/picker" className="text-accent hover:underline">Pick a state →</Link>
+            <span className="text-dim">·</span>
+            <Link href="/about" className="text-accent hover:underline">How DrawData is built</Link>
+            <span className="text-dim">·</span>
+            <Link href="/lab" className="text-accent hover:underline">Try the Formula Lab</Link>
+          </div>
+        </section>
+      </ScrollReveal>
     </div>
   );
 }

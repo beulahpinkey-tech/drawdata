@@ -1,5 +1,7 @@
 "use client";
 
+import { Chart3D } from "@/components/motion/Chart3D";
+
 export function PositionHeatmap({
   freqByPosition,
 }: {
@@ -18,7 +20,8 @@ export function PositionHeatmap({
   const range = max - min || 1;
 
   return (
-    <div className="overflow-x-auto">
+    <Chart3D>
+      <div className="overflow-x-auto">
       <table className="w-full text-[12px] font-mono tabular-nums">
         <thead>
           <tr className="text-dim">
@@ -60,11 +63,12 @@ export function PositionHeatmap({
           })}
         </tbody>
       </table>
-      <div className="mt-3 text-[11px] text-dim flex items-center gap-3">
-        <span>cooler</span>
-        <span className="inline-block h-2 w-32 rounded-full bg-gradient-to-r from-white/[0.06] to-accent/60" />
-        <span>warmer</span>
+        <div className="mt-3 text-[11px] text-dim flex items-center gap-3">
+          <span>cooler</span>
+          <span className="inline-block h-2 w-32 rounded-full bg-gradient-to-r from-white/[0.06] to-accent/60" />
+          <span>warmer</span>
+        </div>
       </div>
-    </div>
+    </Chart3D>
   );
 }

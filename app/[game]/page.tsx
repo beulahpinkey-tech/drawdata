@@ -197,7 +197,7 @@ function BallGameOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
             }
             sub={`${latest?.date}`}
           />
-          <StatCard label="Outcome space" value={outcomeSpace.toLocaleString()} sub={`C(${pool},5) × ${redPool}`} accent />
+          <StatCard label="Outcome space" value={outcomeSpace.toLocaleString("en-US")} sub={`C(${pool},5) × ${redPool}`} accent />
           <StatCard
             label="Most / least drawn white"
             value={

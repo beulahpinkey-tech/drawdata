@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import "../styles/tokens.css";
 import { Header } from "@/components/Header";
-import { DisclaimerBar } from "@/components/DisclaimerBar";
+import { SiteFooter } from "@/components/SiteFooter";
+import { BallfieldMount } from "@/components/3d/BallfieldMount";
+import { AdScripts } from "@/components/ads/AdScripts";
+import { Analytics } from "@/components/analytics/Analytics";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -135,13 +138,23 @@ export default function RootLayout({
       </head>
       <body className="grain">
         <a href="#main-content" className="skip-link">Skip to main content</a>
+        {/* Site-wide scroll-driven 3D lottery-ball field. Fixed, z-0,
+            pointer-events-none — sits behind the z-10 content wrapper
+            on every route. Balls reveal one-by-one with scroll. */}
+        <BallfieldMount />
         <AgeGate />
         <div className="relative z-10 flex min-h-screen flex-col">
           <Header />
           <MainWrapper>{children}</MainWrapper>
-          <DisclaimerBar />
+          <SiteFooter />
         </div>
         <CookieConsent />
+        {/* Ad network loaders — dormant until you're approved and set
+            NEXT_PUBLIC_ADSENSE_CLIENT / NEXT_PUBLIC_EZOIC env vars. */}
+        <AdScripts />
+        {/* Privacy-first event analytics — dormant until
+            NEXT_PUBLIC_PLAUSIBLE_DOMAIN is set. Cookieless, no personal data. */}
+        <Analytics />
       </body>
     </html>
   );

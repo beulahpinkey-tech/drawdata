@@ -10,6 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { TOOLTIP_STYLE, TOOLTIP_LABEL_STYLE, TOOLTIP_ITEM_STYLE } from "./style";
+import { Chart3D } from "@/components/motion/Chart3D";
 
 export function CoverageChart({
   coverageCum,
@@ -32,8 +33,9 @@ export function CoverageChart({
     data.push({ i: N - 1, unique: coverageCum[N - 1], pct: coverageCum[N - 1] / pool });
   }
   return (
-    <div style={{ width: "100%", height }}>
-      <ResponsiveContainer>
+    <Chart3D>
+      <div style={{ width: "100%", height }}>
+        <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
           <CartesianGrid vertical={false} />
           <XAxis dataKey="i" tickLine={false} axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(1)}k`} />
@@ -53,7 +55,8 @@ export function CoverageChart({
           />
           <Line type="monotone" dataKey="unique" stroke="var(--accent)" strokeWidth={2} dot={false} />
         </LineChart>
-      </ResponsiveContainer>
-    </div>
+        </ResponsiveContainer>
+      </div>
+    </Chart3D>
   );
 }
