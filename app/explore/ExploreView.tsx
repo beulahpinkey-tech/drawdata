@@ -18,6 +18,7 @@ import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { GAME_LABELS } from "@/lib/data";
+import { track } from "@/lib/analytics";
 import type { Draw, Game } from "@/lib/types";
 import { NumberBall } from "@/components/NumberBall";
 
@@ -72,6 +73,7 @@ export function ExploreView() {
   );
 
   const onPickGame = (g: Game) => {
+    track("Explore Game", { game: g });
     // Changing positions invalidates p2/p3 — clear position filters.
     const next = new URLSearchParams(sp.toString());
     next.set("g", g);

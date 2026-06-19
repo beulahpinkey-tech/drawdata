@@ -1,0 +1,15 @@
+# ads.txt — Authorized Digital Sellers (IAB).
+# Ad networks read this at https://draw-data.com/ads.txt to confirm who
+# is allowed to sell DrawData's inventory. It is REQUIRED by AdSense and
+# Ezoic before they will serve ads.
+#
+# These lines are PLACEHOLDERS — they do nothing until you fill them in.
+#
+# 1) AdSense: after you're approved, replace pub-0000000000000000 with
+#    your real publisher id (the digits from your "ca-pub-…").
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
+#
+# 2) Ezoic: when you onboard Ezoic, they give you a managed ads.txt to
+#    host (or they manage it automatically via their Cloudflare
+#    integration). Paste their provided lines below, or remove this file
+#    and let the Ezoic integration manage it.

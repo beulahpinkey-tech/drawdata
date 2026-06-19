@@ -42,9 +42,18 @@ export default function PrivacyPage() {
             were viewing). These never leave your device.
           </li>
           <li>
-            <strong>Optional analytics / ad cookies.</strong> If we enable analytics or ads in
-            future, they will be gated by the cookie-consent banner and disabled until you accept.
-            You can revisit your choice at any time via the banner&rsquo;s &ldquo;Manage&rdquo; link.
+            <strong>Privacy-first analytics (aggregate only).</strong> If enabled, we use a
+            cookieless, privacy-focused analytics tool (Plausible) that records{" "}
+            <em className="text-text not-italic">aggregate</em> usage — page views and which tools/games
+            are popular — with <strong>no cookies and no personal data</strong>. It cannot identify you
+            or track you across sites; we only ever see counts like &ldquo;the Odds tool was viewed for
+            Powerball N times.&rdquo; No consent banner is required for it because it stores nothing on
+            your device.
+          </li>
+          <li>
+            <strong>Optional ad cookies.</strong> If we enable advertising in future, any ad cookies
+            will be gated by the cookie-consent banner and disabled until you accept. You can revisit
+            your choice at any time via the banner&rsquo;s &ldquo;Manage&rdquo; link.
           </li>
         </ul>
       </Section>

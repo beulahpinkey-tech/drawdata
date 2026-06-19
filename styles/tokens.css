@@ -272,31 +272,24 @@ body {
   transform: translateY(-4px);
 }
 
-/* ── Scroll-triggered panel reveal (site-wide, all browsers) ──
-   Every .panel on every route fades-up as it scrolls into view.
-   Driven by PanelRevealObserver (IntersectionObserver) which adds
-   `fx-ready` to <html> once JS is live and `.panel-in` to each panel
-   as it enters the viewport. Gating the hidden state on html.fx-ready
-   means no-JS / failed-JS renders panels normally — panels can never
-   be stuck invisible. Replaces the earlier animation-timeline: view()
-   approach, which only ran on the newest Chrome. */
+/* ── Panel entrance (site-wide, bulletproof, CSS-only) ──
+   A subtle fade-up that runs ONCE when a panel mounts. Critically it
+   uses animation-fill-mode: backwards — so the moment the animation
+   ends the panel reverts to its normal styles (fully visible, no
+   transform), which means: (a) content can NEVER get stuck hidden if
+   anything goes wrong, and (b) the .card-hover lift still works
+   afterward. No JavaScript, no IntersectionObserver, no scroll
+   dependency — the earlier observer-gated approach left content stuck
+   at 20% opacity when the observer didn't fire. Reliability over a
+   scroll-triggered reveal. */
 @media (prefers-reduced-motion: no-preference) {
-  html.fx-ready .panel {
-    opacity: 0.2;
-    transform: translateY(28px) scale(0.985);
-    transition:
-      opacity var(--dur-entrance) var(--ease-premium),
-      transform var(--dur-entrance) var(--ease-premium),
-      border-color var(--dur-standard) var(--ease-premium);
+  .panel {
+    animation: panelIn 0.5s var(--ease-premium) backwards;
   }
-  html.fx-ready .panel.panel-in {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  /* .card-hover lift must still win after reveal completes. */
-  html.fx-ready .panel.panel-in.card-hover:hover {
-    transform: translateY(-4px);
-  }
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── .float-soft — ambient floating bob for stat cards / tiles ──

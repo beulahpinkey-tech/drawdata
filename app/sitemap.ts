@@ -29,6 +29,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/`, lastModified, changeFrequency: "daily", priority: 1.0 },
     { url: `${BASE}/picker`, lastModified, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/explore`, lastModified, changeFrequency: "daily", priority: 0.8 },
+    { url: `${BASE}/draw-machine`, lastModified, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE}/odds`, lastModified, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/lab`, lastModified, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/patterns`, lastModified, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/about`, lastModified, changeFrequency: "monthly", priority: 0.4 },

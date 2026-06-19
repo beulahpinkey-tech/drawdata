@@ -19,6 +19,7 @@ import { useMemo, useState } from "react";
 import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { backtestRule, type Rule, type RuleStep } from "@/lib/analytics/formula";
 import { GAME_LABELS } from "@/lib/data";
+import { track } from "@/lib/analytics";
 import type { Game } from "@/lib/types";
 
 const DIGIT_GAMES: Game[] = [
@@ -104,6 +105,43 @@ export function PatternsView() {
     });
   }, [draws, game, positions]);
 
+  // ── Draw composition (parity mix, range split, carryover) +
+  //    the "composition memory" test: does the previous draw's makeup
+  //    predict the next draw's? (It doesn't — that's the honest point.)
+  const comp = useMemo(() => {
+    if (!draws || draws.length < 2) return null;
+    const P = positions;
+    const evenDist = new Array(P + 1).fill(0); // # of even digits (0,2,4,6,8)
+    const lowDist = new Array(P + 1).fill(0);  // # of low digits (0–4)
+    let carry = 0, transitions = 0, sumEven = 0;
+    let evHeavyN = 0, evHeavySum = 0, oddHeavyN = 0, oddHeavySum = 0;
+    for (let i = 0; i < draws.length; i++) {
+      const d = draws[i].digits;
+      if (!d || d.length !== P) continue;
+      const ev = d.filter((x) => x % 2 === 0).length;
+      const lo = d.filter((x) => x <= 4).length;
+      evenDist[ev]++; lowDist[lo]++; sumEven += ev;
+      if (i > 0) {
+        const prev = draws[i - 1].digits;
+        if (prev && prev.length === P) {
+          transitions++;
+          if (d.some((x) => prev.includes(x))) carry++;
+          const pe = prev.filter((x) => x % 2 === 0).length;
+          if (pe > P / 2) { evHeavyN++; evHeavySum += ev; }
+          else if (pe < P / 2) { oddHeavyN++; oddHeavySum += ev; }
+        }
+      }
+    }
+    const total = draws.length;
+    return {
+      P, evenDist, lowDist,
+      carryoverPct: transitions ? carry / transitions : 0,
+      meanEven: sumEven / total,
+      afterEvenHeavy: evHeavyN ? evHeavySum / evHeavyN : 0,
+      afterOddHeavy: oddHeavyN ? oddHeavySum / oddHeavyN : 0,
+    };
+  }, [draws, positions]);
+
   return (
     <div className="space-y-6">
       {/* Game selector */}
@@ -115,7 +153,7 @@ export function PatternsView() {
           {DIGIT_GAMES.map((g) => (
             <button
               key={g}
-              onClick={() => setGame(g)}
+              onClick={() => { setGame(g); track("Pattern Game", { game: g }); }}
               className={`px-3 py-1.5 rounded-md text-[13px] border transition-colors ${
                 g === game
                   ? "border-accent/50 bg-accent/10 text-accent"
@@ -173,6 +211,58 @@ export function PatternsView() {
             ))}
           </div>
 
+          {/* Draw composition — descriptive distributions + the memory test. */}
+          {comp && (
+            <div className="panel p-6">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">
+                Draw composition
+              </div>
+              <h3 className="font-display text-[20px] mt-2">The shape of a draw, and whether it remembers.</h3>
+              <p className="mt-2 text-[13px] text-dim leading-relaxed max-w-3xl">
+                A popular idea: track the <em className="not-italic text-text">makeup</em> of each draw —
+                how many even vs odd digits, how many low vs high — spot a “trend,” and play to it.
+                The distributions below are real and stable. The catch is in the last panel.
+              </p>
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <CompBars title="Parity mix" sub="how many even digits (0·2·4·6·8) per draw" dist={comp.evenDist} />
+                <CompBars title="Range split" sub="how many low digits (0–4) per draw" dist={comp.lowDist} />
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="panel-inner p-4">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-dim font-mono">Carryover</div>
+                  <div className="mt-1 font-display text-[22px] tabular-nums">{pct(comp.carryoverPct)}</div>
+                  <div className="text-[11px] text-dim mt-1">of draws share ≥1 digit with the one before.</div>
+                </div>
+                <div className="panel-inner p-4">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-dim font-mono">Avg even digits — overall</div>
+                  <div className="mt-1 font-display text-[22px] tabular-nums text-cool">{comp.meanEven.toFixed(2)}</div>
+                  <div className="text-[11px] text-dim mt-1">baseline you'd expect: {(comp.P / 2).toFixed(2)}.</div>
+                </div>
+                <div className="panel-inner p-4">
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-dim font-mono">Composition memory</div>
+                  <div className="mt-1 font-mono text-[13px] tabular-nums">
+                    after even-heavy: <span className="text-text">{comp.afterEvenHeavy.toFixed(2)}</span><br />
+                    after odd-heavy: <span className="text-text">{comp.afterOddHeavy.toFixed(2)}</span>
+                  </div>
+                  <div className="text-[11px] text-cool mt-1">
+                    {Math.abs(comp.afterEvenHeavy - comp.afterOddHeavy) < 0.15
+                      ? "≈ identical — the previous draw's makeup does not predict the next."
+                      : "difference is within sampling noise."}
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-[12px] text-dim leading-relaxed max-w-3xl">
+                That last panel is the whole story: the average even-digit count after an
+                <em className="not-italic text-text"> even-heavy</em> draw is essentially the same as after an
+                <em className="not-italic text-text"> odd-heavy</em> draw. The composition has no memory — knowing
+                recent draws tells you nothing about the next one. The distributions are just
+                combinatorics, not a trend you can ride.
+              </p>
+            </div>
+          )}
+
           {/* The honest closing note — where the manifestation belief lands. */}
           <div className="panel p-6 border-cool/20">
             <div className="text-[11px] uppercase tracking-[0.18em] text-cool font-mono">
@@ -190,6 +280,30 @@ export function PatternsView() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function CompBars({ title, sub, dist }: { title: string; sub: string; dist: number[] }) {
+  const total = dist.reduce((a, b) => a + b, 0) || 1;
+  const max = Math.max(1, ...dist);
+  return (
+    <div className="panel-inner p-4">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-dim font-mono">{title}</div>
+      <div className="text-[11px] text-dim mb-3">{sub}</div>
+      <div className="flex items-end gap-2 h-28">
+        {dist.map((c, i) => (
+          <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
+            <span className="text-[10px] font-mono text-dim tabular-nums">{((c / total) * 100).toFixed(0)}%</span>
+            <div
+              className="w-full rounded-sm bg-accent/60"
+              style={{ height: `${4 + (c / max) * 80}px` }}
+              title={`${c.toLocaleString()} draws with ${i}`}
+            />
+            <span className="text-[11px] font-mono text-text tabular-nums">{i}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

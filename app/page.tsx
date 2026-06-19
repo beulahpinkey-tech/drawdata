@@ -5,6 +5,7 @@ import { HeroVideoBackground } from "@/components/HeroVideoBackground";
 import { Magnet } from "@/components/motion/Magnet";
 import { AnimatedText } from "@/components/motion/AnimatedText";
 import { GameStack, type GameGroup } from "@/components/home/GameStack";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
@@ -53,13 +54,27 @@ export default function HomePage() {
   }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 sm:py-14">
-      {/* Hero — the ball video runs under the headline (restored per
-          user request); the site-wide 3D ballfield rolls behind the
-          page itself. Magnet gives the CTAs the portfolio-style
-          magnetic pull. */}
-      <section className="relative overflow-hidden rounded-lg border border-hairline p-8 sm:p-14 min-h-[520px] sm:min-h-[560px]">
+    // Wider, screen-percentage layout: 94% of the viewport (so the hero
+    // rectangle box scales with the screen) capped at 1600px on large
+    // displays — up from the old fixed ~1280px (max-w-7xl).
+    <div className="mx-auto w-[94%] max-w-[1600px] py-10 sm:py-14">
+      {/* Hero — the lottery-ball video plays behind, giving the balls
+          the user wants; a LEFT-weighted scrim darkens only the text
+          column so the headline stays crisp while the balls show
+          clearly on the right. Fixes the original overlap without
+          losing the balls. */}
+      <section className="relative overflow-hidden rounded-lg border border-hairline p-8 sm:p-14 min-h-[480px] sm:min-h-[520px]">
         <HeroVideoBackground />
+        {/* Readability scrim: strong on the text (left) side, fading to
+            transparent on the right so the balls read clearly there. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(100deg, rgba(14,15,19,0.94) 0%, rgba(14,15,19,0.86) 34%, rgba(14,15,19,0.40) 62%, rgba(14,15,19,0.05) 100%)",
+          }}
+        />
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 text-data-label text-fg-tertiary mb-5">
             <span className="h-1.5 w-1.5 rounded-pill bg-data-fair" />
@@ -99,6 +114,11 @@ export default function HomePage() {
       <div className="mt-12">
         <GameStack groups={groups} />
       </div>
+
+      {/* Dormant ad slot (renders nothing until AdSense is approved +
+          NEXT_PUBLIC_ADSENSE_CLIENT is set). Placed between content
+          sections, never in the hero or the data tools. */}
+      <AdSlot slot="home-mid" />
 
       <ScrollReveal>
         <section className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">

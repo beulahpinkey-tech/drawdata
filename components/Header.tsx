@@ -121,6 +121,26 @@ export function Header() {
                 Patterns
               </Link>
               <Link
+                href="/draw-machine"
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  pathname.startsWith("/draw-machine")
+                    ? "text-accent bg-white/[0.04]"
+                    : "hover:text-text"
+                }`}
+              >
+                Machine
+              </Link>
+              <Link
+                href="/odds"
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  pathname.startsWith("/odds")
+                    ? "text-accent bg-white/[0.04]"
+                    : "hover:text-text"
+                }`}
+              >
+                Odds
+              </Link>
+              <Link
                 href="/contact"
                 className={`px-3 py-1.5 rounded-md transition-colors ${
                   pathname === "/contact"

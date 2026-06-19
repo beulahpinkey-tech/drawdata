@@ -3,7 +3,8 @@ import "../styles/tokens.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BallfieldMount } from "@/components/3d/BallfieldMount";
-import { PanelRevealObserver } from "@/components/motion/PanelRevealObserver";
+import { AdScripts } from "@/components/ads/AdScripts";
+import { Analytics } from "@/components/analytics/Analytics";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -141,7 +142,6 @@ export default function RootLayout({
             pointer-events-none — sits behind the z-10 content wrapper
             on every route. Balls reveal one-by-one with scroll. */}
         <BallfieldMount />
-        <PanelRevealObserver />
         <AgeGate />
         <div className="relative z-10 flex min-h-screen flex-col">
           <Header />
@@ -149,6 +149,12 @@ export default function RootLayout({
           <SiteFooter />
         </div>
         <CookieConsent />
+        {/* Ad network loaders — dormant until you're approved and set
+            NEXT_PUBLIC_ADSENSE_CLIENT / NEXT_PUBLIC_EZOIC env vars. */}
+        <AdScripts />
+        {/* Privacy-first event analytics — dormant until
+            NEXT_PUBLIC_PLAUSIBLE_DOMAIN is set. Cookieless, no personal data. */}
+        <Analytics />
       </body>
     </html>
   );

@@ -136,9 +136,11 @@ function Ball({
     const p = scrollRef.current;
     // Reveal: scale + opacity ramp over an 8% scroll window.
     const reveal = reduce ? 1 : smoothstep(spec.revealAt, spec.revealAt + 0.08, p);
-    m.scale.setScalar(spec.r * (0.6 + 0.4 * reveal));
+    // 0.85 global shrink — visibly present (user wants the balls) but a
+    // touch smaller than the original so it reads as depth, not clutter.
+    m.scale.setScalar(spec.r * 0.85 * (0.6 + 0.4 * reveal));
     const mat = m.material as THREE.MeshStandardMaterial;
-    mat.opacity = reveal * 0.7;
+    mat.opacity = reveal * 0.55;
     if (reduce) {
       m.position.set(spec.x, spec.y, spec.z);
       return;
@@ -160,7 +162,7 @@ function Ball({
         roughness={0.35}
         metalness={0.08}
         transparent
-        opacity={reduce ? 0.7 : 0}
+        opacity={reduce ? 0.55 : 0}
       />
     </mesh>
   );
@@ -216,7 +218,7 @@ export default function BallfieldBackground() {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 60% 55% at 50% 40%, rgba(14,15,19,0.62), rgba(14,15,19,0.18) 75%, rgba(14,15,19,0.05) 100%)",
+            "radial-gradient(ellipse 75% 65% at 50% 42%, rgba(14,15,19,0.80), rgba(14,15,19,0.45) 70%, rgba(14,15,19,0.18) 100%)",
         }}
       />
     </div>
