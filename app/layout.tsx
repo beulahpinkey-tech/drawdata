@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "../styles/tokens.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -143,19 +144,17 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
-        {/* Privacy-first analytics (Plausible) — server-rendered into
-            <head> so Plausible's verifier detects it and it loads early.
-            Dormant until NEXT_PUBLIC_PLAUSIBLE_SRC is set (the pa-…js URL
-            from your Plausible snippet). Cookieless, no personal data. */}
+        {/* Privacy-first analytics (Plausible). Uses next/script
+            beforeInteractive — App Router strips raw external <script src>
+            from <head>, but guarantees beforeInteractive scripts land in
+            the initial HTML head (so Plausible detects it and it loads
+            early). Cookieless, no personal data. */}
         {PLAUSIBLE_SRC && (
           <>
-            <script defer src={PLAUSIBLE_SRC} />
-            <script
-              dangerouslySetInnerHTML={{
-                __html:
-                  "window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()",
-              }}
-            />
+            <Script id="plausible-init" strategy="beforeInteractive">
+              {`window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`}
+            </Script>
+            <Script src={PLAUSIBLE_SRC} strategy="beforeInteractive" />
           </>
         )}
       </head>
