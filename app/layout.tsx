@@ -4,7 +4,11 @@ import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BallfieldMount } from "@/components/3d/BallfieldMount";
 import { AdScripts } from "@/components/ads/AdScripts";
-import { Analytics } from "@/components/analytics/Analytics";
+
+// Plausible's per-site script URL (the pa-…js from your dashboard
+// snippet), set as NEXT_PUBLIC_PLAUSIBLE_SRC. Read here at build time and
+// rendered into <head> below. Dormant when unset.
+const PLAUSIBLE_SRC = process.env.NEXT_PUBLIC_PLAUSIBLE_SRC;
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -135,6 +139,21 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        {/* Privacy-first analytics (Plausible) — server-rendered into
+            <head> so Plausible's verifier detects it and it loads early.
+            Dormant until NEXT_PUBLIC_PLAUSIBLE_SRC is set (the pa-…js URL
+            from your Plausible snippet). Cookieless, no personal data. */}
+        {PLAUSIBLE_SRC && (
+          <>
+            <script defer src={PLAUSIBLE_SRC} />
+            <script
+              dangerouslySetInnerHTML={{
+                __html:
+                  "window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()",
+              }}
+            />
+          </>
+        )}
       </head>
       <body className="grain">
         <a href="#main-content" className="skip-link">Skip to main content</a>
@@ -152,9 +171,6 @@ export default function RootLayout({
         {/* Ad network loaders — dormant until you're approved and set
             NEXT_PUBLIC_ADSENSE_CLIENT / NEXT_PUBLIC_EZOIC env vars. */}
         <AdScripts />
-        {/* Privacy-first event analytics — dormant until
-            NEXT_PUBLIC_PLAUSIBLE_DOMAIN is set. Cookieless, no personal data. */}
-        <Analytics />
       </body>
     </html>
   );
