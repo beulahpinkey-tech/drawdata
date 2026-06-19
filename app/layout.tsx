@@ -5,10 +5,14 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { BallfieldMount } from "@/components/3d/BallfieldMount";
 import { AdScripts } from "@/components/ads/AdScripts";
 
-// Plausible's per-site script URL (the pa-…js from your dashboard
-// snippet), set as NEXT_PUBLIC_PLAUSIBLE_SRC. Read here at build time and
-// rendered into <head> below. Dormant when unset.
-const PLAUSIBLE_SRC = process.env.NEXT_PUBLIC_PLAUSIBLE_SRC;
+// Plausible's per-site script URL. Hardcoded so analytics works without
+// any Cloudflare env-var setup (this URL is public anyway — it loads in
+// every visitor's browser). Override via NEXT_PUBLIC_PLAUSIBLE_SRC if the
+// site ever moves to a different Plausible instance. Cookieless, no
+// personal data.
+const PLAUSIBLE_SRC =
+  process.env.NEXT_PUBLIC_PLAUSIBLE_SRC ||
+  "https://plausible.io/js/pa-vwW5AH-vFdGMa86PgcGAw.js";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
