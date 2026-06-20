@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { ALL_GAMES } from "@/lib/types";
 import { META } from "@/lib/data";
 import { yearBuckets, monthSequence } from "@/lib/results";
+import { numberSlugs } from "@/lib/numbers";
 
 // Sitemap INDEX, split per-section via generateSitemaps(). Next.js emits
 // one child sitemap per id (referenced from an auto-generated index at
@@ -13,8 +14,8 @@ import { yearBuckets, monthSequence } from "@/lib/results";
 
 const BASE = "https://draw-data.com";
 
-// Sections become child sitemaps: /sitemap/0.xml (core), /sitemap/1.xml (results).
-const SECTIONS = ["core", "results"] as const;
+// Sections become child sitemaps: core, results, numbers.
+const SECTIONS = ["core", "results", "numbers"] as const;
 
 const CORE_SUBROUTES = [
   "", // overview
@@ -93,7 +94,24 @@ function resultsSitemap(lastMod: Date): MetadataRoute.Sitemap {
   return urls;
 }
 
+function numbersSitemap(lastMod: Date): MetadataRoute.Sitemap {
+  const urls: MetadataRoute.Sitemap = [];
+  for (const game of ALL_GAMES) {
+    for (const slug of numberSlugs(game)) {
+      urls.push({
+        url: `${BASE}/${game}/number/${slug}`,
+        lastModified: lastMod,
+        changeFrequency: "daily",
+        priority: 0.4,
+      });
+    }
+  }
+  return urls;
+}
+
 export default function sitemap({ id }: { id: number }): MetadataRoute.Sitemap {
   const lastMod = lastModified();
-  return SECTIONS[id] === "results" ? resultsSitemap(lastMod) : coreSitemap(lastMod);
+  if (SECTIONS[id] === "results") return resultsSitemap(lastMod);
+  if (SECTIONS[id] === "numbers") return numbersSitemap(lastMod);
+  return coreSitemap(lastMod);
 }
