@@ -129,6 +129,27 @@ template work:
    spoke, its full results archive (every year + month it has data for),
    sitemap entries, and JSON-LD all generate from the shared templates.
 
+### Illinois (manual — WAF-gated source)
+
+Illinois Lottery's results pages sit behind an anti-bot WAF that
+captcha-challenges sustained automated access, so IL is **not** in the
+twice-daily CI refresh (it would fail there). The scraper
+[`scripts/fetch-il.ts`](scripts/fetch-il.ts) works from a normal
+(residential) machine and is **run manually**:
+
+```
+npm run fetch:il            # backfills ~2 years, Pick 3 + Pick 4
+npm run fetch:il -- --months 6   # smaller window
+```
+
+It caches each completed month under `.cache/il/`, so if the WAF blocks a
+month mid-run, just re-run — successful months are skipped and only the
+gaps are retried. The writer is merge-only, so history accumulates across
+runs. After fetching, commit `data/il/pick3.csv` + `pick4.csv`, then run
+`npm run ingest` and add the `il-pick3` / `il-pick4` imports + labels (per
+the "Adding a new game dataset" steps above) to light up the pages. IL is
+a normal dual-stream, dual-game state — no special-casing needed.
+
 ## License + use
 
 Lottery draw data is public-domain by nature. The site code is private

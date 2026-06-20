@@ -15,6 +15,7 @@
     "fetch:nc": "tsx scripts/fetch-nc.ts",
     "fetch:fl": "tsx scripts/fetch-fl.ts",
     "fetch:wa": "tsx scripts/fetch-wa.ts",
+    "fetch:il": "tsx scripts/fetch-il.ts",
     "fetch:wi": "tsx scripts/fetch-wi.ts",
     "fetch:mm": "tsx scripts/fetch-mm.ts",
     "fetch:powerball": "tsx scripts/fetch-powerball.ts",
