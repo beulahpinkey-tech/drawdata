@@ -55,6 +55,69 @@ behavior destroyed 14k+ rows of history before anyone noticed.
 - **TypeScript** end to end; aggregates are precomputed at build time
 - **recharts** for visualizations, **framer-motion** for transitions
 
+## Programmatic page engine
+
+Most of the site's URLs aren't hand-authored — they're generated, one
+per winnable query permutation, across all 12 datasets. The wiring:
+
+**Templates ↔ data.** Pages live under `app/[game]/…` and are pure
+functions of the statically-imported aggregates. `lib/data/index.ts`
+exposes `getDraws(game)` (full draw history) and `getAgg(game)`
+(precomputed stats); a template reads one of those and renders. Because
+`app/[game]/layout.tsx` sets `dynamicParams = false` + `generateStaticParams()`,
+**every page is server-rendered (SSG) into crawlable HTML** — the data
+is in the initial response, not fetched client-side.
+
+**Results archives** (`app/[game]/results`, `/results/[year]`,
+`/results/[year]/[month]`) slice that history with `lib/results.ts`.
+Their `generateStaticParams()` enumerate **only year/month buckets that
+actually contain draws**, so there are never empty/thin pages — the
+anti-thin-content guard (`lib/seo/thresholds.ts`) is enforced at the
+param level, not just at render.
+
+**SEO plumbing** (shared, honest-by-construction):
+- `lib/seo/breadcrumbs.ts` + `components/Breadcrumbs.tsx` — one `Crumb[]`
+  drives both the visible trail and the `BreadcrumbList` JSON-LD (they
+  can't drift). `GameHeader` renders breadcrumbs for every game page
+  automatically; deeper pages pass explicit `crumbs`.
+- `lib/seo/dataset.ts` — per-page `Dataset` JSON-LD with `temporalCoverage`
+  for the slice and `dateModified` pulled from the twice-daily refresh
+  (`meta.lastCsvUpdated`), so Google Dataset Search sees fresh data.
+- Per-page unique `<title>` / description / canonical via each route's
+  `generateMetadata`, templated from real counts and dates.
+
+**Sitemaps.** `app/sitemap.ts` uses `generateSitemaps()` to emit a
+sitemap **index** with per-section children (`core`, `results`), each
+under the 50k-URL cap, with `lastmod` from the refresh. `robots.txt`
+points at `/sitemap.xml` (the index). Regenerated on every deploy →
+regenerated on every twice-daily refresh.
+
+**Slug aliases.** The spec's long-tail slugs `/sums` and
+`/midday-vs-evening` 301 to the canonical pages that already carry that
+data (`/positional`, `/streams`) via `middleware.ts` — one canonical URL
+per concept, no duplicate content.
+
+**Orphan guard.** `npm run verify` runs `scripts/verify-links.ts`, which
+checks the hub→results link, that every game yields non-empty results
+buckets, and that each month prev/next chain is contiguous.
+
+### Adding a new game dataset
+
+The page engine scales automatically off the game list — no per-game
+template work:
+
+1. Add the slug to `ALL_GAMES` in `lib/types.ts` and the labels/blurbs
+   in `lib/data/index.ts` (`GAME_LABELS`, `GAME_SHORT`, `GAME_BLURB`,
+   and the `PICK_GAMES`/`BALL_GAMES` membership).
+2. Add a fetcher (`scripts/fetch-<x>.ts`) and wire it into `fetch:all`
+   and the GitHub Actions workflow; commit the source CSV under `data/`.
+3. Run `npm run ingest` to generate `lib/data/<slug>.json`,
+   `<slug>.agg.json`, and the `meta.json` entry, then import them in
+   `lib/data/index.ts`'s `getDraws`/`getAgg` switches.
+4. Run `npm run verify`. That's it — the new game's hub, every analytic
+   spoke, its full results archive (every year + month it has data for),
+   sitemap entries, and JSON-LD all generate from the shared templates.
+
 ## License + use
 
 Lottery draw data is public-domain by nature. The site code is private
