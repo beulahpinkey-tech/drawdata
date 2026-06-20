@@ -17,6 +17,8 @@ import flPick4 from "./fl-pick4.json";
 import waPick3 from "./wa-pick3.json";
 import gaPick3 from "./ga-pick3.json";
 import gaPick4 from "./ga-pick4.json";
+import miPick3 from "./mi-pick3.json";
+import miPick4 from "./mi-pick4.json";
 import powerball from "./powerball.json";
 import megamillions from "./megamillions.json";
 import wiPick3Agg from "./wi-pick3.agg.json";
@@ -34,6 +36,8 @@ import flPick4Agg from "./fl-pick4.agg.json";
 import waPick3Agg from "./wa-pick3.agg.json";
 import gaPick3Agg from "./ga-pick3.agg.json";
 import gaPick4Agg from "./ga-pick4.agg.json";
+import miPick3Agg from "./mi-pick3.agg.json";
+import miPick4Agg from "./mi-pick4.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
@@ -58,6 +62,8 @@ export function getDraws(game: Game): Draw[] {
     case "wa-pick3": return (waPick3 as { draws: Draw[] }).draws;
     case "ga-pick3": return (gaPick3 as { draws: Draw[] }).draws;
     case "ga-pick4": return (gaPick4 as { draws: Draw[] }).draws;
+    case "mi-pick3": return (miPick3 as { draws: Draw[] }).draws;
+    case "mi-pick4": return (miPick4 as { draws: Draw[] }).draws;
     case "megamillions": return (megamillions as { draws: Draw[] }).draws;
     case "powerball": return (powerball as { draws: Draw[] }).draws;
   }
@@ -80,6 +86,8 @@ export function getAgg(game: Game): any {
     case "wa-pick3": return waPick3Agg;
     case "ga-pick3": return gaPick3Agg;
     case "ga-pick4": return gaPick4Agg;
+    case "mi-pick3": return miPick3Agg;
+    case "mi-pick4": return miPick4Agg;
     case "megamillions": return megamillionsAgg;
     case "powerball": return powerballAgg;
   }
@@ -105,6 +113,8 @@ export const GAME_LABELS: Record<Game, string> = {
   "wa-pick3": "Washington Daily Game",
   "ga-pick3": "Georgia Cash 3",
   "ga-pick4": "Georgia Cash 4",
+  "mi-pick3": "Michigan Daily 3",
+  "mi-pick4": "Michigan Daily 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -125,6 +135,8 @@ export const GAME_SHORT: Record<Game, string> = {
   "wa-pick3": "Daily Game",
   "ga-pick3": "Cash 3",
   "ga-pick4": "Cash 4",
+  "mi-pick3": "Daily 3",
+  "mi-pick4": "Daily 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -138,6 +150,7 @@ export const STATE_LABEL: Record<string, string> = {
   fl: "Florida",
   wa: "Washington",
   ga: "Georgia",
+  mi: "Michigan",
 };
 
 export const GAME_BLURB: Record<Game, string> = {
@@ -171,6 +184,10 @@ export const GAME_BLURB: Record<Game, string> = {
     "Three digits, 0–9, drawn three times daily by the Georgia Lottery (Cash 3 — Midday, Evening, Night) since 1993. Outcome space: 1,000 combinations. The Fireball add-on is not shown.",
   "ga-pick4":
     "Four digits, 0–9, drawn three times daily by the Georgia Lottery (Cash 4 — Midday, Evening, Night) since 1997. Outcome space: 10,000 combinations. The Fireball add-on is not shown.",
+  "mi-pick3":
+    "Three digits, 0–9, drawn twice daily by the Michigan Lottery (Daily 3 — Midday + Evening). Outcome space: 1,000 combinations.",
+  "mi-pick4":
+    "Four digits, 0–9, drawn twice daily by the Michigan Lottery (Daily 4 — Midday + Evening). Outcome space: 10,000 combinations.",
   powerball:
     "Five white balls (1–69) plus one red Powerball (1–26). Outcome space: 292,201,338 combinations. Multi-state.",
   megamillions:
@@ -187,6 +204,7 @@ export const PICK_GAMES: Game[] = [
   "fl-pick3", "fl-pick4",
   "wa-pick3",
   "ga-pick3", "ga-pick4",
+  "mi-pick3", "mi-pick4",
 ];
 export const BALL_GAMES: Game[] = ["powerball", "megamillions"];
 
@@ -198,7 +216,8 @@ export const isDigitGame = (g: Game) =>
   g === "nc-pick3" || g === "nc-pick4" ||
   g === "fl-pick3" || g === "fl-pick4" ||
   g === "wa-pick3" ||
-  g === "ga-pick3" || g === "ga-pick4";
+  g === "ga-pick3" || g === "ga-pick4" ||
+  g === "mi-pick3" || g === "mi-pick4";
 
 // Canonical named streams in chronological order. "other" is excluded —
 // it's the catch-all for untagged/legacy rows, never a comparison column.

@@ -203,7 +203,7 @@ console.log(rule());
 // Washington's Daily Game). For dual-game states pick4 stays required, so
 // a transiently-missing pick4 CSV still skips the whole state as before.
 type StateCfg = {
-  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga";
+  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga" | "mi";
   label: string;
   pick4?: boolean;
 };
@@ -216,6 +216,7 @@ const STATES: StateCfg[] = [
   { code: "fl", label: "Florida", pick4: true },
   { code: "wa", label: "Washington", pick4: false },
   { code: "ga", label: "Georgia", pick4: true },
+  { code: "mi", label: "Michigan", pick4: true },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];

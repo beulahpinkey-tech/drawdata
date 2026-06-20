@@ -148,6 +148,14 @@ jobs:
           restore-keys: |
             ga-fetch-cache-
 
+      - name: Restore MI month cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/mi
+          key: mi-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            mi-fetch-cache-
+
       - name: Restore Powerball year cache
         uses: actions/cache@v5
         with:
@@ -205,6 +213,9 @@ jobs:
       - name: Fetch latest GA draws (galottery.com API, Cash 3/4, midday/evening/night)
         run: npm run fetch:ga
 
+      - name: Fetch latest MI draws (michiganlottery.com GraphQL, Daily 3/4, monthly chunks)
+        run: npm run fetch:mi
+
       - name: Fetch latest Powerball (PA Lottery JSON, g=12)
         run: npm run fetch:powerball
 
@@ -219,9 +230,9 @@ jobs:
           set -e
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
-          git add data/pa data/nj data/wi data/tx data/nc data/fl data/wa data/ga lib/data || true
+          git add data/pa data/nj data/wi data/tx data/nc data/fl data/wa data/ga data/mi lib/data || true
           if git diff --cached --quiet; then
-            echo "No new WI / PA / NJ / TX / NC / FL / WA / GA / MM / PB draws — nothing to commit."
+            echo "No new WI / PA / NJ / TX / NC / FL / WA / GA / MI / MM / PB draws — nothing to commit."
             exit 0
           fi
           git commit -m "chore: refresh WI + PA + NJ + TX + NC + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"

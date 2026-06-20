@@ -1,6 +1,6 @@
 // Game slug = one of the 6 routes. State-scoped picks use the
 // "<state>-<game>" form so /[game] only needs one dynamic segment.
-export type StateCode = "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga";
+export type StateCode = "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga" | "mi";
 export type PickGame = "pick3" | "pick4";
 export type NationalGame = "powerball" | "megamillions";
 export type BallGame = NationalGame;
@@ -21,6 +21,8 @@ export type Game =
   | "wa-pick3"
   | "ga-pick3"
   | "ga-pick4"
+  | "mi-pick3"
+  | "mi-pick4"
   | "powerball"
   | "megamillions";
 
@@ -40,12 +42,14 @@ export const ALL_GAMES: Game[] = [
   "wa-pick3",
   "ga-pick3",
   "ga-pick4",
+  "mi-pick3",
+  "mi-pick4",
   "powerball",
   "megamillions",
 ];
 
 export function isPickSlug(slug: string): slug is `${StateCode}-${PickGame}` {
-  return /^(wi|pa|nj|tx|nc|fl|wa|ga)-(pick3|pick4)$/.test(slug);
+  return /^(wi|pa|nj|tx|nc|fl|wa|ga|mi)-(pick3|pick4)$/.test(slug);
 }
 export function isBallSlug(slug: string): slug is NationalGame {
   return slug === "powerball" || slug === "megamillions";
