@@ -1,14 +1,39 @@
 import { META, GAME_BLURB, GAME_LABELS, isBallGame } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { GameJsonLd } from "./GameJsonLd";
+import { Breadcrumbs } from "./Breadcrumbs";
+import type { Crumb } from "@/lib/seo/breadcrumbs";
 
-export function GameHeader({ game, view }: { game: Game; view: string }) {
+/**
+ * Build the default breadcrumb trail for a game page. The overview page
+ * (view "overview") is just Home / Game; every spoke is Home / Game / View
+ * with the spoke as the current (link-less) crumb. Pages with deeper
+ * nesting (results archives) pass an explicit `crumbs` instead.
+ */
+function defaultCrumbs(game: Game, view: string): Crumb[] {
+  const label = GAME_LABELS[game];
+  if (view === "overview") return [{ name: "Home", path: "/" }, { name: label }];
+  return [{ name: "Home", path: "/" }, { name: label, path: `/${game}` }, { name: view }];
+}
+
+export function GameHeader({
+  game,
+  view,
+  crumbs,
+}: {
+  game: Game;
+  view: string;
+  crumbs?: Crumb[];
+}) {
   const m = (META as any)[game];
   const isBall = isBallGame(game);
   return (
     <div className="border-b border-edge bg-radial-amber">
       <GameJsonLd game={game} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+        <div className="mb-4">
+          <Breadcrumbs crumbs={crumbs ?? defaultCrumbs(game, view)} />
+        </div>
         <div className="flex items-baseline gap-3">
           <div className="text-[11px] uppercase tracking-[0.2em] text-dim font-mono">
             {GAME_LABELS[game]} · {view}
