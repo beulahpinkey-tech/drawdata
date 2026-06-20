@@ -5,7 +5,8 @@
   "scripts": {
     "precompute": "tsx scripts/precompute.ts",
     "ingest": "tsx scripts/precompute.ts",
-    "verify": "tsx scripts/verify.ts && tsx scripts/verify-isolation.ts",
+    "verify": "tsx scripts/verify.ts && tsx scripts/verify-isolation.ts && tsx scripts/verify-links.ts",
+    "verify:links": "tsx scripts/verify-links.ts",
     "verify:isolation": "tsx scripts/verify-isolation.ts",
     "export": "tsx scripts/export-all.ts",
     "fetch:pa": "tsx scripts/fetch-pa.ts",
