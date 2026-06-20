@@ -18,7 +18,7 @@ export default function StreamsPage({ params }: { params: { game: string } }) {
   if (!hasStreams(game)) {
     return (
       <>
-        <GameHeader game={game} view="midday vs evening" />
+        <GameHeader game={game} view="stream comparison" />
         <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8 space-y-6">
           <HonestyNote>
             {GAME_LABELS[game]} is a <strong>single nightly drawing</strong> — there is no separate midday
@@ -42,8 +42,8 @@ export default function StreamsPage({ params }: { params: { game: string } }) {
       <GameHeader game={game} view="midday vs evening" />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
         <HonestyNote>
-          Midday and Evening are two <strong>independent</strong> drawings, even though they share a date.
-          Differences you see here are sample noise — neither stream &ldquo;runs hotter&rdquo; than the other.
+          A game&rsquo;s daily streams are <strong>independent</strong> drawings, even though they share a date.
+          Differences you see here are sample noise — no stream &ldquo;runs hotter&rdquo; than another.
         </HonestyNote>
         <StreamsView game={game} agg={agg} />
       </div>

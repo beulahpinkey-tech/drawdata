@@ -123,7 +123,7 @@ function PickOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
                 ["pairs", "Pair frequency"],
                 ["gaps", "Gaps & recency"],
                 ["carryover", "Carryover + mirror"],
-                ["streams", "Midday vs evening"],
+                ["streams", "Stream comparison"],
                 ["coverage", "Coverage over time"],
                 ["lookup", "Number lookup"],
                 ["check", "Check your numbers"],

@@ -1,6 +1,6 @@
 // Game slug = one of the 6 routes. State-scoped picks use the
 // "<state>-<game>" form so /[game] only needs one dynamic segment.
-export type StateCode = "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa";
+export type StateCode = "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga";
 export type PickGame = "pick3" | "pick4";
 export type NationalGame = "powerball" | "megamillions";
 export type BallGame = NationalGame;
@@ -19,6 +19,8 @@ export type Game =
   | "fl-pick3"
   | "fl-pick4"
   | "wa-pick3"
+  | "ga-pick3"
+  | "ga-pick4"
   | "powerball"
   | "megamillions";
 
@@ -36,12 +38,14 @@ export const ALL_GAMES: Game[] = [
   "fl-pick3",
   "fl-pick4",
   "wa-pick3",
+  "ga-pick3",
+  "ga-pick4",
   "powerball",
   "megamillions",
 ];
 
 export function isPickSlug(slug: string): slug is `${StateCode}-${PickGame}` {
-  return /^(wi|pa|nj|tx|nc|fl|wa)-(pick3|pick4)$/.test(slug);
+  return /^(wi|pa|nj|tx|nc|fl|wa|ga)-(pick3|pick4)$/.test(slug);
 }
 export function isBallSlug(slug: string): slug is NationalGame {
   return slug === "powerball" || slug === "megamillions";
@@ -58,7 +62,12 @@ export function splitPickSlug(
   return { state, game };
 }
 
-export type Stream = "midday" | "evening" | "other";
+// Draw streams. Most states run a Midday + Evening pair; Georgia adds a
+// Night draw (and historically a Morning one), so the model carries all
+// four named slots plus an "other" catch-all. STREAM_ORDER is the canonical
+// chronological order used for sorting and display.
+export type Stream = "morning" | "midday" | "evening" | "night" | "other";
+export const STREAM_ORDER: Exclude<Stream, "other">[] = ["morning", "midday", "evening", "night"];
 
 export type PowerballEra = {
   id: string;
@@ -93,8 +102,10 @@ export type GameMeta = {
   game: Game;
   label: string;
   count: number;
+  countMorning?: number;
   countMidday?: number;
   countEvening?: number;
+  countNight?: number;
   countOther?: number;
   earliest: string;
   latest: string;

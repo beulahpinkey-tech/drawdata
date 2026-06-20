@@ -102,11 +102,12 @@ function writeJson(name: string, obj: unknown) {
 }
 
 function aggregatePick(draws: Draw[], positions: number, label: string) {
-  const splits: Record<string, Draw[]> = {
-    combined: draws,
-    midday: draws.filter((d) => d.stream === "midday"),
-    evening: draws.filter((d) => d.stream === "evening"),
-  };
+  // One sub-aggregate per present stream (morning/midday/evening/night),
+  // plus the combined view. Empty streams are dropped below.
+  const splits: Record<string, Draw[]> = { combined: draws };
+  for (const s of ["morning", "midday", "evening", "night"] as const) {
+    splits[s] = draws.filter((d) => d.stream === s);
+  }
   const out: Record<string, unknown> = {};
   for (const [streamKey, sub] of Object.entries(splits)) {
     if (sub.length === 0) continue;
@@ -202,7 +203,7 @@ console.log(rule());
 // Washington's Daily Game). For dual-game states pick4 stays required, so
 // a transiently-missing pick4 CSV still skips the whole state as before.
 type StateCfg = {
-  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa";
+  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga";
   label: string;
   pick4?: boolean;
 };
@@ -214,6 +215,7 @@ const STATES: StateCfg[] = [
   { code: "nc", label: "North Carolina", pick4: true },
   { code: "fl", label: "Florida", pick4: true },
   { code: "wa", label: "Washington", pick4: false },
+  { code: "ga", label: "Georgia", pick4: true },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];
@@ -368,8 +370,10 @@ for (const p of parsedPicks) {
     stateLabel: p.state.label,
     game: p.game,
     count: p.draws.length,
+    countMorning: p.draws.filter((d) => d.stream === "morning").length,
     countMidday: p.draws.filter((d) => d.stream === "midday").length,
     countEvening: p.draws.filter((d) => d.stream === "evening").length,
+    countNight: p.draws.filter((d) => d.stream === "night").length,
     countOther: p.draws.filter((d) => d.stream === "other").length,
     earliest: p.report.dateRange[0],
     latest: p.report.dateRange[1],

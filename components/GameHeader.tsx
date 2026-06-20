@@ -1,4 +1,4 @@
-import { META, GAME_BLURB, GAME_LABELS, isBallGame, hasStreams } from "@/lib/data";
+import { META, GAME_BLURB, GAME_LABELS, isBallGame, hasStreams, presentStreams, STREAM_LABEL } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { GameJsonLd } from "./GameJsonLd";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -50,13 +50,16 @@ export function GameHeader({
           <span>
             <span className="text-text">{m.earliest}</span> → <span className="text-text">{m.latest}</span>
           </span>
-          {!isBall && hasStreams(game) && "countMidday" in m && (
+          {!isBall && hasStreams(game) && (
             <>
-              <span>midday: <span className="text-text tabular-nums">{m.countMidday.toLocaleString()}</span></span>
-              <span>evening: <span className="text-text tabular-nums">{m.countEvening.toLocaleString()}</span></span>
-              {m.countOther > 0 && (
-                <span>untagged: <span className="text-text tabular-nums">{m.countOther.toLocaleString()}</span></span>
-              )}
+              {presentStreams(game).map((s) => (
+                <span key={s}>
+                  {STREAM_LABEL[s].toLowerCase()}:{" "}
+                  <span className="text-text tabular-nums">
+                    {(m[`count${STREAM_LABEL[s]}`] ?? 0).toLocaleString()}
+                  </span>
+                </span>
+              ))}
             </>
           )}
           {isBall && "currentEra" in m && (

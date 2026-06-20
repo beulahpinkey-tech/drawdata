@@ -23,7 +23,7 @@ export const STATE_GAMES: StateGame[] = [
   // New York hidden — Numbers / Win 4 not offered yet
   // { state: "New York", abbr: "NY", pick3Name: "Numbers", pick4Name: "Win 4", status: "waitlist" },
   { state: "Florida", abbr: "FL", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
-  { state: "Georgia", abbr: "GA", pick3Name: "Cash 3", pick4Name: "Cash 4", status: "waitlist" },
+  { state: "Georgia", abbr: "GA", pick3Name: "Cash 3", pick4Name: "Cash 4", status: "available" },
   { state: "Illinois", abbr: "IL", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
   { state: "Michigan", abbr: "MI", pick3Name: "Daily 3", pick4Name: "Daily 4", status: "waitlist" },
   { state: "Ohio", abbr: "OH", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },

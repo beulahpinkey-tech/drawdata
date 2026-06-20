@@ -70,8 +70,10 @@ function anyDateToIso(s: string): string | null {
 
 function normStream(s: string | undefined): Stream {
   const v = (s ?? "").trim().toLowerCase();
+  if (v === "morning") return "morning";
   if (v === "midday") return "midday";
   if (v === "evening") return "evening";
+  if (v === "night") return "night";
   return "other";
 }
 
@@ -141,8 +143,9 @@ export function parsePick(
   // chronological: oldest first
   draws.sort((a, b) => {
     if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-    // midday before evening for same date
-    const so = (s?: Stream) => (s === "midday" ? 0 : s === "evening" ? 1 : 2);
+    // chronological within a day: morning, midday, evening, night, other
+    const so = (s?: Stream) =>
+      s === "morning" ? 0 : s === "midday" ? 1 : s === "evening" ? 2 : s === "night" ? 3 : 4;
     return so(a.stream) - so(b.stream);
   });
   draws.forEach((d, i) => (d.index = i));
