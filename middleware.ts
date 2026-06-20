@@ -44,6 +44,30 @@ export function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone();
 
+  // Slug aliases → canonical analytic page (301). The spec's long-tail
+  // slugs ("/sums", "/midday-vs-evening") map onto the pages we already
+  // ship ("/positional" carries sums; "/streams" is midday-vs-evening).
+  // Additive: existing URLs are untouched; these only catch inbound
+  // links/typed URLs at the marketing slug and consolidate the signal
+  // onto the one canonical page.
+  const aliasMatch = url.pathname.match(
+    /^\/([a-z]{2}-pick[34]|powerball|megamillions)\/(sums|midday-vs-evening)\/?$/,
+  );
+  if (aliasMatch) {
+    const [, game, alias] = aliasMatch;
+    // "streams" exists only for pick games; ball games have no
+    // midday/evening split, so don't redirect them into a 404.
+    const isPick = /^[a-z]{2}-pick[34]$/.test(game);
+    if (alias === "sums") {
+      url.pathname = `/${game}/positional`;
+      return NextResponse.redirect(url, 301);
+    }
+    if (alias === "midday-vs-evening" && isPick) {
+      url.pathname = `/${game}/streams`;
+      return NextResponse.redirect(url, 301);
+    }
+  }
+
   // Already canonical (over https) — let it through unchanged.
   if (host === CANONICAL_HOST && url.protocol === "https:") {
     return NextResponse.next();
