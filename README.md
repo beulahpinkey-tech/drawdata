@@ -68,6 +68,17 @@ exposes `getDraws(game)` (full draw history) and `getAgg(game)`
 **every page is server-rendered (SSG) into crawlable HTML** — the data
 is in the initial response, not fetched client-side.
 
+**Archetypes generated per game** (all SSG, all off the shared `ALL_GAMES`
+list — adding a game generates its full set automatically):
+- **Results archives** — `/{game}/results`, `/results/{year}`,
+  `/results/{year}/{month}` (`lib/results.ts`).
+- **Per-number / per-digit** — `/{game}/number/{n}` (`lib/numbers.ts`):
+  each white ball + special ball for ball games, each digit 0–9 for pick
+  games, with total draws, last-seen, current gap, rank, and a sparkline.
+- **Q&A hub** — `/learn` + `/learn/{slug}` (`lib/learn.ts`): per-game
+  most-common/overdue pages with real embedded numbers + evergreen concept
+  explainers, all `FAQPage`-marked and funneling to the backing tool.
+
 **Results archives** (`app/[game]/results`, `/results/[year]`,
 `/results/[year]/[month]`) slice that history with `lib/results.ts`.
 Their `generateStaticParams()` enumerate **only year/month buckets that
