@@ -117,6 +117,7 @@ function PickOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
             <h2 className="font-display text-[22px] mt-1">Eight views, one story</h2>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {[
+                ["results", "Results archive"],
                 ["frequency", "Frequency"],
                 ["positional", "Positional + sums"],
                 ["pairs", "Pair frequency"],
@@ -242,6 +243,7 @@ function BallGameOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
           <h2 className="font-display text-[22px] mt-1">Five lenses on the same data</h2>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
             {[
+              ["results", "Results archive"],
               ["frequency", "Frequency"],
               ["gaps", "Gaps & recency"],
               ["coverage", "Coverage"],
