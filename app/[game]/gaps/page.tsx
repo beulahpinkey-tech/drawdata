@@ -1,9 +1,10 @@
 export const runtime = "edge";
 
+import Link from "next/link";
 import { GameHeader } from "@/components/GameHeader";
 import { HonestyNote } from "@/components/HonestyNote";
 import { GapsView } from "./GapsView";
-import { getAgg } from "@/lib/data";
+import { getAgg, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
 
 export default function GapsPage({ params }: { params: { game: string } }) {
@@ -20,6 +21,11 @@ export default function GapsPage({ params }: { params: { game: string } }) {
           pure randomness predicts; observed values track it closely.
         </HonestyNote>
         <GapsView game={game} agg={agg} />
+        <p className="text-[13px] text-dim">
+          <Link href={`/learn/overdue-${game}-numbers`} className="text-accent hover:underline">
+            Which {GAME_LABELS[game]} numbers are &ldquo;overdue&rdquo; — and why that doesn&rsquo;t mean what it sounds like →
+          </Link>
+        </p>
       </div>
     </>
   );

@@ -3,6 +3,7 @@ import { ALL_GAMES } from "@/lib/types";
 import { META } from "@/lib/data";
 import { yearBuckets, monthSequence } from "@/lib/results";
 import { numberSlugs } from "@/lib/numbers";
+import { learnSlugs } from "@/lib/learn";
 
 // Sitemap INDEX, split per-section via generateSitemaps(). Next.js emits
 // one child sitemap per id (referenced from an auto-generated index at
@@ -48,6 +49,7 @@ function coreSitemap(lastMod: Date): MetadataRoute.Sitemap {
     { url: `${BASE}/odds`, lastModified: lastMod, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/lab`, lastModified: lastMod, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE}/patterns`, lastModified: lastMod, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/learn`, lastModified: lastMod, changeFrequency: "weekly", priority: 0.6 },
     { url: `${BASE}/about`, lastModified: lastMod, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/contact`, lastModified: lastMod, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/privacy`, lastModified: lastMod, changeFrequency: "yearly", priority: 0.2 },
@@ -68,7 +70,15 @@ function coreSitemap(lastMod: Date): MetadataRoute.Sitemap {
       });
     }
   }
-  return [...staticPages, ...gamePages];
+
+  const learnPagesUrls: MetadataRoute.Sitemap = learnSlugs().map((slug) => ({
+    url: `${BASE}/learn/${slug}`,
+    lastModified: lastMod,
+    changeFrequency: "weekly",
+    priority: 0.5,
+  }));
+
+  return [...staticPages, ...gamePages, ...learnPagesUrls];
 }
 
 function resultsSitemap(lastMod: Date): MetadataRoute.Sitemap {

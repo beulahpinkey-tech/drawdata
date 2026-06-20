@@ -5,7 +5,7 @@ import { GameHeader } from "@/components/GameHeader";
 import { HonestyNote } from "@/components/HonestyNote";
 import { NumberBall } from "@/components/NumberBall";
 import { FrequencyView } from "./FrequencyView";
-import { META, getAgg, isBallGame } from "@/lib/data";
+import { META, getAgg, isBallGame, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { numberStats } from "@/lib/numbers";
 
@@ -24,6 +24,13 @@ export default function FrequencyPage({ params }: { params: { game: string } }) 
           around it because samples are finite.
         </HonestyNote>
         <FrequencyView game={game} agg={agg} meta={m} />
+
+        <p className="text-[13px] text-dim">
+          Curious which come up most?{" "}
+          <Link href={`/learn/most-common-${game}-numbers`} className="text-accent hover:underline">
+            The most common {GAME_LABELS[game]} numbers — and why frequency isn&rsquo;t an edge →
+          </Link>
+        </p>
 
         <NumberIndex game={game} />
       </div>

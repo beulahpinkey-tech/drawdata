@@ -81,6 +81,17 @@ for (const game of ALL_GAMES) {
   }
 }
 
+// Learn hub: unique slugs, every page has FAQs + a backing link, and the
+// footer links to /learn (no orphan hub).
+import { learnPages } from "../lib/learn";
+const learn = learnPages();
+const lslugs = new Set(learn.map((p) => p.slug));
+check("learn slugs are unique", lslugs.size === learn.length, `${lslugs.size}/${learn.length}`);
+check("every learn page has ≥1 FAQ", learn.every((p) => p.faqs.length > 0));
+check("every learn page has a backing tool link", learn.every((p) => p.backing?.href?.startsWith("/")));
+const footerSrc = readFileSync(join(process.cwd(), "components", "SiteFooter.tsx"), "utf8");
+check("footer links to /learn", /"\/learn"/.test(footerSrc));
+
 if (failures > 0) {
   console.error(`\n${failures} link-graph check(s) failed.`);
   process.exit(1);

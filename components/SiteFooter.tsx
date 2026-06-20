@@ -57,6 +57,7 @@ export function SiteFooter() {
             <Column
               heading="Project"
               links={[
+                { href: "/learn", label: "Learn (Q&A)" },
                 { href: "/about", label: "About & methodology" },
                 { href: "/contact", label: "Feedback" },
                 { href: "/privacy", label: "Privacy" },
