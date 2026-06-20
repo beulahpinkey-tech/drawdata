@@ -198,14 +198,22 @@ console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
 // ─── State-scoped pick games ────────────────────────────────────────────
-type StateCfg = { code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl"; label: string };
+// `pick4: false` marks a state that only offers a 3-digit game (e.g.
+// Washington's Daily Game). For dual-game states pick4 stays required, so
+// a transiently-missing pick4 CSV still skips the whole state as before.
+type StateCfg = {
+  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa";
+  label: string;
+  pick4?: boolean;
+};
 const STATES: StateCfg[] = [
-  { code: "wi", label: "Wisconsin" },
-  { code: "pa", label: "Pennsylvania" },
-  { code: "nj", label: "New Jersey" },
-  { code: "tx", label: "Texas" },
-  { code: "nc", label: "North Carolina" },
-  { code: "fl", label: "Florida" },
+  { code: "wi", label: "Wisconsin", pick4: true },
+  { code: "pa", label: "Pennsylvania", pick4: true },
+  { code: "nj", label: "New Jersey", pick4: true },
+  { code: "tx", label: "Texas", pick4: true },
+  { code: "nc", label: "North Carolina", pick4: true },
+  { code: "fl", label: "Florida", pick4: true },
+  { code: "wa", label: "Washington", pick4: false },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];
@@ -221,16 +229,19 @@ console.log("\nReading state CSVs …");
 const stateLoaded: LoadedPick[] = [];
 for (const s of STATES) {
   const stateDir = join(ROOT, "data", s.code);
+  const wantsPick4 = s.pick4 !== false;
   const p3 = loadCsv("pick3.csv", PICK3_ALIASES, [stateDir], false);
-  const p4 = loadCsv("pick4.csv", PICK4_ALIASES, [stateDir], false);
-  if (!p3 || !p4) {
-    console.log(`  ${s.code.toUpperCase()} skipped (missing pick3 or pick4 in ${stateDir})`);
+  const p4 = wantsPick4 ? loadCsv("pick4.csv", PICK4_ALIASES, [stateDir], false) : null;
+  if (!p3 || (wantsPick4 && !p4)) {
+    console.log(`  ${s.code.toUpperCase()} skipped (missing pick3${wantsPick4 ? " or pick4" : ""} in ${stateDir})`);
     continue;
   }
   stateLoaded.push({ state: s, game: "pick3", csv: p3 });
-  stateLoaded.push({ state: s, game: "pick4", csv: p4 });
   console.log(`  ${s.code.toUpperCase()} pick3 ← ${p3.path}`);
-  console.log(`  ${s.code.toUpperCase()} pick4 ← ${p4.path}`);
+  if (p4) {
+    stateLoaded.push({ state: s, game: "pick4", csv: p4 });
+    console.log(`  ${s.code.toUpperCase()} pick4 ← ${p4.path}`);
+  }
 }
 
 console.log("\nReading national CSVs …");

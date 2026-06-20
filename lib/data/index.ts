@@ -14,6 +14,7 @@ import ncPick3 from "./nc-pick3.json";
 import ncPick4 from "./nc-pick4.json";
 import flPick3 from "./fl-pick3.json";
 import flPick4 from "./fl-pick4.json";
+import waPick3 from "./wa-pick3.json";
 import powerball from "./powerball.json";
 import megamillions from "./megamillions.json";
 import wiPick3Agg from "./wi-pick3.agg.json";
@@ -28,6 +29,7 @@ import ncPick3Agg from "./nc-pick3.agg.json";
 import ncPick4Agg from "./nc-pick4.agg.json";
 import flPick3Agg from "./fl-pick3.agg.json";
 import flPick4Agg from "./fl-pick4.agg.json";
+import waPick3Agg from "./wa-pick3.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
@@ -49,6 +51,7 @@ export function getDraws(game: Game): Draw[] {
     case "nc-pick4": return (ncPick4 as { draws: Draw[] }).draws;
     case "fl-pick3": return (flPick3 as { draws: Draw[] }).draws;
     case "fl-pick4": return (flPick4 as { draws: Draw[] }).draws;
+    case "wa-pick3": return (waPick3 as { draws: Draw[] }).draws;
     case "megamillions": return (megamillions as { draws: Draw[] }).draws;
     case "powerball": return (powerball as { draws: Draw[] }).draws;
   }
@@ -68,6 +71,7 @@ export function getAgg(game: Game): any {
     case "nc-pick4": return ncPick4Agg;
     case "fl-pick3": return flPick3Agg;
     case "fl-pick4": return flPick4Agg;
+    case "wa-pick3": return waPick3Agg;
     case "megamillions": return megamillionsAgg;
     case "powerball": return powerballAgg;
   }
@@ -90,6 +94,7 @@ export const GAME_LABELS: Record<Game, string> = {
   "nc-pick4": "North Carolina Pick 4",
   "fl-pick3": "Florida Pick 3",
   "fl-pick4": "Florida Pick 4",
+  "wa-pick3": "Washington Daily Game",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -107,6 +112,7 @@ export const GAME_SHORT: Record<Game, string> = {
   "nc-pick4": "Pick 4",
   "fl-pick3": "Pick 3",
   "fl-pick4": "Pick 4",
+  "wa-pick3": "Daily Game",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -118,6 +124,7 @@ export const STATE_LABEL: Record<string, string> = {
   tx: "Texas",
   nc: "North Carolina",
   fl: "Florida",
+  wa: "Washington",
 };
 
 export const GAME_BLURB: Record<Game, string> = {
@@ -145,6 +152,8 @@ export const GAME_BLURB: Record<Game, string> = {
     "Three digits, 0–9, drawn twice daily by the Florida Lottery (Midday + Evening). Outcome space: 1,000 combinations. The Fireball add-on is not shown.",
   "fl-pick4":
     "Four digits, 0–9, drawn twice daily by the Florida Lottery (Midday + Evening). Outcome space: 10,000 combinations. The Fireball add-on is not shown.",
+  "wa-pick3":
+    "Three digits, 0–9, drawn once nightly by the Washington Lottery (\"Daily Game\", ~8:00 PM PT). Single daily draw — no midday/evening split. Outcome space: 1,000 combinations.",
   powerball:
     "Five white balls (1–69) plus one red Powerball (1–26). Outcome space: 292,201,338 combinations. Multi-state.",
   megamillions:
@@ -159,6 +168,7 @@ export const PICK_GAMES: Game[] = [
   "tx-pick3", "tx-pick4",
   "nc-pick3", "nc-pick4",
   "fl-pick3", "fl-pick4",
+  "wa-pick3",
 ];
 export const BALL_GAMES: Game[] = ["powerball", "megamillions"];
 
@@ -168,5 +178,18 @@ export const isDigitGame = (g: Game) =>
   g === "nj-pick3" || g === "nj-pick4" ||
   g === "tx-pick3" || g === "tx-pick4" ||
   g === "nc-pick3" || g === "nc-pick4" ||
-  g === "fl-pick3" || g === "fl-pick4";
+  g === "fl-pick3" || g === "fl-pick4" ||
+  g === "wa-pick3";
+
+/**
+ * Whether a game has a Midday/Evening (or Day/Night) split worth comparing.
+ * Single-draw games (e.g. Washington's once-nightly Daily Game) return
+ * false, so the engine suppresses the /streams "midday vs evening" spoke
+ * for them rather than shipping an empty comparison.
+ */
+export const hasStreams = (g: Game): boolean => {
+  if (!isDigitGame(g)) return false;
+  const m = (META as any)[g];
+  return !!m && (m.countMidday ?? 0) > 0 && (m.countEvening ?? 0) > 0;
+};
 export const isBallGame = (g: Game) => g === "powerball" || g === "megamillions";

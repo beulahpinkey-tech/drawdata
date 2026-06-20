@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { ALL_GAMES } from "@/lib/types";
-import { META } from "@/lib/data";
+import { META, hasStreams } from "@/lib/data";
 import { yearBuckets, monthSequence } from "@/lib/results";
 import { numberSlugs } from "@/lib/numbers";
 import { learnSlugs } from "@/lib/learn";
@@ -62,6 +62,8 @@ function coreSitemap(lastMod: Date): MetadataRoute.Sitemap {
     for (const sub of CORE_SUBROUTES) {
       // pick-only subroutes don't apply to ball games
       if (isBall && ["/pairs", "/carryover", "/streams", "/lookup"].includes(sub)) continue;
+      // single-draw pick games (e.g. WA Daily Game) have no midday/evening split
+      if (sub === "/streams" && !hasStreams(game)) continue;
       gamePages.push({
         url: `${BASE}/${game}${sub}`,
         lastModified: lastMod,

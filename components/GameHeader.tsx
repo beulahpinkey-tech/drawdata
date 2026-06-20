@@ -1,4 +1,4 @@
-import { META, GAME_BLURB, GAME_LABELS, isBallGame } from "@/lib/data";
+import { META, GAME_BLURB, GAME_LABELS, isBallGame, hasStreams } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { GameJsonLd } from "./GameJsonLd";
 import { Breadcrumbs } from "./Breadcrumbs";
@@ -50,7 +50,7 @@ export function GameHeader({
           <span>
             <span className="text-text">{m.earliest}</span> → <span className="text-text">{m.latest}</span>
           </span>
-          {!isBall && "countMidday" in m && (
+          {!isBall && hasStreams(game) && "countMidday" in m && (
             <>
               <span>midday: <span className="text-text tabular-nums">{m.countMidday.toLocaleString()}</span></span>
               <span>evening: <span className="text-text tabular-nums">{m.countEvening.toLocaleString()}</span></span>

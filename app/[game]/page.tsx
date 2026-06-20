@@ -6,7 +6,7 @@ import { NumberBall } from "@/components/NumberBall";
 import { HonestyNote } from "@/components/HonestyNote";
 import { FrequencyBars } from "@/components/charts/FrequencyBars";
 import Link from "next/link";
-import { META, getAgg, GAME_LABELS, isBallGame } from "@/lib/data";
+import { META, getAgg, GAME_LABELS, isBallGame, hasStreams } from "@/lib/data";
 import type { Game } from "@/lib/types";
 
 type Props = { params: { game: string } };
@@ -127,7 +127,7 @@ function PickOverview({ game, agg, m }: { game: Game; agg: any; m: any }) {
                 ["coverage", "Coverage over time"],
                 ["lookup", "Number lookup"],
                 ["check", "Check your numbers"],
-              ].map(([slug, label]) => (
+              ].filter(([slug]) => slug !== "streams" || hasStreams(game)).map(([slug, label]) => (
                 <Link
                   key={slug}
                   href={`/${game}/${slug}`}
