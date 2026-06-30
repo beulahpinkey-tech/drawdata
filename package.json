@@ -22,6 +22,7 @@
     "fetch:mm": "tsx scripts/fetch-mm.ts",
     "fetch:powerball": "tsx scripts/fetch-powerball.ts",
     "fetch:all": "npm run fetch:wi && npm run fetch:pa && npm run fetch:nj && npm run fetch:tx && npm run fetch:nc && npm run fetch:fl && npm run fetch:wa && npm run fetch:ga && npm run fetch:mi && npm run fetch:mm && npm run fetch:powerball",
+    "indexnow": "tsx scripts/indexnow.ts",
     "clean:next": "node scripts/clean-next.mjs",
     "predev": "npm run clean:next && npm run precompute",
     "prebuild": "npm run clean:next && npm run precompute",

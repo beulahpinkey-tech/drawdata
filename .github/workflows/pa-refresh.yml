@@ -246,6 +246,10 @@ jobs:
           for i in 1 2 3 4 5; do
             if git push; then
               echo "Pushed on attempt $i"
+              # Tell IndexNow (Bing/Yandex/etc.) the refreshed pages changed,
+              # so fresh draws get recrawled in minutes. Non-fatal.
+              echo "Pinging IndexNow…"
+              npm run indexnow || true
               exit 0
             fi
             echo "Push rejected on attempt $i — rebasing onto remote and retrying"
