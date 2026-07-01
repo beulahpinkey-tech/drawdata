@@ -1,3 +1,8 @@
+// Cloudflare's next-on-pages requires every non-static route to run on the
+// edge runtime. generateSitemaps() makes this a dynamic route, so it must
+// opt in explicitly — without this the whole Pages build fails.
+export const runtime = "edge";
+
 import type { MetadataRoute } from "next";
 import { ALL_GAMES } from "@/lib/types";
 import { META, hasStreams } from "@/lib/data";
