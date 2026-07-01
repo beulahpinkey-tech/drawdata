@@ -10,7 +10,11 @@ type Props = {
   compact?: boolean;
 };
 
-const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; group: "wi" | "pa" | "nj" | "tx" | "nc" | "national" }[] = [
+type GroupKey = "national" | "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "ga" | "mi" | "wa";
+
+const GAMES: { id: string; label: string; tag: string; group: GroupKey }[] = [
+  { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", group: "national" },
+  { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", group: "national" },
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit", group: "wi" },
   { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit", group: "wi" },
   { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit", group: "pa" },
@@ -21,8 +25,26 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
   { id: "tx-pick4", label: "Texas Daily 4", tag: "4-digit", group: "tx" },
   { id: "nc-pick3", label: "North Carolina Pick 3", tag: "3-digit", group: "nc" },
   { id: "nc-pick4", label: "North Carolina Pick 4", tag: "4-digit", group: "nc" },
-  { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", group: "national" },
-  { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", group: "national" },
+  { id: "fl-pick3", label: "Florida Pick 3", tag: "3-digit", group: "fl" },
+  { id: "fl-pick4", label: "Florida Pick 4", tag: "4-digit", group: "fl" },
+  { id: "ga-pick3", label: "Georgia Cash 3", tag: "3-digit", group: "ga" },
+  { id: "ga-pick4", label: "Georgia Cash 4", tag: "4-digit", group: "ga" },
+  { id: "mi-pick3", label: "Michigan Daily 3", tag: "3-digit", group: "mi" },
+  { id: "mi-pick4", label: "Michigan Daily 4", tag: "4-digit", group: "mi" },
+  { id: "wa-pick3", label: "Washington Daily Game", tag: "3-digit", group: "wa" },
+];
+
+const GROUPS: { key: GroupKey; title: string }[] = [
+  { key: "national", title: "National games" },
+  { key: "wi", title: "Wisconsin" },
+  { key: "pa", title: "Pennsylvania" },
+  { key: "nj", title: "New Jersey" },
+  { key: "tx", title: "Texas" },
+  { key: "nc", title: "North Carolina" },
+  { key: "fl", title: "Florida" },
+  { key: "ga", title: "Georgia" },
+  { key: "mi", title: "Michigan" },
+  { key: "wa", title: "Washington" },
 ];
 
 export function GameSwitcher({ currentGame, storedGame, currentView }: Props) {
@@ -71,78 +93,27 @@ export function GameSwitcher({ currentGame, storedGame, currentView }: Props) {
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-72 panel p-1 z-30">
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">National games</div>
-          {GAMES.filter((g) => g.group === "national").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
-          <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Wisconsin</div>
-          {GAMES.filter((g) => g.group === "wi").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
-          <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Pennsylvania</div>
-          {GAMES.filter((g) => g.group === "pa").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
-          <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">New Jersey</div>
-          {GAMES.filter((g) => g.group === "nj").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
-          <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">Texas</div>
-          {GAMES.filter((g) => g.group === "tx").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
-          <div className="my-1 h-px bg-edge" />
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">North Carolina</div>
-          {GAMES.filter((g) => g.group === "nc").map((g) => (
-            <GameRow
-              key={g.id}
-              g={g}
-              active={g.id === effective}
-              onGameRoute={onGameRoute}
-              currentView={currentView}
-              onSelect={() => setOpen(false)}
-            />
-          ))}
+        <div className="absolute right-0 mt-2 w-72 panel p-1 z-30 max-h-[70vh] overflow-y-auto overscroll-contain">
+          {GROUPS.map((grp, i) => {
+            const items = GAMES.filter((g) => g.group === grp.key);
+            if (items.length === 0) return null;
+            return (
+              <div key={grp.key}>
+                {i > 0 && <div className="my-1 h-px bg-edge" />}
+                <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.16em] text-dim font-mono">{grp.title}</div>
+                {items.map((g) => (
+                  <GameRow
+                    key={g.id}
+                    g={g}
+                    active={g.id === effective}
+                    onGameRoute={onGameRoute}
+                    currentView={currentView}
+                    onSelect={() => setOpen(false)}
+                  />
+                ))}
+              </div>
+            );
+          })}
           <div className="my-1 h-px bg-edge" />
           <Link
             href="/picker"

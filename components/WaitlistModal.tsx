@@ -108,7 +108,7 @@ export function WaitlistModal({
             exit={{ opacity: 0, scale: 0.96, y: 4, filter: "blur(5px)" }}
             transition={spring}
             onClick={(e) => e.stopPropagation()}
-            className="panel w-full max-w-md p-6"
+            className="panel w-full max-w-md p-6 max-h-[90vh] overflow-y-auto overscroll-contain"
             role="dialog"
             aria-modal
             aria-labelledby="waitlist-title"
