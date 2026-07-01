@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "../styles/tokens.css";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BallfieldMount } from "@/components/3d/BallfieldMount";
 import { AdScripts } from "@/components/ads/AdScripts";
-import { Analytics } from "@/components/analytics/Analytics";
+
+// Plausible's per-site script URL. Hardcoded so analytics works without
+// any Cloudflare env-var setup (this URL is public anyway — it loads in
+// every visitor's browser). Override via NEXT_PUBLIC_PLAUSIBLE_SRC if the
+// site ever moves to a different Plausible instance. Cookieless, no
+// personal data.
+const PLAUSIBLE_SRC =
+  process.env.NEXT_PUBLIC_PLAUSIBLE_SRC ||
+  "https://plausible.io/js/pa-vwW5AH-vFdGMa86PgcGAw.js";
 import { AgeGate } from "@/components/AgeGate";
 import { CookieConsent } from "@/components/CookieConsent";
 import { MainWrapper } from "@/components/MainWrapper";
@@ -49,7 +58,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     images: [
       {
-        url: "/og-image.svg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "DrawData — Powerball, Mega Millions, Pick 3 & Pick 4 history",
@@ -61,7 +70,7 @@ export const metadata: Metadata = {
     title: "DrawData — Lottery Draw Analytics",
     description:
       "Powerball, Mega Millions, Pick 3 and Pick 4 history with frequency, gaps, and an honest formula backtester.",
-    images: ["/og-image.svg"],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -103,7 +112,7 @@ const organizationJsonLd = {
   "@id": "https://draw-data.com/#org",
   name: "DrawData",
   url: "https://draw-data.com",
-  logo: "https://draw-data.com/og-image.svg",
+  logo: "https://draw-data.com/og-image.png",
   sameAs: ["https://github.com/beulahpinkey-tech/drawdata"],
   description:
     "DrawData publishes descriptive analytics on US lottery draw history — Powerball, Mega Millions, and state Pick 3 / Pick 4 games across Wisconsin, Pennsylvania, New Jersey, Texas, and North Carolina.",
@@ -135,6 +144,19 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        {/* Privacy-first analytics (Plausible). Uses next/script
+            beforeInteractive — App Router strips raw external <script src>
+            from <head>, but guarantees beforeInteractive scripts land in
+            the initial HTML head (so Plausible detects it and it loads
+            early). Cookieless, no personal data. */}
+        {PLAUSIBLE_SRC && (
+          <>
+            <Script id="plausible-init" strategy="beforeInteractive">
+              {`window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};plausible.init()`}
+            </Script>
+            <Script src={PLAUSIBLE_SRC} strategy="beforeInteractive" />
+          </>
+        )}
       </head>
       <body className="grain">
         <a href="#main-content" className="skip-link">Skip to main content</a>
@@ -152,9 +174,6 @@ export default function RootLayout({
         {/* Ad network loaders — dormant until you're approved and set
             NEXT_PUBLIC_ADSENSE_CLIENT / NEXT_PUBLIC_EZOIC env vars. */}
         <AdScripts />
-        {/* Privacy-first event analytics — dormant until
-            NEXT_PUBLIC_PLAUSIBLE_DOMAIN is set. Cookieless, no personal data. */}
-        <Analytics />
       </body>
     </html>
   );
