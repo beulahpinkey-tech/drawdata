@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { readActiveGame } from "@/lib/clientState";
 
 const KEY = "drawdata_age_confirmed_v1";
 const spring = { type: "spring" as const, bounce: 0.4, duration: 1 };
 
 export function AgeGate() {
-  const router = useRouter();
-  const pathname = usePathname() || "/";
   const [state, setState] = useState<"loading" | "needs" | "confirmed" | "declined">("loading");
 
   useEffect(() => {
@@ -22,21 +18,6 @@ export function AgeGate() {
       setState("needs");
     }
   }, []);
-
-  // After confirmation, send first-time visitors to /picker.
-  useEffect(() => {
-    if (state !== "confirmed") return;
-    const onPickerOrPublic =
-      pathname.startsWith("/picker") ||
-      pathname.startsWith("/about") ||
-      pathname.startsWith("/privacy") ||
-      pathname.startsWith("/terms") ||
-      pathname.startsWith("/contact");
-    if (onPickerOrPublic) return;
-    if (pathname !== "/") return; // only auto-redirect from the bare home root
-    const active = readActiveGame();
-    if (!active) router.replace("/picker");
-  }, [state, pathname, router]);
 
   if (state === "loading" || state === "confirmed") return null;
 
