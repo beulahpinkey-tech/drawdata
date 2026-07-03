@@ -1,0 +1,10 @@
+# DrawData security policy — https://securitytxt.org (RFC 9116)
+# DrawData is a static, descriptive lottery-analytics site. It sells
+# nothing, takes no payments, and stores no user accounts or personal data.
+# Please report any security concerns via the contact below.
+
+Contact: https://draw-data.com/contact
+Expires: 2027-07-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://draw-data.com/.well-known/security.txt
+Policy: https://draw-data.com/terms
