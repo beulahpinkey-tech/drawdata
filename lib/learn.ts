@@ -43,10 +43,10 @@ function ordinalList(values: (string | number)[]): string {
 }
 
 /** "most-common-{game}-numbers" — top of the frequency table, honestly framed. */
-function mostCommonPage(game: Game): LearnPage {
+async function mostCommonPage(game: Game): Promise<LearnPage> {
   const label = GAME_LABELS[game];
   const ball = isBallGame(game);
-  const stats = numberStats(game);
+  const stats = await numberStats(game);
   const main = stats.filter((s) => (ball ? s.kind === "white" : s.kind === "digit"));
   const top = [...main].sort((a, b) => b.count - a.count).slice(0, 5);
   const topVals = top.map((s) => s.value);
@@ -100,10 +100,10 @@ function mostCommonPage(game: Game): LearnPage {
 }
 
 /** "overdue-{game}-numbers" — biggest current gaps, with the "not due" caveat. */
-function overduePage(game: Game): LearnPage {
+async function overduePage(game: Game): Promise<LearnPage> {
   const label = GAME_LABELS[game];
   const ball = isBallGame(game);
-  const stats = numberStats(game);
+  const stats = await numberStats(game);
   const main = stats.filter((s) => (ball ? s.kind === "white" : s.kind === "digit"));
   const longest = [...main].sort((a, b) => b.currentGap - a.currentGap).slice(0, 5);
   const vals = longest.map((s) => s.value);
@@ -212,22 +212,22 @@ function evergreenPages(): LearnPage[] {
 let _cache: LearnPage[] | null = null;
 
 /** All learn pages — per-game data-driven + evergreen. */
-export function learnPages(): LearnPage[] {
+export async function learnPages(): Promise<LearnPage[]> {
   if (_cache) return _cache;
   const pages: LearnPage[] = [];
   for (const game of ALL_GAMES) {
-    pages.push(mostCommonPage(game));
-    pages.push(overduePage(game));
+    pages.push(await mostCommonPage(game));
+    pages.push(await overduePage(game));
   }
   pages.push(...evergreenPages());
   _cache = pages;
   return pages;
 }
 
-export function learnPage(slug: string): LearnPage | null {
-  return learnPages().find((p) => p.slug === slug) ?? null;
+export async function learnPage(slug: string): Promise<LearnPage | null> {
+  return (await learnPages()).find((p) => p.slug === slug) ?? null;
 }
 
-export function learnSlugs(): string[] {
-  return learnPages().map((p) => p.slug);
+export async function learnSlugs(): Promise<string[]> {
+  return (await learnPages()).map((p) => p.slug);
 }

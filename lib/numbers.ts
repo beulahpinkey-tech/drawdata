@@ -33,8 +33,8 @@ export type NumberStat = {
 };
 
 /** Draws in the basis we count over (current era for ball games, all for pick). */
-function basisDraws(game: Game): Draw[] {
-  const draws = getDraws(game);
+async function basisDraws(game: Game): Promise<Draw[]> {
+  const draws = await getDraws(game);
   if (!isBallGame(game)) return draws;
   const start = (META as any)[game]?.currentEra?.start as string | undefined;
   return start ? draws.filter((d) => d.date >= start) : draws;
@@ -50,8 +50,8 @@ function yearCounts(hits: Draw[]): { year: string; count: number }[] {
 }
 
 /** All per-number/per-digit stats for a game, keyed by slug. */
-export function numberStats(game: Game): NumberStat[] {
-  const draws = basisDraws(game);
+export async function numberStats(game: Game): Promise<NumberStat[]> {
+  const draws = await basisDraws(game);
   const total = draws.length;
   // newest-first lets us read currentGap as "index of first hit".
   const newest = [...draws].sort((a, b) => (a.date === b.date ? b.index - a.index : b.date.localeCompare(a.date)));
@@ -139,11 +139,11 @@ export function numberStats(game: Game): NumberStat[] {
 }
 
 /** Just the slugs, for generateStaticParams. */
-export function numberSlugs(game: Game): string[] {
-  return numberStats(game).map((s) => s.slug);
+export async function numberSlugs(game: Game): Promise<string[]> {
+  return (await numberStats(game)).map((s) => s.slug);
 }
 
 /** One number's stats by slug, or null. */
-export function numberStat(game: Game, slug: string): NumberStat | null {
-  return numberStats(game).find((s) => s.slug === slug) ?? null;
+export async function numberStat(game: Game, slug: string): Promise<NumberStat | null> {
+  return (await numberStats(game)).find((s) => s.slug === slug) ?? null;
 }

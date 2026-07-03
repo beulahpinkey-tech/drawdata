@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://draw-data.com/learn" },
 };
 
-export default function LearnIndexPage() {
-  const pages = learnPages();
+export default async function LearnIndexPage() {
+  const pages = await learnPages();
   const concept = pages.filter((p) => !p.game);
   const byGame = pages.filter((p) => p.game);
 

@@ -17,6 +17,7 @@ import { ALL_GAMES } from "../lib/types";
 import { yearBuckets, monthSequence } from "../lib/results";
 import { numberStats } from "../lib/numbers";
 import { isBallGame } from "../lib/data";
+import { learnPages } from "../lib/learn";
 
 let failures = 0;
 const check = (name: string, ok: boolean, detail?: string) => {
@@ -24,6 +25,7 @@ const check = (name: string, ok: boolean, detail?: string) => {
   if (!ok) failures++;
 };
 
+async function main() {
 // 1. Hub → /results link present.
 const hubSrc = readFileSync(join(process.cwd(), "app", "[game]", "page.tsx"), "utf8");
 check(
@@ -42,8 +44,8 @@ check(
 
 // 2 + 3. Per-game bucket non-emptiness and contiguous month chain.
 for (const game of ALL_GAMES) {
-  const years = yearBuckets(game);
-  const months = monthSequence(game);
+  const years = await yearBuckets(game);
+  const months = await monthSequence(game);
 
   check(`[${game}] has ≥1 results year bucket`, years.length > 0, `${years.length} years`);
   check(`[${game}] has ≥1 results month bucket`, months.length > 0, `${months.length} months`);
@@ -63,7 +65,7 @@ for (const game of ALL_GAMES) {
 
   // Per-number pages: unique slugs, and total appearances reconcile with
   // the draw count (every page carries real, accounted-for data).
-  const stats = numberStats(game);
+  const stats = await numberStats(game);
   const slugs = new Set(stats.map((s) => s.slug));
   check(`[${game}] number slugs are unique`, slugs.size === stats.length, `${slugs.size}/${stats.length}`);
 
@@ -83,17 +85,22 @@ for (const game of ALL_GAMES) {
 
 // Learn hub: unique slugs, every page has FAQs + a backing link, and the
 // footer links to /learn (no orphan hub).
-import { learnPages } from "../lib/learn";
-const learn = learnPages();
+const learn = await learnPages();
 const lslugs = new Set(learn.map((p) => p.slug));
 check("learn slugs are unique", lslugs.size === learn.length, `${lslugs.size}/${learn.length}`);
 check("every learn page has ≥1 FAQ", learn.every((p) => p.faqs.length > 0));
 check("every learn page has a backing tool link", learn.every((p) => p.backing?.href?.startsWith("/")));
 const footerSrc = readFileSync(join(process.cwd(), "components", "SiteFooter.tsx"), "utf8");
 check("footer links to /learn", /"\/learn"/.test(footerSrc));
-
-if (failures > 0) {
-  console.error(`\n${failures} link-graph check(s) failed.`);
-  process.exit(1);
 }
-console.log("\nAll link-graph checks passed.");
+
+main().then(() => {
+  if (failures > 0) {
+    console.error(`\n${failures} link-graph check(s) failed.`);
+    process.exit(1);
+  }
+  console.log("\nAll link-graph checks passed.");
+}).catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

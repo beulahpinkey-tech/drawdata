@@ -14,21 +14,21 @@ import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; year: string; month: string };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const out: Params[] = [];
   for (const game of ALL_GAMES) {
-    for (const m of monthSequence(game)) {
+    for (const m of await monthSequence(game)) {
       out.push({ game, year: m.year, month: m.month });
     }
   }
   return out;
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { game, year, month } = params;
   const label = (GAME_LABELS as any)[game] ?? game;
   const monthName = MONTH_NAMES[parseInt(month, 10) - 1];
-  const draws = drawsInMonth(game as Game, year, month);
+  const draws = await drawsInMonth(game as Game, year, month);
   if (!draws.length) return {};
   const path = `/${game}/results/${year}/${month}`;
   const description = `Every ${label} winning number drawn in ${monthName} ${year} — all ${draws.length} draws with dates, digits${
@@ -43,7 +43,7 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default function MonthArchivePage({ params }: { params: Params }) {
+export default async function MonthArchivePage({ params }: { params: Params }) {
   const { game, year, month } = params;
   const g = game as Game;
   const label = (GAME_LABELS as any)[game] ?? game;
@@ -51,11 +51,11 @@ export default function MonthArchivePage({ params }: { params: Params }) {
   const monthName = MONTH_NAMES[monthIdx];
   if (!monthName) notFound();
 
-  const draws = drawsInMonth(g, year, month);
+  const draws = await drawsInMonth(g, year, month);
   if (!draws.length) notFound(); // anti-thin guard — no empty shells
 
   // prev/next month within this game's actual history
-  const seq = monthSequence(g);
+  const seq = await monthSequence(g);
   const here = seq.findIndex((m) => m.year === year && m.month === month);
   const prev = here > 0 ? seq[here - 1] : null;
   const next = here >= 0 && here < seq.length - 1 ? seq[here + 1] : null;

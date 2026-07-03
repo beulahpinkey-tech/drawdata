@@ -14,18 +14,18 @@ import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; year: string };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const out: Params[] = [];
   for (const game of ALL_GAMES) {
-    for (const y of yearBuckets(game)) out.push({ game, year: y.year });
+    for (const y of await yearBuckets(game)) out.push({ game, year: y.year });
   }
   return out;
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { game, year } = params;
   const label = (GAME_LABELS as any)[game] ?? game;
-  const draws = drawsInYear(game as Game, year);
+  const draws = await drawsInYear(game as Game, year);
   if (!draws.length) return {};
   const path = `/${game}/results/${year}`;
   const description = `${label} winning numbers for ${year} — all ${draws.length} draws, organized by month. Complete descriptive archive from DrawData. No predictions.`;
@@ -38,19 +38,19 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default function YearArchivePage({ params }: { params: Params }) {
+export default async function YearArchivePage({ params }: { params: Params }) {
   const { game, year } = params;
   const g = game as Game;
   const label = (GAME_LABELS as any)[game] ?? game;
 
-  const years = yearBuckets(g);
+  const years = await yearBuckets(g);
   const yi = years.findIndex((y) => y.year === year);
   if (yi === -1) notFound();
   const bucket = years[yi];
   const newer = yi > 0 ? years[yi - 1] : null; // years sorted newest-first
   const older = yi < years.length - 1 ? years[yi + 1] : null;
 
-  const yearDraws = drawsInYear(g, year);
+  const yearDraws = await drawsInYear(g, year);
   const latest = yearDraws[0]; // newest first
   const ball = isBallGame(g);
 

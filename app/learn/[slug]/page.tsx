@@ -11,12 +11,12 @@ import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return learnSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  return (await learnSlugs()).map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const p = learnPage(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const p = await learnPage(params.slug);
   if (!p) return {};
   const url = `${BASE}/learn/${p.slug}`;
   return {
@@ -28,8 +28,8 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function LearnPage({ params }: { params: { slug: string } }) {
-  const p = learnPage(params.slug);
+export default async function LearnPage({ params }: { params: { slug: string } }) {
+  const p = await learnPage(params.slug);
   if (!p) notFound();
 
   const url = `${BASE}/learn/${p.slug}`;
@@ -62,9 +62,10 @@ export default function LearnPage({ params }: { params: { slug: string } }) {
     isAccessibleForFree: true,
   };
 
+  const allPages = await learnPages();
   const related = (p.related ?? [])
-    .map((s) => learnPages().find((x) => x.slug === s))
-    .filter(Boolean) as ReturnType<typeof learnPages>;
+    .map((s) => allPages.find((x) => x.slug === s))
+    .filter(Boolean) as typeof allPages;
 
   return (
     <article className="mx-auto max-w-3xl px-4 sm:px-6 py-10 space-y-6">

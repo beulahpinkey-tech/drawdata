@@ -31,7 +31,7 @@ const CORE_SUBROUTES = [
   "/streams",
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const lastMod = new Date((META as any).lastCsvUpdated ?? new Date().toISOString());
   const urls: MetadataRoute.Sitemap = [];
 
@@ -69,19 +69,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       });
     }
 
-    for (const y of yearBuckets(game)) {
+    for (const y of await yearBuckets(game)) {
       urls.push({ url: `${BASE}/${game}/results/${y.year}`, lastModified: lastMod, changeFrequency: "yearly", priority: 0.4 });
     }
-    for (const m of monthSequence(game)) {
+    for (const m of await monthSequence(game)) {
       urls.push({ url: `${BASE}/${game}/results/${m.year}/${m.month}`, lastModified: lastMod, changeFrequency: "monthly", priority: 0.4 });
     }
-    for (const slug of numberSlugs(game)) {
+    for (const slug of await numberSlugs(game)) {
       urls.push({ url: `${BASE}/${game}/number/${slug}`, lastModified: lastMod, changeFrequency: "daily", priority: 0.4 });
     }
   }
 
   // ── Learn / Q&A pages ──
-  for (const slug of learnSlugs()) {
+  for (const slug of await learnSlugs()) {
     urls.push({ url: `${BASE}/learn/${slug}`, lastModified: lastMod, changeFrequency: "weekly", priority: 0.5 });
   }
 

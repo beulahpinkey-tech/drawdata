@@ -21,16 +21,16 @@ export type YearBucket = { year: string; count: number; months: MonthBucket[] };
 export type MonthBucket = { year: string; month: string; monthName: string; count: number };
 
 /** All draws for a game, newest first (archives read reverse-chronologically). */
-export function drawsNewestFirst(game: Game): Draw[] {
-  return [...getDraws(game)].sort((a, b) =>
+export async function drawsNewestFirst(game: Game): Promise<Draw[]> {
+  return [...(await getDraws(game))].sort((a, b) =>
     a.date === b.date ? b.index - a.index : b.date.localeCompare(a.date),
   );
 }
 
 /** Year → month buckets that actually have draws. Newest year first. */
-export function yearBuckets(game: Game): YearBucket[] {
+export async function yearBuckets(game: Game): Promise<YearBucket[]> {
   const byYear = new Map<string, Map<string, number>>();
-  for (const d of getDraws(game)) {
+  for (const d of await getDraws(game)) {
     const y = yearOf(d);
     const mo = monthOf(d);
     if (!byYear.has(y)) byYear.set(y, new Map());
@@ -57,14 +57,14 @@ export function yearBuckets(game: Game): YearBucket[] {
 }
 
 /** Draws for one calendar month, newest first. */
-export function drawsInMonth(game: Game, year: string, month: string): Draw[] {
+export async function drawsInMonth(game: Game, year: string, month: string): Promise<Draw[]> {
   const prefix = `${year}-${month}-`;
-  return drawsNewestFirst(game).filter((d) => d.date.startsWith(prefix));
+  return (await drawsNewestFirst(game)).filter((d) => d.date.startsWith(prefix));
 }
 
 /** Draws for one calendar year, newest first. */
-export function drawsInYear(game: Game, year: string): Draw[] {
-  return drawsNewestFirst(game).filter((d) => d.date.startsWith(`${year}-`));
+export async function drawsInYear(game: Game, year: string): Promise<Draw[]> {
+  return (await drawsNewestFirst(game)).filter((d) => d.date.startsWith(`${year}-`));
 }
 
 /**
@@ -72,9 +72,9 @@ export function drawsInYear(game: Game, year: string): Draw[] {
  * game — used both for generateStaticParams and for prev/next links.
  * Oldest first so index math reads naturally.
  */
-export function monthSequence(game: Game): MonthBucket[] {
+export async function monthSequence(game: Game): Promise<MonthBucket[]> {
   const seq: MonthBucket[] = [];
-  for (const y of [...yearBuckets(game)].reverse()) {
+  for (const y of [...(await yearBuckets(game))].reverse()) {
     for (const m of [...y.months].reverse()) seq.push(m);
   }
   return seq;

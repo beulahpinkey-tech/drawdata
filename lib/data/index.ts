@@ -2,25 +2,6 @@
 // ("wi-pick3", "pa-pick4", "nj-pick3", "tx-pick3", "powerball",
 // "megamillions") and we look up the matching aggregate JSON.
 
-import wiPick3 from "./wi-pick3.json";
-import wiPick4 from "./wi-pick4.json";
-import paPick3 from "./pa-pick3.json";
-import paPick4 from "./pa-pick4.json";
-import njPick3 from "./nj-pick3.json";
-import njPick4 from "./nj-pick4.json";
-import txPick3 from "./tx-pick3.json";
-import txPick4 from "./tx-pick4.json";
-import ncPick3 from "./nc-pick3.json";
-import ncPick4 from "./nc-pick4.json";
-import flPick3 from "./fl-pick3.json";
-import flPick4 from "./fl-pick4.json";
-import waPick3 from "./wa-pick3.json";
-import gaPick3 from "./ga-pick3.json";
-import gaPick4 from "./ga-pick4.json";
-import miPick3 from "./mi-pick3.json";
-import miPick4 from "./mi-pick4.json";
-import powerball from "./powerball.json";
-import megamillions from "./megamillions.json";
 import wiPick3Agg from "./wi-pick3.agg.json";
 import wiPick4Agg from "./wi-pick4.agg.json";
 import paPick3Agg from "./pa-pick3.agg.json";
@@ -41,33 +22,15 @@ import miPick4Agg from "./mi-pick4.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
-import type { Draw, Game } from "../types";
+import type { Game } from "../types";
 
 export const META = meta as typeof meta;
 
-export function getDraws(game: Game): Draw[] {
-  switch (game) {
-    case "wi-pick3": return (wiPick3 as { draws: Draw[] }).draws;
-    case "wi-pick4": return (wiPick4 as { draws: Draw[] }).draws;
-    case "pa-pick3": return (paPick3 as { draws: Draw[] }).draws;
-    case "pa-pick4": return (paPick4 as { draws: Draw[] }).draws;
-    case "nj-pick3": return (njPick3 as { draws: Draw[] }).draws;
-    case "nj-pick4": return (njPick4 as { draws: Draw[] }).draws;
-    case "tx-pick3": return (txPick3 as { draws: Draw[] }).draws;
-    case "tx-pick4": return (txPick4 as { draws: Draw[] }).draws;
-    case "nc-pick3": return (ncPick3 as { draws: Draw[] }).draws;
-    case "nc-pick4": return (ncPick4 as { draws: Draw[] }).draws;
-    case "fl-pick3": return (flPick3 as { draws: Draw[] }).draws;
-    case "fl-pick4": return (flPick4 as { draws: Draw[] }).draws;
-    case "wa-pick3": return (waPick3 as { draws: Draw[] }).draws;
-    case "ga-pick3": return (gaPick3 as { draws: Draw[] }).draws;
-    case "ga-pick4": return (gaPick4 as { draws: Draw[] }).draws;
-    case "mi-pick3": return (miPick3 as { draws: Draw[] }).draws;
-    case "mi-pick4": return (miPick4 as { draws: Draw[] }).draws;
-    case "megamillions": return (megamillions as { draws: Draw[] }).draws;
-    case "powerball": return (powerball as { draws: Draw[] }).draws;
-  }
-}
+// getDraws is lazy (dynamic per-game import) and lives in lib/draws, so the
+// ~20 MB of full history is NOT bundled into every route. Re-exported here
+// so existing `import { getDraws } from "@/lib/data"` sites keep working —
+// note it now returns Promise<Draw[]>, so callers must await it.
+export { getDraws } from "../draws";
 
 export function getAgg(game: Game): any {
   switch (game) {

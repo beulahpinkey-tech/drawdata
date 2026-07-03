@@ -17,10 +17,10 @@ import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; n: string };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const out: Params[] = [];
   for (const game of ALL_GAMES) {
-    for (const s of numberStats(game)) out.push({ game, n: s.slug });
+    for (const s of await numberStats(game)) out.push({ game, n: s.slug });
   }
   return out;
 }
@@ -32,10 +32,10 @@ function noun(game: Game, kind: string, value: number) {
   return `number ${value}`;
 }
 
-export function generateMetadata({ params }: { params: Params }): Metadata {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { game, n } = params;
   const g = game as Game;
-  const stat = numberStat(g, n);
+  const stat = await numberStat(g, n);
   if (!stat) return {};
   const label = GAME_LABELS[g];
   const thing = noun(g, stat.kind, stat.value);
@@ -52,13 +52,13 @@ export function generateMetadata({ params }: { params: Params }): Metadata {
   };
 }
 
-export default function NumberPage({ params }: { params: Params }) {
+export default async function NumberPage({ params }: { params: Params }) {
   const { game, n } = params;
   const g = game as Game;
   const label = GAME_LABELS[g];
   const ball = isBallGame(g);
 
-  const all = numberStats(g);
+  const all = await numberStats(g);
   const idx = all.findIndex((s) => s.slug === n);
   if (idx === -1) notFound();
   const stat = all[idx];

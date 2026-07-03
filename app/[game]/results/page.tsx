@@ -35,13 +35,13 @@ export function generateMetadata({ params }: { params: { game: string } }): Meta
   };
 }
 
-export default function ResultsIndexPage({ params }: { params: { game: string } }) {
+export default async function ResultsIndexPage({ params }: { params: { game: string } }) {
   const g = params.game as Game;
   const label = (GAME_LABELS as any)[g] ?? g;
   const m = (META as any)[g] ?? {};
 
-  const latest = drawsNewestFirst(g).slice(0, LATEST_N);
-  const years = yearBuckets(g);
+  const latest = (await drawsNewestFirst(g)).slice(0, LATEST_N);
+  const years = await yearBuckets(g);
 
   const path = `/${g}/results`;
   const crumbs: Crumb[] = [

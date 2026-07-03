@@ -7,12 +7,13 @@ import { NumberBall } from "@/components/NumberBall";
 import { FrequencyView } from "./FrequencyView";
 import { META, getAgg, isBallGame, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
-import { numberStats } from "@/lib/numbers";
+import { numberStats, type NumberStat } from "@/lib/numbers";
 
-export default function FrequencyPage({ params }: { params: { game: string } }) {
+export default async function FrequencyPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;
   const agg = getAgg(game);
   const m = META[game];
+  const stats = await numberStats(game);
   return (
     <>
       <GameHeader game={game} view="frequency" />
@@ -32,7 +33,7 @@ export default function FrequencyPage({ params }: { params: { game: string } }) 
           </Link>
         </p>
 
-        <NumberIndex game={game} />
+        <NumberIndex game={game} stats={stats} />
       </div>
     </>
   );
@@ -43,8 +44,7 @@ export default function FrequencyPage({ params }: { params: { game: string } }) 
  * /{game}/number/{n} page an inbound link (no orphans) and lets visitors
  * jump straight to a single number's full history.
  */
-function NumberIndex({ game }: { game: Game }) {
-  const stats = numberStats(game);
+function NumberIndex({ game, stats }: { game: Game; stats: NumberStat[] }) {
   const ball = isBallGame(game);
   const whites = stats.filter((s) => s.kind === "white");
   const specials = stats.filter((s) => s.kind === "special");
