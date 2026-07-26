@@ -1,0 +1,53 @@
+# Live-site freshness monitor.
+#
+# The data-refresh workflow can succeed (fetch + commit + push all green)
+# while the LIVE site silently stops updating — e.g. Cloudflare Pages
+# builds start failing, so fresh commits never deploy. That exact failure
+# froze the site for ~20 days once, with zero notification, because the
+# refresh job itself was healthy.
+#
+# This job watches the ACTUAL OUTCOME instead: it reads the deployed
+# sitemap's <lastmod> (which is stamped from the data at build time) and
+# FAILS if the live site's data is more than STALE_DAYS old. A failing
+# scheduled workflow emails the repo owner (GitHub default), so a stalled
+# deploy now pages you instead of hiding.
+
+name: Live freshness check
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # once daily, ~13:00 UTC (after the morning refresh)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify draw-data.com is serving fresh data
+        env:
+          STALE_DAYS: "2"
+        run: |
+          set -euo pipefail
+          URL="https://draw-data.com/sitemap.xml"
+          LASTMOD=$(curl -sSL --compressed --max-time 30 "$URL" \
+            | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//')
+
+          if [ -z "${LASTMOD:-}" ]; then
+            echo "::error::Could not read <lastmod> from $URL — site may be down or the build broken."
+            exit 1
+          fi
+
+          NOW=$(date -u +%s)
+          THEN=$(date -u -d "$LASTMOD" +%s)
+          AGE_DAYS=$(( (NOW - THEN) / 86400 ))
+          echo "Deployed data timestamp: $LASTMOD  (${AGE_DAYS} days old)"
+
+          if [ "$AGE_DAYS" -gt "$STALE_DAYS" ]; then
+            echo "::error::Live site data is ${AGE_DAYS} days stale (> ${STALE_DAYS}). Deploys are likely broken — check Cloudflare Pages → Deployments."
+            exit 1
+          fi
+
+          echo "OK — live site is fresh (${AGE_DAYS} days old)."
