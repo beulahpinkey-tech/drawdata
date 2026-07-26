@@ -235,7 +235,7 @@ jobs:
             echo "No new WI / PA / NJ / TX / NC / FL / WA / GA / MI / MM / PB draws — nothing to commit."
             exit 0
           fi
-          git commit -m "chore: refresh WI + PA + NJ + TX + NC + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
+          git commit -m "chore: refresh WI + PA + NJ + TX + NC + FL + WA + GA + MI + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
 
           # Push with retry. The remote can move forward mid-run from a
           # manual trigger, an in-flight scheduled run, or you pushing
