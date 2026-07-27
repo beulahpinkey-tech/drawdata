@@ -1,22 +1,27 @@
-# Live-site freshness monitor.
+# Deploy-health monitor.
 #
-# The data-refresh workflow can succeed (fetch + commit + push all green)
-# while the LIVE site silently stops updating — e.g. Cloudflare Pages
-# builds start failing, so fresh commits never deploy. That exact failure
-# froze the site for ~20 days once, with zero notification, because the
-# refresh job itself was healthy.
+# Why not scrape the live site: draw-data.com sits behind Cloudflare bot
+# protection, which serves GitHub Actions' datacenter IPs a "Just a
+# moment..." challenge instead of the page — so a curl from CI can't read
+# the site no matter the User-Agent. Instead we ask Cloudflare directly:
+# is the latest Pages deployment recent AND successful? That watches the
+# exact thing that failed silently for ~20 days (builds breaking on
+# ERESOLVE, so fresh commits never deployed).
 #
-# This job watches the ACTUAL OUTCOME instead: it reads the deployed
-# sitemap's <lastmod> (which is stamped from the data at build time) and
-# FAILS if the live site's data is more than STALE_DAYS old. A failing
-# scheduled workflow emails the repo owner (GitHub default), so a stalled
-# deploy now pages you instead of hiding.
+# SETUP (until these are set, the job PASSES with a note — it never
+# false-alarms): add three repository secrets —
+#   CF_API_TOKEN   — a Cloudflare API token with "Account > Pages > Read"
+#   CF_ACCOUNT_ID  — your Cloudflare account id
+#   CF_PROJECT     — the Pages project name (e.g. "drawdata")
+#
+# Also recommended (belt-and-suspenders, zero code): enable Cloudflare's
+# native notification — Dashboard > Notifications > "Pages build failed".
 
 name: Live freshness check
 
 on:
   schedule:
-    - cron: "0 13 * * *" # once daily, ~13:00 UTC (after the morning refresh)
+    - cron: "0 13 * * *" # once daily, after the morning data refresh
   workflow_dispatch:
 
 permissions:
@@ -26,42 +31,51 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify draw-data.com is serving fresh data
+      - name: Check Cloudflare Pages deployment health
         env:
-          STALE_DAYS: "2"
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_PROJECT: ${{ secrets.CF_PROJECT }}
+          STALE_HOURS: "30" # refresh runs twice daily; >30h between deploys = stalled
         run: |
-          # Deliberately NOT `set -e`: a no-match grep would otherwise abort
-          # the script before our own diagnostics/error messages can print.
           set -uo pipefail
-          URL="https://draw-data.com/sitemap.xml"
-          # A browser-like User-Agent is required: a bare curl gets a
-          # Cloudflare bot challenge instead of the sitemap, which would
-          # make this monitor fail even when the site is perfectly fresh.
-          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
 
-          SITEMAP=$(curl -sSL --compressed --max-time 60 --retry 4 --retry-delay 5 \
-            -A "$UA" -H "Accept: application/xml,text/xml,*/*;q=0.9" "$URL" || true)
-          BYTES=$(printf '%s' "$SITEMAP" | wc -c | tr -d ' ')
-          echo "Fetched ${BYTES} bytes from ${URL}"
+          if [ -z "${CF_API_TOKEN:-}" ] || [ -z "${CF_ACCOUNT_ID:-}" ] || [ -z "${CF_PROJECT:-}" ]; then
+            echo "Cloudflare deploy monitoring not configured — skipping (this is a PASS, not a failure)."
+            echo "To enable: add CF_API_TOKEN (Pages:Read), CF_ACCOUNT_ID, CF_PROJECT repo secrets."
+            echo "Recommended regardless: Cloudflare Dashboard > Notifications > 'Pages build failed'."
+            exit 0
+          fi
 
-          LASTMOD=$(printf '%s' "$SITEMAP" | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//' || true)
-          if [ -z "$LASTMOD" ]; then
-            echo "::error::No <lastmod> found (fetched ${BYTES} bytes). Site down, build broken, or request blocked."
-            echo "--- first 400 bytes of response ---"
-            printf '%s' "$SITEMAP" | head -c 400; echo
+          API="https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${CF_PROJECT}/deployments?env=production&per_page=1"
+          RESP=$(curl -sS --max-time 30 -H "Authorization: Bearer ${CF_API_TOKEN}" "$API" || true)
+
+          OK=$(printf '%s' "$RESP" | jq -r '.success // false')
+          if [ "$OK" != "true" ]; then
+            echo "::error::Cloudflare API call failed. Check CF_API_TOKEN / CF_ACCOUNT_ID / CF_PROJECT."
+            printf '%s' "$RESP" | head -c 400; echo
             exit 1
           fi
 
-          THEN=$(date -u -d "$LASTMOD" +%s 2>/dev/null || echo 0)
+          STATUS=$(printf '%s' "$RESP" | jq -r '.result[0].latest_stage.status // "unknown"')
+          CREATED=$(printf '%s' "$RESP" | jq -r '.result[0].created_on // ""')
+          echo "Latest production deployment: status=${STATUS} created=${CREATED}"
+
+          if [ "$STATUS" != "success" ]; then
+            echo "::error::Latest Cloudflare Pages deployment is '${STATUS}', not 'success' — the live site is not receiving updates."
+            exit 1
+          fi
+
+          THEN=$(date -u -d "$CREATED" +%s 2>/dev/null || echo 0)
           if [ "$THEN" = "0" ]; then
-            echo "::error::Could not parse lastmod date: '$LASTMOD'"
+            echo "::error::Could not parse deployment timestamp: '$CREATED'"
             exit 1
           fi
-          AGE_DAYS=$(( ( $(date -u +%s) - THEN ) / 86400 ))
-          echo "Deployed data timestamp: ${LASTMOD} (${AGE_DAYS} days old)"
+          AGE_HOURS=$(( ( $(date -u +%s) - THEN ) / 3600 ))
+          echo "Last successful deploy was ${AGE_HOURS}h ago."
 
-          if [ "$AGE_DAYS" -gt "$STALE_DAYS" ]; then
-            echo "::error::Live site data is ${AGE_DAYS} days stale (> ${STALE_DAYS}). Deploys likely broken — check Cloudflare Pages → Deployments."
+          if [ "$AGE_HOURS" -gt "$STALE_HOURS" ]; then
+            echo "::error::No successful deploy in ${AGE_HOURS}h (> ${STALE_HOURS}h). Deploys appear stalled — check Cloudflare Pages."
             exit 1
           fi
-          echo "OK — live site is fresh (${AGE_DAYS} days old)."
+          echo "OK — deploys are healthy (last success ${AGE_HOURS}h ago)."
