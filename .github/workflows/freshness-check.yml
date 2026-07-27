@@ -32,11 +32,18 @@ jobs:
         run: |
           set -euo pipefail
           URL="https://draw-data.com/sitemap.xml"
-          LASTMOD=$(curl -sSL --compressed --max-time 30 "$URL" \
-            | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//')
+          # A browser-like User-Agent is required: a bare curl gets a
+          # Cloudflare bot challenge instead of the sitemap, which would
+          # make this monitor fail even when the site is perfectly fresh.
+          UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+          SITEMAP=$(curl -sSL --compressed --max-time 45 --retry 4 --retry-delay 5 \
+            -A "$UA" -H "Accept: application/xml,text/xml,*/*;q=0.9" "$URL" || true)
+          LASTMOD=$(printf '%s' "$SITEMAP" | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//')
 
           if [ -z "${LASTMOD:-}" ]; then
-            echo "::error::Could not read <lastmod> from $URL — site may be down or the build broken."
+            echo "::error::Could not read <lastmod> from $URL — site may be down, the build broken, or the request blocked."
+            echo "First 300 bytes of response (for debugging):"
+            printf '%s' "$SITEMAP" | head -c 300
             exit 1
           fi
 
