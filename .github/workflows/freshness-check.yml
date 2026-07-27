@@ -30,31 +30,38 @@ jobs:
         env:
           STALE_DAYS: "2"
         run: |
-          set -euo pipefail
+          # Deliberately NOT `set -e`: a no-match grep would otherwise abort
+          # the script before our own diagnostics/error messages can print.
+          set -uo pipefail
           URL="https://draw-data.com/sitemap.xml"
           # A browser-like User-Agent is required: a bare curl gets a
           # Cloudflare bot challenge instead of the sitemap, which would
           # make this monitor fail even when the site is perfectly fresh.
           UA="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-          SITEMAP=$(curl -sSL --compressed --max-time 45 --retry 4 --retry-delay 5 \
-            -A "$UA" -H "Accept: application/xml,text/xml,*/*;q=0.9" "$URL" || true)
-          LASTMOD=$(printf '%s' "$SITEMAP" | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//')
 
-          if [ -z "${LASTMOD:-}" ]; then
-            echo "::error::Could not read <lastmod> from $URL — site may be down, the build broken, or the request blocked."
-            echo "First 300 bytes of response (for debugging):"
-            printf '%s' "$SITEMAP" | head -c 300
+          SITEMAP=$(curl -sSL --compressed --max-time 60 --retry 4 --retry-delay 5 \
+            -A "$UA" -H "Accept: application/xml,text/xml,*/*;q=0.9" "$URL" || true)
+          BYTES=$(printf '%s' "$SITEMAP" | wc -c | tr -d ' ')
+          echo "Fetched ${BYTES} bytes from ${URL}"
+
+          LASTMOD=$(printf '%s' "$SITEMAP" | grep -oE '<lastmod>[^<]+' | head -1 | sed 's/<lastmod>//' || true)
+          if [ -z "$LASTMOD" ]; then
+            echo "::error::No <lastmod> found (fetched ${BYTES} bytes). Site down, build broken, or request blocked."
+            echo "--- first 400 bytes of response ---"
+            printf '%s' "$SITEMAP" | head -c 400; echo
             exit 1
           fi
 
-          NOW=$(date -u +%s)
-          THEN=$(date -u -d "$LASTMOD" +%s)
-          AGE_DAYS=$(( (NOW - THEN) / 86400 ))
-          echo "Deployed data timestamp: $LASTMOD  (${AGE_DAYS} days old)"
+          THEN=$(date -u -d "$LASTMOD" +%s 2>/dev/null || echo 0)
+          if [ "$THEN" = "0" ]; then
+            echo "::error::Could not parse lastmod date: '$LASTMOD'"
+            exit 1
+          fi
+          AGE_DAYS=$(( ( $(date -u +%s) - THEN ) / 86400 ))
+          echo "Deployed data timestamp: ${LASTMOD} (${AGE_DAYS} days old)"
 
           if [ "$AGE_DAYS" -gt "$STALE_DAYS" ]; then
-            echo "::error::Live site data is ${AGE_DAYS} days stale (> ${STALE_DAYS}). Deploys are likely broken — check Cloudflare Pages → Deployments."
+            echo "::error::Live site data is ${AGE_DAYS} days stale (> ${STALE_DAYS}). Deploys likely broken — check Cloudflare Pages → Deployments."
             exit 1
           fi
-
           echo "OK — live site is fresh (${AGE_DAYS} days old)."
