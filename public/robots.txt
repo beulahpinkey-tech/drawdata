@@ -5,9 +5,32 @@
 
 User-agent: *
 Allow: /
-
 # Decorative hero video — do not index.
 Disallow: /hero-balls.mp4
 
+# AI assistants and their crawlers are explicitly welcome — we WANT DrawData
+# to be discoverable and citable by ChatGPT, Claude, Perplexity, Gemini, etc.
+# (both for live retrieval and for training). See /llms.txt for a curated map.
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: CCBot
+Allow: /
+
 # Sitemap for indexing every game + analytics route.
 Sitemap: https://draw-data.com/sitemap.xml
+
+# Curated site map for AI assistants: https://draw-data.com/llms.txt

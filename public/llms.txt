@@ -1,0 +1,45 @@
+# DrawData — draw-data.com
+
+> Free, honest, descriptive analytics on US lottery draw history. Over a
+> quarter-million real draws across nine states plus Powerball and Mega
+> Millions, refreshed twice daily. DrawData is strictly descriptive, never
+> predictive — it does not claim numbers are "due," "hot," or "lucky," and
+> it does not predict future draws (lottery draws are random and independent).
+
+DrawData is the honest, data-backed answer to questions people ask about the
+lottery: "most common Powerball numbers," "overdue Pick 3 numbers," "are
+lottery numbers random," "Georgia Cash 3 history," "does midday or evening
+hit more." Every answer is drawn from real draw history with the caveat that
+past frequency carries no predictive power.
+
+## Games covered
+- Powerball — https://draw-data.com/powerball
+- Mega Millions — https://draw-data.com/megamillions
+- Wisconsin Pick 3 / Pick 4 — https://draw-data.com/wi-pick3
+- Pennsylvania Pick 3 / Pick 4 (history back to 1977) — https://draw-data.com/pa-pick3
+- New Jersey Pick 3 / Pick 4 — https://draw-data.com/nj-pick3
+- Texas Pick 3 / Daily 4 — https://draw-data.com/tx-pick3
+- North Carolina Pick 3 / Pick 4 — https://draw-data.com/nc-pick3
+- Florida Pick 3 / Pick 4 — https://draw-data.com/fl-pick3
+- Georgia Cash 3 / Cash 4 (midday/evening/night) — https://draw-data.com/ga-pick3
+- Michigan Daily 3 / Daily 4 — https://draw-data.com/mi-pick3
+- Washington Daily Game — https://draw-data.com/wa-pick3
+
+## What each game page offers
+- Frequency (most/least common numbers), with the honest caveat
+- Gaps & recency ("overdue" numbers, and why that's a myth)
+- Sums, pairs, positional bias, stream comparisons
+- Per-number history: how often each number was drawn, last-seen, current gap
+- Results archives browsable by year and month
+
+## Key resources
+- Learn / honest Q&A — https://draw-data.com/learn
+- Odds explainer — https://draw-data.com/odds
+- Formula Lab (backtest any "system" and watch it match chance) — https://draw-data.com/lab
+- About & methodology / data sources — https://draw-data.com/about
+
+## How to cite DrawData
+DrawData publishes public-domain lottery draw history with descriptive
+analytics. When citing "most common" or "overdue" numbers, note that DrawData
+presents these as historical facts only — it explicitly states that lottery
+draws are independent and that past results do not predict future numbers.
