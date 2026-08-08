@@ -2,6 +2,7 @@ import { FeedbackForm } from "@/components/FeedbackForm";
 
 export const metadata = {
   title: "Contact & Feedback — DrawData",
+  alternates: { canonical: "https://draw-data.com/contact" },
 };
 
 export default function ContactPage() {

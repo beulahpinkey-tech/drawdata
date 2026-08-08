@@ -1,6 +1,12 @@
 import { META, GAME_LABELS } from "@/lib/data";
 import { ALL_GAMES } from "@/lib/types";
 import { POWERBALL_ERAS } from "@/lib/ingest/eras";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About & Methodology",
+  alternates: { canonical: "https://draw-data.com/about" },
+};
 
 export default function AboutPage() {
   // Auto-generate the data sources list from META so this page never

@@ -1,4 +1,7 @@
-export const metadata = { title: "Terms of Service — DrawData" };
+export const metadata = {
+  title: "Terms of Service — DrawData",
+  alternates: { canonical: "https://draw-data.com/terms" },
+};
 
 export default function TermsPage() {
   return (

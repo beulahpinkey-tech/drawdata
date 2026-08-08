@@ -6,6 +6,11 @@ import { Magnet } from "@/components/motion/Magnet";
 import { AnimatedText } from "@/components/motion/AnimatedText";
 import { GameStack, type GameGroup } from "@/components/home/GameStack";
 import { AdSlot } from "@/components/ads/AdSlot";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "https://draw-data.com" },
+};
 
 const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },

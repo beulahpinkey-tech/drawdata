@@ -1,4 +1,7 @@
-export const metadata = { title: "Privacy Policy — DrawData" };
+export const metadata = {
+  title: "Privacy Policy — DrawData",
+  alternates: { canonical: "https://draw-data.com/privacy" },
+};
 
 export default function PrivacyPage() {
   return (

@@ -1,6 +1,9 @@
 import { PickerView } from "./PickerView";
 
-export const metadata = { title: "Choose what to explore — DrawData" };
+export const metadata = {
+  title: "Choose what to explore — DrawData",
+  alternates: { canonical: "https://draw-data.com/picker" },
+};
 
 export default function PickerPage() {
   return (

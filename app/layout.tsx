@@ -26,9 +26,12 @@ export const metadata: Metadata = {
   },
   description:
     "Free interactive analytics on every Powerball, Mega Millions, Pick 3 and Pick 4 draw from Wisconsin, Pennsylvania, New Jersey, and Texas. Frequency, gaps, sums, pairs, and a transparent Formula Lab — descriptive only, no predictions.",
-  alternates: {
-    canonical: "https://draw-data.com",
-  },
+  // NOTE: no `alternates.canonical` here on purpose. A canonical set in the
+  // root layout CASCADES to every child page that doesn't override it, which
+  // made /picker, /about, /contact, etc. all declare the homepage as their
+  // canonical (Google then treated them as duplicates of "/"). Each page
+  // sets its own self-referencing canonical instead; the homepage sets one
+  // in app/page.tsx.
   keywords: [
     "drawdata",
     "draw data",
