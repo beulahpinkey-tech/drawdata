@@ -46,6 +46,7 @@ mkdirSync(OUT_DIR, { recursive: true });
 const BASE = "https://www.calottery.com/api/DrawGameApi/DrawGamePastDrawResults";
 const PAGE_SIZE = 50; // hard cap — see note 1
 const MAX_PAGES = 40; // window is ~8 pages; headroom if CA widens it
+const MAX_ATTEMPTS = 5; // exponential backoff: ~1+2+4+8s before giving up
 
 type Endpoint = {
   game: "pick3" | "pick4";
@@ -92,8 +93,11 @@ async function fetchPage(ep: Endpoint, page: number, attempt = 1): Promise<RawDr
     if (body === null) throw new Error(`null body at page ${page} — PAGE_SIZE ${PAGE_SIZE} over cap?`);
     return body.PreviousDraws ?? [];
   } catch (err) {
-    if (attempt < 3) {
-      await sleep(500 * attempt);
+    // calottery.com rate-limits under sustained access and answers 403 for a
+    // while afterwards. 500ms x3 is nowhere near long enough to ride that
+    // out, so back off exponentially with jitter before giving up.
+    if (attempt < MAX_ATTEMPTS) {
+      await sleep(1000 * 2 ** (attempt - 1) + Math.floor(Math.random() * 500));
       return fetchPage(ep, page, attempt + 1);
     }
     throw err;
@@ -202,9 +206,33 @@ async function main() {
   console.log("Fetching CA Daily 3 / Daily 4 (rolling ~6-month window)");
   console.log(`Source: ${BASE}`);
 
+  let unreachable = 0;
+
   for (const ep of ENDPOINTS) {
     process.stdout.write(`  ${ep.game.padEnd(6)} `);
-    const { rows: fetched, malformed, truncated } = await fetchGame(ep);
+
+    // If the upstream is unreachable but we already hold history, keep it and
+    // report, rather than aborting. The CSV is a merge-only accumulator, so
+    // last-known-good stays correct — it just stops growing, and precompute
+    // flags the dataset stale. Only a first run with nothing on disk is fatal,
+    // because then there is genuinely no data to ship.
+    let fetched: Row[];
+    let malformed = 0;
+    let truncated: string | null = null;
+    try {
+      ({ rows: fetched, malformed, truncated } = await fetchGame(ep));
+    } catch (err) {
+      const existing = readExisting(ep.game, ep.positions);
+      if (existing.size === 0) throw err;
+      unreachable++;
+      process.stdout.write(
+        `
+         upstream unreachable (${(err as Error).message}) — ` +
+          `keeping ${existing.size.toLocaleString()} existing draws
+`,
+      );
+      continue;
+    }
 
     const merged = readExisting(ep.game, ep.positions);
     const existingCount = merged.size;
@@ -225,6 +253,22 @@ async function main() {
     console.log(`         ${rows[rows.length - 1]?.iso} → ${rows[0]?.iso}`);
     if (truncated) console.log(`         dropped partial edge date ${truncated}`);
     if (malformed) console.warn(`         ${malformed} malformed draw(s) skipped`);
+  }
+
+  if (unreachable > 0) {
+    // Exit non-zero even though the data on disk is fine. The refresh
+    // workflow marks every fetch step continue-on-error, so a failure here
+    // does NOT block the other states, ingest, or the commit — but it does
+    // surface the step as failed in the Actions UI. Exiting 0 would paint it
+    // green while the dataset quietly stopped updating, which is the silent
+    // staleness the deploy monitor exists to catch.
+    console.error(
+      `
+  ${unreachable} game(s) could not be refreshed; existing history preserved ` +
+        `and left untouched. Usually calottery.com rate-limiting, which clears on ` +
+        `its own — the dataset will age until it does.`,
+    );
+    process.exitCode = 1;
   }
 }
 

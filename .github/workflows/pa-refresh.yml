@@ -3,31 +3,45 @@ name: Lottery daily refresh
 # Single workflow, fires twice a day, refreshing every data source in one
 # run:
 #
-#   1. fetch:pa         — PA Pick 3 / Pick 4 from palottery.pa.gov JSON
-#   2. fetch:nj         — NJ Pick 3 / Pick 4 from njlottery.com JSON
-#   3. fetch:wi         — WI Pick 3 / Pick 4 scraped from wilottery.com
-#                         (merge-only writer — never overwrites shrunk)
-#   4. fetch:tx         — TX Pick 3 / Daily 4 from texaslottery.com CSV
-#                         exports (Day → Midday, Night → Evening; Morning
-#                         + Evening intra-day draws are skipped)
-#   5. fetch:nc         — NC Pick 3 / Pick 4 from nclottery.com download
-#                         CSVs (D → Midday, E → Evening)
-#   6. fetch:ny         — NY Numbers / Win 4 from data.ny.gov Open Data
-#                         (whole 1980→ history in a single request)
-#   7. fetch:ca         — CA Daily 3 / Daily 4 from calottery.com API
-#                         (~6-month rolling window; merge-only accumulator)
-#   8. fetch:ma         — MA The Numbers Game (4-digit only) from
-#                         masslottery.com. No range query exists, so past
-#                         years are skipped via data/ma/fetched-years.json
-#                         and only the current year's tail is refetched.
-#   9. fetch:powerball  — Powerball from PA endpoint (g=12), merges
-#                         with existing CSV to preserve 1992-2002 history
-#  10. fetch:mm         — Mega Millions from data.ny.gov Open Data
+#    1. fetch:pa         — PA Pick 3 / Pick 4 from palottery.pa.gov JSON
+#    2. fetch:nj         — NJ Pick 3 / Pick 4 from njlottery.com JSON
+#    3. fetch:wi         — WI Pick 3 / Pick 4 scraped from wilottery.com
+#                          (merge-only writer — never overwrites shrunk)
+#    4. fetch:tx         — TX Pick 3 / Daily 4 from texaslottery.com CSV
+#                          exports (Day → Midday, Night → Evening; Morning
+#                          + Evening intra-day draws are skipped)
+#    5. fetch:nc         — NC Pick 3 / Pick 4 from nclottery.com download
+#                          CSVs (D → Midday, E → Evening)
+#    6. fetch:fl         — FL Pick 3 / Pick 4 from the floridalottery.com
+#                          app API (2yr rolling window, merge-only)
+#    7. fetch:wa         — WA Daily Game (3-digit only), walottery.com
+#                          180-day rolling window, merge-only
+#    8. fetch:ga         — GA Cash 3 / Cash 4 from galottery.com JSON
+#                          (midday/evening/night streams)
+#    9. fetch:mi         — MI Daily 3 / Daily 4, michiganlottery.com
+#                          GraphQL, fetched in monthly chunks
+#   10. fetch:ny         — NY Numbers / Win 4 from data.ny.gov Open Data
+#                          (whole 1980→ history in a single request)
+#   11. fetch:ca         — CA Daily 3 / Daily 4 from calottery.com API
+#                          (~6-month rolling window; merge-only accumulator)
+#   12. fetch:ma         — MA The Numbers Game (4-digit only) from
+#                          masslottery.com. No range query exists, so past
+#                          years are skipped via data/ma/fetched-years.json
+#                          and only the current year's tail is refetched.
+#   13. fetch:co         — CO Pick 3 (3-digit only) from the
+#                          coloradolottery.com month archive, one page per
+#                          month back to 2013-04; completed months cached
+#   14. fetch:md         — MD Pick 3 / Pick 4 from mdlottery.com in a single
+#                          request (~7-month rolling window, merge-only)
+#   15. fetch:powerball  — Powerball from PA endpoint (g=12), merges
+#                          with existing CSV to preserve 1992-2002 history
+#   16. fetch:mm         — Mega Millions from data.ny.gov Open Data
 #
 # After fetching, npm run ingest regenerates JSON aggregates and runs
-# freshness + size guards (fail if any dataset is >7 days stale or any
-# file >50 MB). If aggregates changed, the bot commits and pushes —
-# Cloudflare Pages auto-rebuilds.
+# freshness + size guards (freshness is FLAGGED, not fatal, so one dead
+# upstream can't freeze the healthy datasets; >50 MB files warn). Then
+# npm run verify gates the commit on structural correctness. If aggregates
+# changed, the bot commits and pushes — Cloudflare Pages auto-rebuilds.
 #
 # Cron times (UTC, with 0-15 min jitter added in-job below):
 #   19:17 UTC  — after midday draws (PA 1:35 PM ET, NJ 12:59 PM ET)
@@ -80,10 +94,11 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     # 30 min cap accommodates the worst case on a scheduled run:
-    #   ~15 min jitter (0-899s random) + ~7 min total fetch across
-    #   PA/NJ/WI/TX/NC/PB/MM + ~2 min ingest + ~1 min push. Started
-    #   at 10 min when we had 3 states; grew with TX (8 CSV pulls)
-    #   and NC (2 CSV pulls). Public-repo Actions are unbilled so
+    #   ~15 min jitter (0-899s random) + ~8-9 min total fetch across
+    #   all 14 states + PB/MM + ~2 min ingest/verify + ~1 min push.
+    #   Started at 10 min when we had 3 states; grew with TX (8 CSV
+    #   pulls), NC (2 CSV pulls), and the 2026 batch (NY/CA/MA/CO/MD,
+    #   measured at +82s cold). Public-repo Actions are unbilled so
     #   the upper bound here is cosmetic — a stuck run should fail,
     #   not loop forever, and 30 min gives plenty of headroom.
     timeout-minutes: 30
@@ -218,56 +233,132 @@ jobs:
           echo "This spreads our load across the 19:30/04:30 cron window."
           sleep "$DELAY"
 
+      # Every fetch step below is continue-on-error BY DESIGN.
+      #
+      # Upstreams break independently and often: a state lottery rate-limits
+      # us (calottery.com returns 403 under load), puts a WAF in front of the
+      # results page, or just 500s for an afternoon. Without this, one such
+      # upstream fails its step, fails the job, and NOTHING gets committed —
+      # so all 27 datasets go stale because one went down. That is the exact
+      # failure mode precompute's staleness handling was written to avoid
+      # ("shipping the healthy sources beats freezing everything").
+      #
+      # Every fetcher is merge-only and refuses to write an empty CSV, so a
+      # failed fetch leaves last-known-good on disk untouched. The dataset
+      # then ages, precompute flags it in meta.stale, and the failed step is
+      # still visible in the Actions UI. Real corruption is caught separately
+      # by the verify gate before the commit.
+
       - name: Fetch latest PA draws
+        continue-on-error: true
         run: npm run fetch:pa
 
       - name: Fetch latest NJ draws
+        continue-on-error: true
         run: npm run fetch:nj
 
       - name: Fetch latest WI draws (scrapes wilottery.com)
+        continue-on-error: true
         run: npm run fetch:wi
 
       - name: Fetch latest TX draws (texaslottery.com CSV exports)
+        continue-on-error: true
         run: npm run fetch:tx
 
       - name: Fetch latest NC draws (nclottery.com CSV exports)
+        continue-on-error: true
         run: npm run fetch:nc
 
       - name: Fetch latest FL draws (floridalottery.com app API, 2yr rolling window, merge-only)
+        continue-on-error: true
         run: npm run fetch:fl
 
       - name: Fetch latest WA draws (walottery.com Daily Game, 180-day rolling window, merge-only)
+        continue-on-error: true
         run: npm run fetch:wa
 
       - name: Fetch latest GA draws (galottery.com API, Cash 3/4, midday/evening/night)
+        continue-on-error: true
         run: npm run fetch:ga
 
       - name: Fetch latest MI draws (michiganlottery.com GraphQL, Daily 3/4, monthly chunks)
+        continue-on-error: true
         run: npm run fetch:mi
 
       - name: Fetch latest NY draws (data.ny.gov Open Data, full history in one call)
+        continue-on-error: true
         run: npm run fetch:ny
 
       - name: Fetch latest CA draws (calottery.com API, ~6mo rolling window, merge-only)
+        continue-on-error: true
         run: npm run fetch:ca
 
       - name: Fetch latest MA draws (masslottery.com, incremental — past years skipped via manifest)
+        continue-on-error: true
         run: npm run fetch:ma
 
       - name: Fetch latest CO draws (coloradolottery.com month archive, Pick 3 only)
+        continue-on-error: true
         run: npm run fetch:co
 
       - name: Fetch latest MD draws (mdlottery.com, ~7mo rolling window, merge-only)
+        continue-on-error: true
         run: npm run fetch:md
 
       - name: Fetch latest Powerball (PA Lottery JSON, g=12)
+        continue-on-error: true
         run: npm run fetch:powerball
 
       - name: Fetch latest Mega Millions (NY Open Data)
+        continue-on-error: true
         run: npm run fetch:mm
 
       - name: Regenerate JSON aggregates
         run: npm run ingest
+
+      # Gate the commit on the data actually being coherent. These are
+      # structural invariants (per-position totals, stream splits summing to
+      # the combined count, shape/sum distributions, state-catalog agreement)
+      # — NOT freshness, which precompute deliberately only flags so one dead
+      # upstream can't freeze every healthy dataset. The digit-uniformity
+      # test is reported as a warning for the same reason: it is statistical,
+      # and must never wedge the refresh over sampling noise.
+      #
+      # If this fails, something is genuinely corrupt and we would rather
+      # keep serving last-known-good than commit it.
+      - name: Verify aggregates before committing
+        run: npm run verify
+
+      # Refuse to commit a dataset that LOST draws.
+      #
+      # This is the invariant the WI fetcher's merge-only writer was built
+      # for after pagination silently truncated it and destroyed 14k rows.
+      # But it was only ever enforced inside that one fetcher: NJ, TX and NC
+      # still overwrite their CSV with whatever the upstream returned, so a
+      # partial response silently deletes history. Observed in practice — a
+      # single `npm run fetch:all` dropped 1,274 draws across those three
+      # (NJ back to 2025-12-31) because their upstreams returned short.
+      #
+      # Draw history is append-only in reality: a CSV shrinking always means
+      # a broken fetch, never a legitimate update. Catch it here, for every
+      # state at once, rather than trusting each fetcher to police itself.
+      - name: Refuse to commit shrunken datasets
+        run: |
+          set -uo pipefail
+          fail=0
+          for f in $(git ls-files 'data/*.csv' 'data/**/*.csv'); do
+            old=$(git show "HEAD:$f" 2>/dev/null | grep -cE '^[0-9]{2}-' || echo 0)
+            new=$(grep -cE '^[0-9]{2}-' "$f" || echo 0)
+            if [ "$new" -lt "$old" ]; then
+              echo "::error::$f lost draws: $old -> $new. Upstream returned a partial result and the fetcher overwrote instead of merging."
+              fail=1
+            fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "Refusing to commit — restore with: git checkout HEAD -- data/"
+            exit 1
+          fi
+          echo "OK — no dataset shrank."
 
       - name: Commit + push if anything changed
         run: |

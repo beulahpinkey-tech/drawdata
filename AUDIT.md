@@ -11,7 +11,7 @@
 
 | Layer | Detected |
 |---|---|
-| Framework | **Next.js 14.2.15**, App Router, fully static export, `output: "standalone"`, deployed via `@cloudflare/next-on-pages` to Cloudflare Pages |
+| Framework | **Next.js 14.2.15**, App Router, deployed via `@cloudflare/next-on-pages` to Cloudflare Pages (serves `.vercel/output/static`). `output: "standalone"` is set on Linux only — nothing consumes `.next/standalone`, and on Windows it breaks `next build` with EBUSY while tracing edge chunks. Game routes run on the edge runtime, so they are server-rendered per request rather than statically exported. |
 | Language | TypeScript (strict) end-to-end |
 | Styling | **Tailwind 3.4.7** + a small `styles/tokens.css` of CSS custom properties + utility classes (`.panel`, `.panel-inner`, `.grain`, `.kbd`, `.divider`) |
 | Animation | **framer-motion 11.18.2** (used in `components/motion/primitives.tsx` for `StaggerGroup`/`StaggerItem`), Tailwind keyframes (`fade-up`, `shimmer`) |

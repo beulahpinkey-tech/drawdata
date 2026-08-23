@@ -57,9 +57,25 @@ const securityHeaders = [
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
 ];
 
+// `output: "standalone"` packages a self-hosted Node server into
+// .next/standalone. Nothing in this project consumes it: Cloudflare Pages
+// serves .vercel/output/static, produced by @cloudflare/next-on-pages
+// (see wrangler.toml), and there is no Dockerfile or custom server.
+//
+// It is also actively broken on Windows — the standalone tracing step dies
+// with EBUSY copying .next/server/edge-chunks/*.js, because this app runs
+// pages on the edge runtime. That reproduces on a clean checkout with no
+// local changes, so `next build` cannot complete on a Windows dev machine.
+//
+// Rather than drop the setting outright (it predates the Cloudflare
+// migration and something on Linux may still expect it), skip it only on
+// Windows. CI and production build on Linux and keep the exact behaviour
+// they have today; local Windows builds now finish.
+const isWindows = process.platform === "win32";
+
 const nextConfig = {
   reactStrictMode: true,
-  output: "standalone",
+  ...(isWindows ? {} : { output: "standalone" }),
   // Don't leak Next's version in X-Powered-By — drops one fingerprint
   // a scanner could use to target known-Next vulnerabilities.
   poweredByHeader: false,
