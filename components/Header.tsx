@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import { GameSwitcher } from "./GameSwitcher";
 import { readActiveGame, writeActiveGame, type ActiveGame } from "@/lib/clientState";
+import { ALL_GAMES, isPickSlug } from "@/lib/types";
 
 const NAV_FULL = [
   { href: "overview", label: "Overview" },
@@ -20,7 +21,10 @@ const NAV_FULL = [
   { href: "lookup", label: "Lookup", pickOnly: true },
 ];
 
-const GAMES = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4", "nc-pick3", "nc-pick4", "powerball", "megamillions"];
+// Recognised URL slugs. Hardcoding this list let it fall 15 datasets behind:
+// any game missing here parsed as `urlGame = null`, so its per-game tab bar
+// (Overview / Frequency / Gaps / ...) silently never rendered.
+const GAMES: string[] = ALL_GAMES;
 
 export function Header() {
   const pathname = usePathname() || "/";
@@ -41,12 +45,36 @@ export function Header() {
   // The "effective" game used for non-game pages (Lab/About) — falls back to last selected.
   const effectiveGame = urlGame ?? storedGame;
   // Build Lab link with ?game= so the Lab respects context.
-  const isPick = effectiveGame && /^(wi|pa|nj)-pick[34]$/.test(effectiveGame);
+  const isPick = effectiveGame && isPickSlug(effectiveGame);
   const labHref = isPick
     ? `/lab?game=${effectiveGame}`
     : effectiveGame === "powerball" || effectiveGame === "megamillions"
     ? `/lab?from=${effectiveGame}`
     : "/lab";
+
+  // One definition of the primary nav, shared by the desktop bar and the
+  // mobile sheet, so the two can never drift apart.
+  const siteLinks = [
+    { href: "/explore", label: "Explorer", active: pathname.startsWith("/explore") },
+    { href: labHref, label: "Formula Lab", active: pathname.startsWith("/lab") },
+    { href: "/patterns", label: "Patterns", active: pathname.startsWith("/patterns") },
+    { href: "/draw-machine", label: "Machine", active: pathname.startsWith("/draw-machine") },
+    { href: "/odds", label: "Odds", active: pathname.startsWith("/odds") },
+    { href: "/contact", label: "Feedback", active: pathname === "/contact" },
+    { href: "/about", label: "About", active: pathname === "/about" },
+  ];
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Close on navigation, otherwise the sheet stays open over the new page.
+  useEffect(() => setMobileOpen(false), [pathname]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
 
   // Scroll-driven cinematic feedback. Pure visual values, no layout impact.
   const reduce = useReducedMotion();
@@ -90,90 +118,106 @@ export function Header() {
               currentView={currentView}
             />
             <nav className="hidden lg:flex items-center gap-1 text-sm text-dim">
-              <Link
-                href="/explore"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname.startsWith("/explore")
-                    ? "text-accent bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Explorer
-              </Link>
-              <Link
-                href={labHref}
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname.startsWith("/lab")
-                    ? "text-accent bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Formula Lab
-              </Link>
-              <Link
-                href="/patterns"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname.startsWith("/patterns")
-                    ? "text-accent bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Patterns
-              </Link>
-              <Link
-                href="/draw-machine"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname.startsWith("/draw-machine")
-                    ? "text-accent bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Machine
-              </Link>
-              <Link
-                href="/odds"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname.startsWith("/odds")
-                    ? "text-accent bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Odds
-              </Link>
-              <Link
-                href="/contact"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname === "/contact"
-                    ? "text-text bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                Feedback
-              </Link>
-              <Link
-                href="/about"
-                className={`px-3 py-1.5 rounded-md transition-colors ${
-                  pathname === "/about"
-                    ? "text-text bg-white/[0.04]"
-                    : "hover:text-text"
-                }`}
-              >
-                About
-              </Link>
+              {siteLinks.map((l) => (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  className={`px-3 py-1.5 rounded-md transition-colors ${
+                    l.active ? "text-accent bg-white/[0.04]" : "hover:text-text"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              ))}
             </nav>
           </div>
-          <div className="md:hidden">
-            <GameSwitcher
-              currentGame={urlGame}
-              storedGame={storedGame}
-              currentView={currentView}
-              compact
-            />
+          {/* Below lg the primary nav is hidden, so without this button the
+              Explorer / Lab / Patterns / Machine / Odds pages are simply
+              unreachable on a phone or tablet — there was no menu at all. */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="md:hidden">
+              <GameSwitcher
+                currentGame={urlGame}
+                storedGame={storedGame}
+                currentView={currentView}
+                compact
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setMobileOpen((o) => !o)}
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-menu"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-edge text-dim hover:text-text hover:bg-white/[0.04] transition-colors"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                {mobileOpen ? (
+                  <>
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M3 12h18" />
+                    <path d="M3 6h18" />
+                    <path d="M3 18h18" />
+                  </>
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+        {/* Mobile / tablet sheet. Carries BOTH the primary nav and, when a
+            game is selected, its analytic views — the per-game tab bar below
+            is hidden under md, so those pages had no reachable navigation on
+            a phone either. */}
+        {mobileOpen && (
+          <div id="mobile-menu" className="lg:hidden border-t border-edge py-3">
+            <nav className="flex flex-col text-sm">
+              {siteLinks.map((l) => (
+                <Link
+                  key={l.label}
+                  href={l.href}
+                  className={`px-2 py-2.5 rounded-md transition-colors ${
+                    l.active ? "text-accent bg-white/[0.04]" : "text-dim hover:text-text"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            {urlGame && (
+              <div className="mt-3 border-t border-edge pt-3">
+                <p className="px-2 pb-2 text-[11px] uppercase tracking-wider text-dim/70">
+                  This game
+                </p>
+                <div className="flex flex-wrap gap-1.5 px-2">
+                  {NAV_FULL.filter((n) => !n.pickOnly || isPickSlug(urlGame!)).map((n) => {
+                    const href = `/${urlGame}/${n.href === "overview" ? "" : n.href}`.replace(/\/$/, "");
+                    const active = currentView === n.href;
+                    return (
+                      <Link
+                        key={n.href}
+                        href={href || `/${urlGame}`}
+                        className={`text-[13px] px-3 py-1.5 rounded-full border transition-colors ${
+                          active
+                            ? "text-accent border-accent/30 bg-accent/[0.06]"
+                            : "text-dim border-edge hover:text-text"
+                        }`}
+                      >
+                        {n.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         {urlGame && (
           <div className="hidden md:flex h-10 items-center gap-1 overflow-x-auto border-t border-edge -mx-4 px-4 sm:-mx-6 sm:px-6">
-            {NAV_FULL.filter((n) => !n.pickOnly || /^(wi|pa|nj)-pick[34]$/.test(urlGame!)).map((n) => {
+            {NAV_FULL.filter((n) => !n.pickOnly || isPickSlug(urlGame!)).map((n) => {
               const href = `/${urlGame}/${n.href === "overview" ? "" : n.href}`.replace(/\/$/, "");
               const active = currentView === n.href;
               return (

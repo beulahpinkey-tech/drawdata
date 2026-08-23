@@ -92,8 +92,8 @@ export default function HomePage() {
           <p className="mt-6 text-fg-secondary text-body max-w-2xl leading-body">
             DrawData turns public lottery history into an interactive, honest data
             instrument. Powerball winning numbers since 1992. Mega Millions since 2002.
-            Pick 3 and Pick 4 results from Wisconsin, Pennsylvania, New Jersey, Texas,
-            and North Carolina — a quarter-million draws in all. Watch frequencies
+            Daily digit games from fourteen states, reaching back to 1976 — more
+            than 330,000 draws in all. Watch frequencies
             converge, gaps wander, sums settle into a bell. Test your favorite
             &ldquo;system&rdquo; in the Formula Lab and see, with your own eyes, why
             randomness is randomness.

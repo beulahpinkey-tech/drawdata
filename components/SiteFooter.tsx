@@ -106,8 +106,11 @@ export function SiteFooter() {
               <span className="text-fg-primary font-medium">For analysis and entertainment only.</span>{" "}
               Lottery draws are random and independent. This app describes past results
               and does not predict future numbers, improve your chances of winning, or
-              constitute betting advice. Sources: Wisconsin, Pennsylvania, New Jersey,
-              Texas, and North Carolina state lottery publications + data.ny.gov.{" "}
+              constitute betting advice. Sources: official lottery publications from
+              California, Colorado, Florida, Georgia, Maryland, Massachusetts,
+              Michigan, New Jersey, North Carolina, Pennsylvania, Texas, Washington
+              and Wisconsin, plus New York State open data (data.ny.gov) for the New
+              York and Mega Millions draws.{" "}
               <strong className="text-fg-primary">Not affiliated with or endorsed by any official lottery.</strong> 18+.
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 t-caption">
@@ -178,7 +181,7 @@ function CtaBand() {
       <div className="mx-auto max-w-narrow px-4 sm:px-6 py-section flex flex-col items-center text-center gap-6">
         <div className="t-data-label">One last thing</div>
         <h2 className="t-h2 max-w-3xl">
-          A quarter-million draws.<br />
+          Over 330,000 draws.<br />
           <span className="text-brand-500">Pick one and look.</span>
         </h2>
         <p className="text-fg-secondary max-w-prose text-body">

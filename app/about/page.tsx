@@ -27,9 +27,11 @@ export default function AboutPage() {
           We turn public state and national lottery draw history into interactive,
           honest analytics. The point of view is structural: lottery draws are
           independent and random, so every view here describes the past — none claims
-          to predict the future. Coverage spans Powerball, Mega Millions, and Pick 3 /
-          Pick 4 games across Wisconsin, Pennsylvania, New Jersey, Texas, and North
-          Carolina — over a quarter-million draws in all.
+          to predict the future. Coverage spans Powerball, Mega Millions, and the
+          daily digit games of fourteen states — California, Colorado, Florida,
+          Georgia, Maryland, Massachusetts, Michigan, New Jersey, New York, North
+          Carolina, Pennsylvania, Texas, Washington and Wisconsin — over 330,000
+          draws in all, the oldest from 1976.
         </p>
         {(META as any).lastCsvUpdated && (
           <div className="mt-4 inline-flex items-center gap-2 text-caption font-mono text-fg-tertiary panel-inner px-3 py-1.5">

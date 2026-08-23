@@ -1,35 +1,16 @@
 "use client";
 
+import { ALL_GAMES, type Game } from "@/lib/types";
+
 const GAME_KEY = "drawdata_active_game_v2"; // v2 because slug format changed
 
-export type ActiveGame =
-  | "wi-pick3"
-  | "wi-pick4"
-  | "pa-pick3"
-  | "pa-pick4"
-  | "nj-pick3"
-  | "nj-pick4"
-  | "tx-pick3"
-  | "tx-pick4"
-  | "nc-pick3"
-  | "nc-pick4"
-  | "powerball"
-  | "megamillions";
+// The set of games the client may remember. Derived from ALL_GAMES so it
+// cannot drift: this used to be a hand-maintained union and fell 15 datasets
+// behind, which silently broke "remember my last game" for every state added
+// after North Carolina.
+export type ActiveGame = Game;
 
-const VALID = new Set<ActiveGame>([
-  "wi-pick3",
-  "wi-pick4",
-  "pa-pick3",
-  "pa-pick4",
-  "nj-pick3",
-  "nj-pick4",
-  "tx-pick3",
-  "tx-pick4",
-  "nc-pick3",
-  "nc-pick4",
-  "powerball",
-  "megamillions",
-]);
+const VALID = new Set<ActiveGame>(ALL_GAMES);
 
 export function readActiveGame(): ActiveGame | null {
   if (typeof window === "undefined") return null;
