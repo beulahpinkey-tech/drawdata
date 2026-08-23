@@ -199,12 +199,15 @@ console.log("DrawData ingest — Wisconsin Lottery CSVs → JSON aggregates");
 console.log(rule());
 
 // ─── State-scoped pick games ────────────────────────────────────────────
-// `pick4: false` marks a state that only offers a 3-digit game (e.g.
-// Washington's Daily Game). For dual-game states pick4 stays required, so
-// a transiently-missing pick4 CSV still skips the whole state as before.
+// Some states run only one digit game. `pick4: false` marks a 3-digit-only
+// state (Washington's Daily Game); `pick3: false` marks a 4-digit-only one
+// (Massachusetts' The Numbers Game). Whichever games a state DOES declare
+// stay required, so a transiently-missing CSV still skips the whole state
+// rather than silently shipping half of it.
 type StateCfg = {
-  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga" | "mi";
+  code: "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "wa" | "ga" | "mi" | "ny" | "ca" | "ma" | "co" | "md";
   label: string;
+  pick3?: boolean;
   pick4?: boolean;
 };
 const STATES: StateCfg[] = [
@@ -217,6 +220,11 @@ const STATES: StateCfg[] = [
   { code: "wa", label: "Washington", pick4: false },
   { code: "ga", label: "Georgia", pick4: true },
   { code: "mi", label: "Michigan", pick4: true },
+  { code: "ny", label: "New York", pick4: true },
+  { code: "ca", label: "California", pick4: true },
+  { code: "ma", label: "Massachusetts", pick3: false },
+  { code: "co", label: "Colorado", pick4: false },
+  { code: "md", label: "Maryland", pick4: true },
 ];
 
 const PICK3_ALIASES = ["pick-3.csv", "pick-3_history.csv", "pick_3.csv"];
@@ -232,15 +240,19 @@ console.log("\nReading state CSVs …");
 const stateLoaded: LoadedPick[] = [];
 for (const s of STATES) {
   const stateDir = join(ROOT, "data", s.code);
+  const wantsPick3 = s.pick3 !== false;
   const wantsPick4 = s.pick4 !== false;
-  const p3 = loadCsv("pick3.csv", PICK3_ALIASES, [stateDir], false);
+  const p3 = wantsPick3 ? loadCsv("pick3.csv", PICK3_ALIASES, [stateDir], false) : null;
   const p4 = wantsPick4 ? loadCsv("pick4.csv", PICK4_ALIASES, [stateDir], false) : null;
-  if (!p3 || (wantsPick4 && !p4)) {
-    console.log(`  ${s.code.toUpperCase()} skipped (missing pick3${wantsPick4 ? " or pick4" : ""} in ${stateDir})`);
+  if ((wantsPick3 && !p3) || (wantsPick4 && !p4)) {
+    const wanted = [wantsPick3 && "pick3", wantsPick4 && "pick4"].filter(Boolean).join(" or ");
+    console.log(`  ${s.code.toUpperCase()} skipped (missing ${wanted} in ${stateDir})`);
     continue;
   }
-  stateLoaded.push({ state: s, game: "pick3", csv: p3 });
-  console.log(`  ${s.code.toUpperCase()} pick3 ← ${p3.path}`);
+  if (p3) {
+    stateLoaded.push({ state: s, game: "pick3", csv: p3 });
+    console.log(`  ${s.code.toUpperCase()} pick3 ← ${p3.path}`);
+  }
   if (p4) {
     stateLoaded.push({ state: s, game: "pick4", csv: p4 });
     console.log(`  ${s.code.toUpperCase()} pick4 ← ${p4.path}`);

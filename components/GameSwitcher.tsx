@@ -10,7 +10,7 @@ type Props = {
   compact?: boolean;
 };
 
-type GroupKey = "national" | "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "ga" | "mi" | "wa";
+type GroupKey = "national" | "wi" | "pa" | "nj" | "tx" | "nc" | "fl" | "ga" | "mi" | "ny" | "ca" | "ma" | "co" | "md" | "wa";
 
 const GAMES: { id: string; label: string; tag: string; group: GroupKey }[] = [
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", group: "national" },
@@ -31,6 +31,14 @@ const GAMES: { id: string; label: string; tag: string; group: GroupKey }[] = [
   { id: "ga-pick4", label: "Georgia Cash 4", tag: "4-digit", group: "ga" },
   { id: "mi-pick3", label: "Michigan Daily 3", tag: "3-digit", group: "mi" },
   { id: "mi-pick4", label: "Michigan Daily 4", tag: "4-digit", group: "mi" },
+  { id: "ny-pick3", label: "New York Numbers", tag: "3-digit", group: "ny" },
+  { id: "ny-pick4", label: "New York Win 4", tag: "4-digit", group: "ny" },
+  { id: "ca-pick3", label: "California Daily 3", tag: "3-digit", group: "ca" },
+  { id: "ca-pick4", label: "California Daily 4", tag: "4-digit", group: "ca" },
+  { id: "ma-pick4", label: "Massachusetts The Numbers Game", tag: "4-digit", group: "ma" },
+  { id: "co-pick3", label: "Colorado Pick 3", tag: "3-digit", group: "co" },
+  { id: "md-pick3", label: "Maryland Pick 3", tag: "3-digit", group: "md" },
+  { id: "md-pick4", label: "Maryland Pick 4", tag: "4-digit", group: "md" },
   { id: "wa-pick3", label: "Washington Daily Game", tag: "3-digit", group: "wa" },
 ];
 
@@ -44,6 +52,11 @@ const GROUPS: { key: GroupKey; title: string }[] = [
   { key: "fl", title: "Florida" },
   { key: "ga", title: "Georgia" },
   { key: "mi", title: "Michigan" },
+  { key: "ny", title: "New York" },
+  { key: "ca", title: "California" },
+  { key: "ma", title: "Massachusetts" },
+  { key: "co", title: "Colorado" },
+  { key: "md", title: "Maryland" },
   { key: "wa", title: "Washington" },
 ];
 

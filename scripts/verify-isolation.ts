@@ -33,7 +33,24 @@ type Draw = {
 
 type GameFile = { game: string; draws: Draw[] };
 
-const PICKS = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4", "nc-pick3", "nc-pick4"] as const;
+// Every shipped pick game. Keep in sync with PICK_GAMES in lib/data/index.ts —
+// a slug missing here is silently never checked for cross-state contamination.
+const PICKS = [
+  "wi-pick3", "wi-pick4",
+  "pa-pick3", "pa-pick4",
+  "nj-pick3", "nj-pick4",
+  "tx-pick3", "tx-pick4",
+  "nc-pick3", "nc-pick4",
+  "fl-pick3", "fl-pick4",
+  "wa-pick3",
+  "ga-pick3", "ga-pick4",
+  "mi-pick3", "mi-pick4",
+  "ny-pick3", "ny-pick4",
+  "ca-pick3", "ca-pick4",
+  "ma-pick4",
+  "co-pick3",
+  "md-pick3", "md-pick4",
+] as const;
 const BALLS = ["powerball", "megamillions"] as const;
 
 let failures = 0;

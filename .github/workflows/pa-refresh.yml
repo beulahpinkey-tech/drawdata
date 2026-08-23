@@ -1,7 +1,7 @@
 name: Lottery daily refresh
 
-# Single workflow, fires twice a day, refreshes ALL SEVEN data sources
-# in one run:
+# Single workflow, fires twice a day, refreshing every data source in one
+# run:
 #
 #   1. fetch:pa         — PA Pick 3 / Pick 4 from palottery.pa.gov JSON
 #   2. fetch:nj         — NJ Pick 3 / Pick 4 from njlottery.com JSON
@@ -12,9 +12,17 @@ name: Lottery daily refresh
 #                         + Evening intra-day draws are skipped)
 #   5. fetch:nc         — NC Pick 3 / Pick 4 from nclottery.com download
 #                         CSVs (D → Midday, E → Evening)
-#   6. fetch:powerball  — Powerball from PA endpoint (g=12), merges
+#   6. fetch:ny         — NY Numbers / Win 4 from data.ny.gov Open Data
+#                         (whole 1980→ history in a single request)
+#   7. fetch:ca         — CA Daily 3 / Daily 4 from calottery.com API
+#                         (~6-month rolling window; merge-only accumulator)
+#   8. fetch:ma         — MA The Numbers Game (4-digit only) from
+#                         masslottery.com. No range query exists, so past
+#                         years are skipped via data/ma/fetched-years.json
+#                         and only the current year's tail is refetched.
+#   9. fetch:powerball  — Powerball from PA endpoint (g=12), merges
 #                         with existing CSV to preserve 1992-2002 history
-#   7. fetch:mm         — Mega Millions from data.ny.gov Open Data
+#  10. fetch:mm         — Mega Millions from data.ny.gov Open Data
 #
 # After fetching, npm run ingest regenerates JSON aggregates and runs
 # freshness + size guards (fail if any dataset is >7 days stale or any
@@ -156,6 +164,27 @@ jobs:
           restore-keys: |
             mi-fetch-cache-
 
+      # MA is the one fetcher whose full backfill is expensive (~18,400
+      # requests — its API has no range query, so one call per date). This
+      # cache is a speed-up ONLY: the authoritative "which years are done"
+      # record is data/ma/fetched-years.json, committed to the repo, so an
+      # evicted cache costs nothing rather than triggering a re-backfill.
+      - name: Restore MA year cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/ma
+          key: ma-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            ma-fetch-cache-
+
+      - name: Restore CO month cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/co
+          key: co-fetch-cache-${{ github.run_id }}
+          restore-keys: |
+            co-fetch-cache-
+
       - name: Restore Powerball year cache
         uses: actions/cache@v5
         with:
@@ -216,6 +245,21 @@ jobs:
       - name: Fetch latest MI draws (michiganlottery.com GraphQL, Daily 3/4, monthly chunks)
         run: npm run fetch:mi
 
+      - name: Fetch latest NY draws (data.ny.gov Open Data, full history in one call)
+        run: npm run fetch:ny
+
+      - name: Fetch latest CA draws (calottery.com API, ~6mo rolling window, merge-only)
+        run: npm run fetch:ca
+
+      - name: Fetch latest MA draws (masslottery.com, incremental — past years skipped via manifest)
+        run: npm run fetch:ma
+
+      - name: Fetch latest CO draws (coloradolottery.com month archive, Pick 3 only)
+        run: npm run fetch:co
+
+      - name: Fetch latest MD draws (mdlottery.com, ~7mo rolling window, merge-only)
+        run: npm run fetch:md
+
       - name: Fetch latest Powerball (PA Lottery JSON, g=12)
         run: npm run fetch:powerball
 
@@ -230,12 +274,14 @@ jobs:
           set -e
           git config user.name "drawdata-bot"
           git config user.email "drawdata-bot@users.noreply.github.com"
-          git add data/pa data/nj data/wi data/tx data/nc data/fl data/wa data/ga data/mi lib/data || true
+          # data/ma includes fetched-years.json — the manifest MUST be
+          # committed or every run re-backfills Massachusetts from 1976.
+          git add data/pa data/nj data/wi data/tx data/nc data/fl data/wa data/ga data/mi data/ny data/ca data/ma data/co data/md lib/data || true
           if git diff --cached --quiet; then
-            echo "No new WI / PA / NJ / TX / NC / FL / WA / GA / MI / MM / PB draws — nothing to commit."
+            echo "No new draws across any tracked state — nothing to commit."
             exit 0
           fi
-          git commit -m "chore: refresh WI + PA + NJ + TX + NC + FL + WA + GA + MI + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
+          git commit -m "chore: refresh WI + PA + NJ + TX + NC + FL + WA + GA + MI + NY + CA + MA + CO + MD + MM + Powerball $(date -u +%Y-%m-%d_%H%MZ)"
 
           # Push with retry. The remote can move forward mid-run from a
           # manual trigger, an in-flight scheduled run, or you pushing

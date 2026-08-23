@@ -1,9 +1,11 @@
 # DrawData — [draw-data.com](https://draw-data.com)
 
 Free, interactive analytics on every public US lottery draw worth tracking.
-Powerball and Mega Millions back to the games' first matrices. Pick 3 and
-Pick 4 results from **Wisconsin, Pennsylvania, New Jersey, Texas, and
-North Carolina** — over a quarter-million draws, refreshed twice daily.
+Powerball and Mega Millions back to the games' first matrices. Daily digit
+games from **California, Colorado, Florida, Georgia, Maryland,
+Massachusetts, Michigan, New Jersey, New York, North Carolina,
+Pennsylvania, Texas, Washington, and Wisconsin** — over 330,000 draws
+going back to 1976, refreshed twice daily.
 
 **[Open the live site →](https://draw-data.com)**
 
@@ -20,6 +22,15 @@ North Carolina** — over a quarter-million draws, refreshed twice daily.
 | [New Jersey Pick 3](https://draw-data.com/nj-pick3) / [Pick 4](https://draw-data.com/nj-pick4) | 2015 → today | njlottery.com JSON |
 | [Texas Pick 3](https://draw-data.com/tx-pick3) / [Daily 4](https://draw-data.com/tx-pick4) | 1993 / 2007 → today | texaslottery.com CSV |
 | [North Carolina Pick 3](https://draw-data.com/nc-pick3) / [Pick 4](https://draw-data.com/nc-pick4) | 2006 / 2009 → today | nclottery.com CSV |
+| [Florida Pick 3](https://draw-data.com/fl-pick3) / [Pick 4](https://draw-data.com/fl-pick4) | 2024 → today | floridalottery.com app API |
+| [Georgia Cash 3](https://draw-data.com/ga-pick3) / [Cash 4](https://draw-data.com/ga-pick4) | 1993 / 1997 → today | galottery.com JSON |
+| [Michigan Daily 3](https://draw-data.com/mi-pick3) / [Daily 4](https://draw-data.com/mi-pick4) | 1998 → today | michiganlottery.com GraphQL |
+| [Washington Daily Game](https://draw-data.com/wa-pick3) | 2025 → today | walottery.com (scraped) |
+| [New York Numbers](https://draw-data.com/ny-pick3) / [Win 4](https://draw-data.com/ny-pick4) | 1980 / 1981 → today | data.ny.gov Open Data |
+| [California Daily 3](https://draw-data.com/ca-pick3) / [Daily 4](https://draw-data.com/ca-pick4) | 2026 → today (rolling window) | calottery.com JSON |
+| [Massachusetts The Numbers Game](https://draw-data.com/ma-pick4) | 1976 → today | masslottery.com JSON |
+| [Colorado Pick 3](https://draw-data.com/co-pick3) | 2013 → today | coloradolottery.com (scraped) |
+| [Maryland Pick 3](https://draw-data.com/md-pick3) / [Pick 4](https://draw-data.com/md-pick4) | 2026 → today (rolling window) | mdlottery.com (scraped) |
 
 Every dataset feeds the same set of analytics: digit frequency, pair
 co-occurrence, gap distributions, sums, positional bias, stream
@@ -58,7 +69,7 @@ behavior destroyed 14k+ rows of history before anyone noticed.
 ## Programmatic page engine
 
 Most of the site's URLs aren't hand-authored — they're generated, one
-per winnable query permutation, across all 12 datasets. The wiring:
+per winnable query permutation, across all 27 datasets. The wiring:
 
 **Templates ↔ data.** Pages live under `app/[game]/…` and are pure
 functions of the statically-imported aggregates. `lib/data/index.ts`

@@ -31,6 +31,14 @@ export async function getDraws(game: Game): Promise<Draw[]> {
     case "ga-pick4": return ((await import("./data/ga-pick4.json")).default as { draws: Draw[] }).draws;
     case "mi-pick3": return ((await import("./data/mi-pick3.json")).default as { draws: Draw[] }).draws;
     case "mi-pick4": return ((await import("./data/mi-pick4.json")).default as { draws: Draw[] }).draws;
+    case "ny-pick3": return ((await import("./data/ny-pick3.json")).default as { draws: Draw[] }).draws;
+    case "ny-pick4": return ((await import("./data/ny-pick4.json")).default as { draws: Draw[] }).draws;
+    case "ca-pick3": return ((await import("./data/ca-pick3.json")).default as { draws: Draw[] }).draws;
+    case "ca-pick4": return ((await import("./data/ca-pick4.json")).default as { draws: Draw[] }).draws;
+    case "ma-pick4": return ((await import("./data/ma-pick4.json")).default as { draws: Draw[] }).draws;
+    case "co-pick3": return ((await import("./data/co-pick3.json")).default as { draws: Draw[] }).draws;
+    case "md-pick3": return ((await import("./data/md-pick3.json")).default as { draws: Draw[] }).draws;
+    case "md-pick4": return ((await import("./data/md-pick4.json")).default as { draws: Draw[] }).draws;
     case "powerball": return ((await import("./data/powerball.json")).default as { draws: Draw[] }).draws;
     case "megamillions": return ((await import("./data/megamillions.json")).default as { draws: Draw[] }).draws;
   }

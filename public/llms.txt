@@ -1,7 +1,7 @@
 # DrawData — draw-data.com
 
-> Free, honest, descriptive analytics on US lottery draw history. Over a
-> quarter-million real draws across nine states plus Powerball and Mega
+> Free, honest, descriptive analytics on US lottery draw history. Over
+> 330,000 real draws across fourteen states plus Powerball and Mega
 > Millions, refreshed twice daily. DrawData is strictly descriptive, never
 > predictive — it does not claim numbers are "due," "hot," or "lucky," and
 > it does not predict future draws (lottery draws are random and independent).
@@ -23,6 +23,11 @@ past frequency carries no predictive power.
 - Florida Pick 3 / Pick 4 — https://draw-data.com/fl-pick3
 - Georgia Cash 3 / Cash 4 (midday/evening/night) — https://draw-data.com/ga-pick3
 - Michigan Daily 3 / Daily 4 — https://draw-data.com/mi-pick3
+- New York Numbers / Win 4 (history back to 1980) — https://draw-data.com/ny-pick3
+- California Daily 3 / Daily 4 — https://draw-data.com/ca-pick3
+- Massachusetts The Numbers Game, 4-digit (history back to 1976) — https://draw-data.com/ma-pick4
+- Colorado Pick 3, 3-digit only (history back to 2013) — https://draw-data.com/co-pick3
+- Maryland Pick 3 / Pick 4 — https://draw-data.com/md-pick3
 - Washington Daily Game — https://draw-data.com/wa-pick3
 
 ## What each game page offers

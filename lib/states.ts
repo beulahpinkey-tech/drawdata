@@ -2,8 +2,9 @@
 // Game names are sourced from each state lottery's public website. Some may
 // drift over time — the owner should verify before marking a state `available`.
 //
-// Only Wisconsin is currently `available` (we have its full draw CSV in data/wi/).
-// Every other state is `waitlist`; selecting it opens the waitlist modal.
+// A state is `available` once its draw CSVs land in data/<abbr>/ and it is
+// wired into scripts/precompute.ts. Every other state is `waitlist`;
+// selecting it opens the waitlist modal.
 
 export type StateGame = {
   state: string;
@@ -18,17 +19,15 @@ export const STATE_GAMES: StateGame[] = [
   { state: "Pennsylvania", abbr: "PA", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
   { state: "New Jersey", abbr: "NJ", pick3Name: "Pick-3", pick4Name: "Pick-4", status: "available" },
 
-  { state: "California", abbr: "CA", pick3Name: "Daily 3", pick4Name: "Daily 4", status: "waitlist" },
+  { state: "California", abbr: "CA", pick3Name: "Daily 3", pick4Name: "Daily 4", status: "available" },
   { state: "Texas", abbr: "TX", pick3Name: "Pick 3", pick4Name: "Daily 4", status: "available" },
-  // New York hidden — Numbers / Win 4 not offered yet
-  // { state: "New York", abbr: "NY", pick3Name: "Numbers", pick4Name: "Win 4", status: "waitlist" },
+  { state: "New York", abbr: "NY", pick3Name: "Numbers", pick4Name: "Win 4", status: "available" },
   { state: "Florida", abbr: "FL", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
   { state: "Georgia", abbr: "GA", pick3Name: "Cash 3", pick4Name: "Cash 4", status: "available" },
   { state: "Illinois", abbr: "IL", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
   { state: "Michigan", abbr: "MI", pick3Name: "Daily 3", pick4Name: "Daily 4", status: "available" },
   { state: "Ohio", abbr: "OH", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
-  { state: "New Jersey", abbr: "NJ", pick3Name: "Pick-3", pick4Name: "Pick-4", status: "waitlist" },
-  { state: "Maryland", abbr: "MD", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
+  { state: "Maryland", abbr: "MD", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "available" },
   { state: "Virginia", abbr: "VA", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
   { state: "North Carolina", abbr: "NC", pick3Name: "Carolina Pick 3", pick4Name: "Carolina Pick 4", status: "available" },
   { state: "South Carolina", abbr: "SC", pick3Name: "Pick 3", pick4Name: "Pick 4", status: "waitlist" },
@@ -47,12 +46,13 @@ export const STATE_GAMES: StateGame[] = [
   { state: "Maine", abbr: "ME", pick3Name: "Tri-State Pick 3", pick4Name: "Tri-State Pick 4", status: "waitlist" },
   { state: "New Hampshire", abbr: "NH", pick3Name: "Tri-State Pick 3", pick4Name: "Tri-State Pick 4", status: "waitlist" },
   { state: "Vermont", abbr: "VT", pick3Name: "Tri-State Pick 3", pick4Name: "Tri-State Pick 4", status: "waitlist" },
-  { state: "Massachusetts", abbr: "MA", pick3Name: "Numbers 3", pick4Name: "Numbers 4", status: "waitlist" },
+  // Massachusetts runs a single 4-digit game; there is no 3-digit counterpart.
+  { state: "Massachusetts", abbr: "MA", pick3Name: "The Numbers Game", status: "available" },
   { state: "Rhode Island", abbr: "RI", pick3Name: "Numbers", status: "waitlist" },
   { state: "New Mexico", abbr: "NM", pick3Name: "Pick 3", status: "waitlist" },
   { state: "Oklahoma", abbr: "OK", pick3Name: "Pick 3", status: "waitlist" },
   { state: "Kansas", abbr: "KS", pick3Name: "Pick 3", status: "waitlist" },
-  { state: "Colorado", abbr: "CO", pick3Name: "Pick 3", status: "waitlist" },
+  { state: "Colorado", abbr: "CO", pick3Name: "Pick 3", status: "available" },
   { state: "Arizona", abbr: "AZ", pick3Name: "Pick 3", status: "waitlist" },
   { state: "Minnesota", abbr: "MN", pick3Name: "Daily 3", status: "waitlist" },
   { state: "Nebraska", abbr: "NE", pick3Name: "Pick 3", status: "waitlist" },

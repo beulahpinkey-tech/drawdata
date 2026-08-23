@@ -19,6 +19,14 @@ import gaPick3Agg from "./ga-pick3.agg.json";
 import gaPick4Agg from "./ga-pick4.agg.json";
 import miPick3Agg from "./mi-pick3.agg.json";
 import miPick4Agg from "./mi-pick4.agg.json";
+import nyPick3Agg from "./ny-pick3.agg.json";
+import nyPick4Agg from "./ny-pick4.agg.json";
+import caPick3Agg from "./ca-pick3.agg.json";
+import caPick4Agg from "./ca-pick4.agg.json";
+import maPick4Agg from "./ma-pick4.agg.json";
+import coPick3Agg from "./co-pick3.agg.json";
+import mdPick3Agg from "./md-pick3.agg.json";
+import mdPick4Agg from "./md-pick4.agg.json";
 import powerballAgg from "./powerball.agg.json";
 import megamillionsAgg from "./megamillions.agg.json";
 import meta from "./meta.json";
@@ -51,6 +59,14 @@ export function getAgg(game: Game): any {
     case "ga-pick4": return gaPick4Agg;
     case "mi-pick3": return miPick3Agg;
     case "mi-pick4": return miPick4Agg;
+    case "ny-pick3": return nyPick3Agg;
+    case "ny-pick4": return nyPick4Agg;
+    case "ca-pick3": return caPick3Agg;
+    case "ca-pick4": return caPick4Agg;
+    case "ma-pick4": return maPick4Agg;
+    case "co-pick3": return coPick3Agg;
+    case "md-pick3": return mdPick3Agg;
+    case "md-pick4": return mdPick4Agg;
     case "megamillions": return megamillionsAgg;
     case "powerball": return powerballAgg;
   }
@@ -78,6 +94,14 @@ export const GAME_LABELS: Record<Game, string> = {
   "ga-pick4": "Georgia Cash 4",
   "mi-pick3": "Michigan Daily 3",
   "mi-pick4": "Michigan Daily 4",
+  "ny-pick3": "New York Numbers",
+  "ny-pick4": "New York Win 4",
+  "ca-pick3": "California Daily 3",
+  "ca-pick4": "California Daily 4",
+  "ma-pick4": "Massachusetts The Numbers Game",
+  "co-pick3": "Colorado Pick 3",
+  "md-pick3": "Maryland Pick 3",
+  "md-pick4": "Maryland Pick 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -100,6 +124,14 @@ export const GAME_SHORT: Record<Game, string> = {
   "ga-pick4": "Cash 4",
   "mi-pick3": "Daily 3",
   "mi-pick4": "Daily 4",
+  "ny-pick3": "Numbers",
+  "ny-pick4": "Win 4",
+  "ca-pick3": "Daily 3",
+  "ca-pick4": "Daily 4",
+  "ma-pick4": "The Numbers Game",
+  "co-pick3": "Pick 3",
+  "md-pick3": "Pick 3",
+  "md-pick4": "Pick 4",
   powerball: "Powerball",
   megamillions: "Mega Millions",
 };
@@ -114,6 +146,11 @@ export const STATE_LABEL: Record<string, string> = {
   wa: "Washington",
   ga: "Georgia",
   mi: "Michigan",
+  ny: "New York",
+  ca: "California",
+  ma: "Massachusetts",
+  co: "Colorado",
+  md: "Maryland",
 };
 
 export const GAME_BLURB: Record<Game, string> = {
@@ -151,6 +188,22 @@ export const GAME_BLURB: Record<Game, string> = {
     "Three digits, 0–9, drawn twice daily by the Michigan Lottery (Daily 3 — Midday + Evening). Outcome space: 1,000 combinations.",
   "mi-pick4":
     "Four digits, 0–9, drawn twice daily by the Michigan Lottery (Daily 4 — Midday + Evening). Outcome space: 10,000 combinations.",
+  "ny-pick3":
+    "Three digits, 0–9, drawn twice daily by the New York Lottery (\"Numbers\" — Midday + Evening) since September 1980, the deepest history on the site. Outcome space: 1,000 combinations.",
+  "ny-pick4":
+    "Four digits, 0–9, drawn twice daily by the New York Lottery (\"Win 4\" — Midday + Evening) since July 1981. Outcome space: 10,000 combinations.",
+  "ca-pick3":
+    "Three digits, 0–9, drawn twice daily by the California Lottery (Daily 3 — Midday + Evening). Outcome space: 1,000 combinations. California's results feed only serves a rolling six-month window, so this history starts when we began collecting and grows from there.",
+  "ca-pick4":
+    "Four digits, 0–9, drawn once nightly by the California Lottery (Daily 4, ~6:30 PM PT). Single daily draw — no midday/evening split. Outcome space: 10,000 combinations. History grows forward from our first collection.",
+  "ma-pick4":
+    "Four digits, 0–9, drawn by the Massachusetts Lottery (\"The Numbers Game\") since April 1976 — the longest-running series on the site. Evening-only for its first three decades, with a Midday draw added later. Massachusetts runs no 3-digit game. Outcome space: 10,000 combinations.",
+  "co-pick3":
+    "Three digits, 0–9, drawn by the Colorado Lottery since April 2013. Evening-only until December 2016, when a Midday draw was added — so the two streams cover different spans. Colorado runs no 4-digit game. Outcome space: 1,000 combinations.",
+  "md-pick3":
+    "Three digits, 0–9, drawn twice daily by the Maryland Lottery (Midday + Evening). Outcome space: 1,000 combinations. Maryland publishes a rolling seven-month window, so this history starts when we began collecting and grows from there.",
+  "md-pick4":
+    "Four digits, 0–9, drawn twice daily by the Maryland Lottery (Midday + Evening). Outcome space: 10,000 combinations. History grows forward from our first collection.",
   powerball:
     "Five white balls (1–69) plus one red Powerball (1–26). Outcome space: 292,201,338 combinations. Multi-state.",
   megamillions:
@@ -168,6 +221,11 @@ export const PICK_GAMES: Game[] = [
   "wa-pick3",
   "ga-pick3", "ga-pick4",
   "mi-pick3", "mi-pick4",
+  "ny-pick3", "ny-pick4",
+  "ca-pick3", "ca-pick4",
+  "ma-pick4",
+  "co-pick3",
+  "md-pick3", "md-pick4",
 ];
 export const BALL_GAMES: Game[] = ["powerball", "megamillions"];
 
@@ -180,7 +238,12 @@ export const isDigitGame = (g: Game) =>
   g === "fl-pick3" || g === "fl-pick4" ||
   g === "wa-pick3" ||
   g === "ga-pick3" || g === "ga-pick4" ||
-  g === "mi-pick3" || g === "mi-pick4";
+  g === "mi-pick3" || g === "mi-pick4" ||
+  g === "ny-pick3" || g === "ny-pick4" ||
+  g === "ca-pick3" || g === "ca-pick4" ||
+  g === "ma-pick4" ||
+  g === "co-pick3" ||
+  g === "md-pick3" || g === "md-pick4";
 
 // Canonical named streams in chronological order. "other" is excluded —
 // it's the catch-all for untagged/legacy rows, never a comparison column.
