@@ -1,5 +1,69 @@
 # Cloudflare Pages headers file.
 # https://developers.cloudflare.com/pages/configuration/headers/
+#
+# THIS FILE — not next.config.mjs — is what sets response headers in
+# production. Cloudflare Pages serves the next-on-pages output and does NOT
+# apply Next's `async headers()`, so the security block in next.config.mjs was
+# dead code as far as the live site was concerned: draw-data.com was served
+# with no CSP, no X-Frame-Options, no Permissions-Policy, no COOP/CORP, and
+# HSTS reported `max-age=0` (i.e. off). next.config.mjs keeps its copy because
+# that one still applies to `next dev` / `next start` locally.
+#
+# Keep the two in sync BY HAND. A third-party script added to the app must be
+# allowed here too, or it will work locally and be blocked only in production.
+#
+# ---------------------------------------------------------------------------
+# Why these specific CSP origins
+#
+# Enumerated from the source, not copied from next.config.mjs — that policy
+# predates Plausible and Web3Forms and would have broken both:
+#
+#   plausible.io                     analytics script and its beacon
+#                                    (script-src + connect-src)
+#   api.web3forms.com                FeedbackForm and WaitlistModal both submit
+#                                    with fetch(), so this MUST be in
+#                                    connect-src or both forms fail silently
+#   fonts.googleapis.com             stylesheet for the display/mono faces
+#   fonts.gstatic.com                the font files themselves
+#   static.cloudflareinsights.com    Cloudflare Web Analytics. Not in today's
+#                                    HTML, but Cloudflare injects this beacon
+#                                    at the edge once Web Analytics is enabled
+#                                    in the dashboard, and README lists it in
+#                                    the stack. A blocked beacon fails
+#                                    silently, so it is pre-allowed.
+#
+# Deliberately NOT allowed: pagead2.googlesyndication.com and the Ezoic
+# scripts in components/ads/. Both are gated behind NEXT_PUBLIC_ADSENSE_CLIENT
+# / NEXT_PUBLIC_EZOIC, which are unset, so ads are off. Switching ads on WILL
+# be blocked until their origins are added to script-src / img-src / frame-src
+# here — intentional, so there is no ad-network script surface while ads are off.
+#
+# Honest limitation: script-src keeps 'unsafe-inline' because Next inlines its
+# bootstrap scripts (a dozen inline blocks on the homepage). That blocks
+# injection of EXTERNAL scripts but not inline injection, so CSP here is
+# defence-in-depth rather than a complete XSS control. Tightening it requires
+# Next's nonce support, which is separate work.
+#
+# Checked for things a strict policy would break: no eval / new Function
+# anywhere, no web workers, and the only Blob use is a client-side CSV download
+# (browser downloads are not governed by CSP fetch directives). three.js and
+# R3F need no eval.
+#
+# HSTS: `preload` is intentionally omitted even though next.config.mjs asks for
+# it. Preload is a ~2-year commitment compiled into browsers and painful to
+# unwind if a subdomain ever needs plain HTTP. Run with HSTS first, confirm
+# nothing breaks, then add `preload` and submit the domain.
+# ---------------------------------------------------------------------------
+
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none'; manifest-src 'self'; img-src 'self' data: blob:; media-src 'self'; font-src 'self' https://fonts.gstatic.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' https://plausible.io https://static.cloudflareinsights.com; connect-src 'self' https://plausible.io https://api.web3forms.com https://cloudflareinsights.com; upgrade-insecure-requests
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
 
 # Tell crawlers not to index the decorative hero video (belt-and-braces
 # alongside robots.txt; some indexers honor one but not the other).

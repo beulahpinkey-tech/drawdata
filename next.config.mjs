@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 
-// Security headers applied to every response.
+// Security headers.
+//
+// NOTE: this block only applies to `next dev` / `next start`. Production runs
+// on Cloudflare Pages via next-on-pages, which does NOT honour Next's
+// headers() — public/_headers is the file that governs the live site. Both are
+// maintained together on purpose so local and production behave the same; if
+// you change one, change the other.
 // Tuned to be strict but not break the site:
 //   - Google Fonts (fonts.googleapis.com + fonts.gstatic.com) are needed
 //     because layout.tsx pulls Fraunces / Hanken Grotesk / JetBrains Mono
@@ -22,8 +28,12 @@ const csp = [
   "media-src 'self'",
   "font-src 'self' https://fonts.gstatic.com data:",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
-  "connect-src 'self'",
+  // Keep these origins in sync with public/_headers, which is what actually
+  // applies in production (Cloudflare Pages ignores this headers() block).
+  // plausible.io = analytics; static.cloudflareinsights.com = CF Web Analytics
+  // beacon; api.web3forms.com = FeedbackForm + WaitlistModal fetch() target.
+  `script-src 'self' 'unsafe-inline' https://plausible.io https://static.cloudflareinsights.com${isProd ? "" : " 'unsafe-eval'"}`,
+  "connect-src 'self' https://plausible.io https://api.web3forms.com https://cloudflareinsights.com",
   "object-src 'none'",
   "manifest-src 'self'",
   "upgrade-insecure-requests",
@@ -50,7 +60,8 @@ const securityHeaders = [
   // Only meaningful over HTTPS, which Cloudflare Pages enforces.
   {
     key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
+    // Matches public/_headers: 1 year, no `preload` (see that file for why).
+    value: "max-age=31536000; includeSubDomains",
   },
   // Cross-origin isolation primitives. We don't load embeds; tight is fine.
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
