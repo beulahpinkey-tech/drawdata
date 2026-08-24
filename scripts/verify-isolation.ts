@@ -14,6 +14,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import { decodeDrawFile } from "../lib/draw-codec";
 import { join } from "node:path";
 
 const DATA = join(process.cwd(), "lib", "data");
@@ -63,7 +64,10 @@ console.log("\n────────────────── per-game i
 const allDates = new Map<string, Set<string>>(); // game → set of "date|stream"
 
 for (const slug of [...PICKS, ...BALLS]) {
-  const file = j<GameFile>(`${slug}.json`);
+  const raw = j<unknown>(`${slug}.json`);
+  // Pick histories are stored compactly (lib/draw-codec.ts); decode so the
+  // per-draw shape checks below see real Draw objects for both encodings.
+  const file = { draws: decodeDrawFile(raw) } as GameFile;
   const positions = slug.endsWith("pick3") ? 3 : slug.endsWith("pick4") ? 4 : null;
   const isBall = (BALLS as readonly string[]).includes(slug);
 
@@ -116,7 +120,7 @@ console.log("\n────────────────── aggregate 
 // JSON's draw count. Same for ball games' currentCount and the filtered
 // current-era count in the raw JSON.
 for (const slug of PICKS) {
-  const file = j<GameFile>(`${slug}.json`);
+  const file = { draws: decodeDrawFile(j<unknown>(`${slug}.json`)) } as GameFile;
   const agg = j<any>(`${slug}.agg.json`);
   const cnt = agg?.combined?.count ?? -1;
   check(

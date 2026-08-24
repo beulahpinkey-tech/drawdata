@@ -47,6 +47,7 @@ import {
   perYearCoverage,
 } from "../lib/analytics/coverage";
 import type { Draw, ParseReport } from "../lib/types";
+import { encodePickDraws, DRAW_FILE_VERSION } from "../lib/draw-codec";
 
 const ROOT = process.cwd();
 const NATIONAL_CSV_DIR = join(ROOT, "data");
@@ -322,7 +323,16 @@ if (errors.length) {
 console.log("\nWriting JSON aggregates to lib/data/ …");
 for (const p of parsedPicks) {
   const slug = `${p.state.code}-${p.game}`;
-  writeJson(`${slug}.json`, { game: slug, draws: p.draws, report: p.report });
+  // Compact row encoding — see lib/draw-codec.ts. Storing plain Draw objects
+  // pushed the Cloudflare Pages Functions bundle past its 25 MiB cap and broke
+  // deploys; these files are inlined whole into the edge worker.
+  writeJson(`${slug}.json`, {
+    game: slug,
+    v: DRAW_FILE_VERSION,
+    kind: p.game,
+    rows: encodePickDraws(p.draws),
+    report: p.report,
+  });
   writeJson(
     `${slug}.agg.json`,
     aggregatePick(p.draws, p.game === "pick3" ? 3 : 4, slug),
@@ -441,12 +451,23 @@ if (staleSlugs.size > 0) {
   );
 }
 
-// File-size budget. The current shape uses ~25 MB total; alert at 100
-// MB so we have time to compress / archive before hitting GitHub's
-// hard limits (5 GB repo soft cap, 100 MB single-file soft cap).
+// Size budget, governed by DEPLOYABILITY rather than GitHub's limits.
+//
+// Cloudflare Pages rejects a Functions bundle over 25 MiB, and because every
+// game page runs on the edge runtime, next-on-pages inlines all of lib/data
+// into that single worker - so lib/data's size IS the bundle size, near 1:1.
+// This budget was previously 100 MB (chosen against GitHub's repo limits) and
+// so never fired while the real ceiling was crossed: the bundle reached
+// 31.92 MiB and production silently stopped deploying for two days.
+//
+// The numbers below leave real headroom under 25 MiB: warn with room to act,
+// fail before committing anything that cannot ship. Failing is deliberate -
+// committing undeployable data is strictly worse than skipping a refresh.
 const SIZE_WARNINGS: string[] = [];
-const FILE_WARN_BYTES = 50 * 1024 * 1024;    // 50 MB single file
-const TOTAL_WARN_BYTES = 100 * 1024 * 1024;  // 100 MB across lib/data/
+const SIZE_ERRORS: string[] = [];
+const FILE_WARN_BYTES = 8 * 1024 * 1024;    // 8 MB single file
+const TOTAL_WARN_BYTES = 14 * 1024 * 1024;  // 14 MB across lib/data/
+const TOTAL_FAIL_BYTES = 18 * 1024 * 1024;  // 18 MB hard stop, 7 MB under the cap
 let dataTotal = 0;
 import { readdirSync as _readdir, statSync as _stat } from "node:fs";
 for (const f of _readdir(OUT_DIR)) {
@@ -459,15 +480,28 @@ for (const f of _readdir(OUT_DIR)) {
     );
   }
 }
-if (dataTotal > TOTAL_WARN_BYTES) {
+if (dataTotal > TOTAL_FAIL_BYTES) {
+  SIZE_ERRORS.push(
+    `lib/data/ total: ${(dataTotal / 1024 / 1024).toFixed(1)} MB > ` +
+      `${TOTAL_FAIL_BYTES / 1024 / 1024} MB hard limit. Cloudflare Pages caps a ` +
+      `Functions bundle at 25 MiB and will reject this build.`,
+  );
+} else if (dataTotal > TOTAL_WARN_BYTES) {
   SIZE_WARNINGS.push(
     `lib/data/ total: ${(dataTotal / 1024 / 1024).toFixed(1)} MB > ` +
-      `${TOTAL_WARN_BYTES / 1024 / 1024} MB cap`,
+      `${TOTAL_WARN_BYTES / 1024 / 1024} MB budget - approaching the 25 MiB ` +
+      `Cloudflare Functions bundle cap.`,
   );
 }
 if (SIZE_WARNINGS.length > 0) {
   console.warn("\nSIZE BUDGET WARNINGS (still writing, but investigate):");
   for (const w of SIZE_WARNINGS) console.warn(`  ⚠ ${w}`);
+}
+
+if (SIZE_ERRORS.length > 0) {
+  console.error("\nSIZE BUDGET EXCEEDED - refusing to ship undeployable data:");
+  for (const e of SIZE_ERRORS) console.error(`  x ${e}`);
+  process.exit(1);
 }
 
 console.log(`\n${rule()}`);

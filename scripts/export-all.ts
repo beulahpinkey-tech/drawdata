@@ -31,6 +31,7 @@ import {
   rmSync,
 } from "node:fs";
 import { join } from "node:path";
+import { decodeDrawFile } from "../lib/draw-codec";
 
 const ROOT = process.cwd();
 const DATA = join(ROOT, "lib", "data");
@@ -74,7 +75,7 @@ const MAX_COMBINED_ROWS = 1_000_000;       // safe margin below Excel's 1,048,57
 
 function loadDraws(slug: string): Draw[] {
   const file = JSON.parse(readFileSync(join(DATA, `${slug}.json`), "utf8"));
-  return file.draws as Draw[];
+  return decodeDrawFile(file);
 }
 
 function escapeCsv(s: string): string {
