@@ -13,7 +13,7 @@
  * Exits non-zero on any failure so this can gate CI/deploy.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { decodeDrawFile } from "../lib/draw-codec";
 import { join } from "node:path";
 
@@ -77,6 +77,18 @@ for (const slug of [...PICKS, ...BALLS]) {
     const hasWhites = file.draws.filter((d) => d.whites && d.whites.length > 0).length;
     check(`[${slug}] every draw has exactly ${positions} digits`, wrongLen === 0, `bad=${wrongLen}`);
     check(`[${slug}] no draw has ball-game shape`, hasWhites === 0, `whites=${hasWhites}`);
+    // Regression (F-1): a fetcher once wrote stream:"null" for rows whose
+    // upstream period field was blank; the parser silently bucketed them as
+    // "other", skewing stream stats. Assert every stream is a known enum and
+    // every digit is 0-9 so a malformed value can never ship again.
+    const badStream = file.draws.filter(
+      (d) => !["morning", "midday", "evening", "night", "other"].includes(String(d.stream)),
+    ).length;
+    const badDigit = file.draws.filter(
+      (d) => (d.digits ?? []).some((n) => !Number.isInteger(n) || n < 0 || n > 9),
+    ).length;
+    check(`[${slug}] every stream is a known value`, badStream === 0, `bad=${badStream}`);
+    check(`[${slug}] every digit is 0-9`, badDigit === 0, `bad=${badDigit}`);
   } else if (isBall) {
     const wrongWhites = file.draws.filter((d) => (d.whites?.length ?? 0) !== 5).length;
     const noSpecial = file.draws.filter((d) => typeof d.special !== "number").length;
@@ -166,6 +178,43 @@ for (let i = 0; i < pickGames.length; i++) {
       `  ${pickGames[i]} ∩ ${pickGames[k]}: ${overlap.toLocaleString()} shared dates (${(ratio * 100).toFixed(1)}% of smaller set)`,
     );
   }
+}
+
+// ── Raw-CSV guard (F-1): catch a malformed stream at the SOURCE, before the
+// parser normalizes an unknown value to "other" and hides it. This is the
+// check that would have caught the NC stream:"null" rows on the run that
+// introduced them. Pure filesystem scan, no decode.
+{
+  const dataRoot = join(process.cwd(), "data");
+  let rawBad = 0;
+  const rawOffenders: string[] = [];
+  const okStream = /^(midday|evening|morning|night|day)$/i;
+  const NL = /\r?\n/;
+  const dateRe = /^[0-9]{2}-[0-9]{2}-[0-9]{4}/;
+  if (existsSync(dataRoot)) {
+    for (const st of readdirSync(dataRoot)) {
+      const dir = join(dataRoot, st);
+      if (!statSync(dir).isDirectory()) continue;
+      for (const f of readdirSync(dir)) {
+        if (!f.endsWith(".csv")) continue;
+        // Ball-game CSVs (whites+special) have no stream column — skip them.
+        if (/powerball|megamillions/.test(f)) continue;
+        for (const line of readFileSync(join(dir, f), "utf8").split(NL)) {
+          if (!dateRe.test(line)) continue;
+          const streamCol = (line.split(",")[1] ?? "").trim();
+          if (!okStream.test(streamCol)) {
+            rawBad++;
+            if (rawOffenders.length < 5) rawOffenders.push(`${st}/${f}: ${JSON.stringify(streamCol)}`);
+          }
+        }
+      }
+    }
+  }
+  check(
+    "[raw-csv] every stream column is a known value",
+    rawBad === 0,
+    rawBad ? `${rawBad} bad (${rawOffenders.join("; ")})` : "clean",
+  );
 }
 
 console.log("\n──────────────────── final ────────────────────");

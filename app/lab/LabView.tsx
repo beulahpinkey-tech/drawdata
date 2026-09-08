@@ -703,7 +703,7 @@ Verdict: ${Math.abs(result.straightRate - result.straightChance) < 0.005 ? "no e
   };
   const openMail = () => {
     const subj = encodeURIComponent("DrawData · Formula Lab result");
-    const body = encodeURIComponent(summary + "\n\nhttps://drawdata.app/lab");
+    const body = encodeURIComponent(summary + "\n\nhttps://draw-data.com/lab");
     window.location.href = `mailto:?subject=${subj}&body=${body}`;
   };
   const reset = () => {

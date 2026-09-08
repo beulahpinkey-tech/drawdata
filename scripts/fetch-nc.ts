@@ -112,12 +112,15 @@ function parseCsv(raw: string, ep: Endpoint): Row[] {
     const dd = dateM[2].padStart(2, "0");
     const yyyy = dateM[3];
 
-    const code = cols[1].toUpperCase();
-    const stream: "Midday" | "Evening" =
-      code === "D" ? "Midday" : code === "E" ? "Evening" : (() => null as never)();
-    // Defensive: silently skip anything that isn't D/E (e.g. future
-    // header changes or a "DD" double-draw row).
-    if (stream === undefined) continue;
+    // Skip anything that isn't the Day/Evening code. The upstream CSV has
+    // occasionally emitted an empty/"null" period field; the previous guard
+    // compared the fallback to `undefined` while the fallback produced `null`,
+    // so those rows were written with a literal `stream: "null"` (7 of them,
+    // then bucketed as "other" by the parser and mis-counted in stream stats).
+    // Compare the code directly so an unknown period is dropped, not coerced.
+    const code = (cols[1] ?? "").trim().toUpperCase();
+    if (code !== "D" && code !== "E") continue;
+    const stream: "Midday" | "Evening" = code === "D" ? "Midday" : "Evening";
 
     const digits: number[] = [];
     let ok = true;

@@ -11,10 +11,16 @@
 //   - Google Fonts (fonts.googleapis.com + fonts.gstatic.com) are needed
 //     because layout.tsx pulls Fraunces / Hanken Grotesk / JetBrains Mono
 //     from there.
-//   - 'unsafe-inline' is kept ONLY for style-src because Next.js inlines
-//     small style chunks; script-src is strict. If we move to a CSS-in-JS
-//     library that emits runtime <style> tags we'll need to add a nonce
-//     pattern; for now Tailwind + tokens.css are static.
+//   - 'unsafe-inline' is in BOTH style-src and script-src. style-src needs
+//     it for Next's inlined style chunks; script-src needs it for Next's
+//     inline bootstrap and the JSON-LD <script> blocks. CONSEQUENCE: the CSP
+//     does NOT mitigate inline-script injection today — it blocks EXTERNAL
+//     script origins (defence in depth), not an inline XSS. That is
+//     acceptable here only because the app has no reflected/stored HTML sink:
+//     routes are a fixed enumerated set (dynamicParams=false), draw data is
+//     strictly numeric, and every dangerouslySetInnerHTML feeds JSON.stringify
+//     of build-time-known values. Removing 'unsafe-inline' from script-src
+//     requires nonce support (Next 15+), tracked with the framework upgrade.
 //   - 'unsafe-eval' is included in script-src for dev (HMR needs it) —
 //     Next sets NODE_ENV=production at build, so we conditionally drop it.
 const isProd = process.env.NODE_ENV === "production";
