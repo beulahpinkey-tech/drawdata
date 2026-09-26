@@ -1,8 +1,21 @@
 "use client";
 
 import { useEffect, useState, useId } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+
+// react-zoom-pan-pinch cannot be evaluated in the Cloudflare worker during
+// SSR — doing so left an unresolvable client reference and 500'd every
+// /positional page in production. It lives behind ssr:false and only
+// downloads when the overlay opens. See ChartZoomSurface for the full story.
+const ChartZoomSurface = dynamic(() => import("./ChartZoomSurface"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid h-full w-full place-items-center text-[12px] text-dim font-mono">
+      Loading zoom…
+    </div>
+  ),
+});
 
 /**
  * Wraps any chart/heatmap. Clicking the chart opens an expanded overlay
@@ -89,21 +102,7 @@ export function ChartZoom({
                 </button>
               </div>
               <div className="h-[calc(100%-2.5rem)] panel-inner overflow-hidden">
-                <TransformWrapper
-                  initialScale={1}
-                  minScale={0.5}
-                  maxScale={6}
-                  wheel={{ step: 0.2 }}
-                  doubleClick={{ mode: "reset" }}
-                  panning={{ velocityDisabled: false }}
-                >
-                  <TransformComponent
-                    wrapperStyle={{ width: "100%", height: "100%" }}
-                    contentStyle={{ width: "100%", height: "100%" }}
-                  >
-                    <div className="w-full h-full p-4">{children}</div>
-                  </TransformComponent>
-                </TransformWrapper>
+                <ChartZoomSurface>{children}</ChartZoomSurface>
               </div>
             </motion.div>
           </motion.div>
