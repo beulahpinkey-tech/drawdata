@@ -42,6 +42,7 @@ import {
   redFrequency,
 } from "../lib/analytics/frequency";
 import { currentGapsPerValue, gapDistribution } from "../lib/analytics/gaps";
+import { boxTypeBreakdown, rootSumDistribution } from "../lib/analytics/digits";
 import {
   cumulativeUniqueCoverage,
   perYearCoverage,
@@ -120,6 +121,12 @@ function aggregatePick(draws: Draw[], positions: number, label: string) {
     const gapDist = gapDistribution(sub, 10, (d) => d.digits ?? []);
     const coverageCum = cumulativeUniqueCoverage(sub, 10, (d) => d.digits ?? []);
     const coverageYear = perYearCoverage(sub, 10, (d) => d.digits ?? []);
+    // Digital-root and box-type breakdowns used to be computed in the
+    // browser from the full per-game history, which meant /positional
+    // could not render them without shipping ~25k draws to the client.
+    // They are cheap here and the page is now server-rendered.
+    const rootDist = rootSumDistribution(sub);
+    const boxTypes = boxTypeBreakdown(sub, positions as 3 | 4);
     out[streamKey] = {
       count: sub.length,
       earliest: sub[0].date,
@@ -132,6 +139,8 @@ function aggregatePick(draws: Draw[], positions: number, label: string) {
       gapDist,
       coverageCum,
       coverageYear,
+      rootDist,
+      boxTypes,
     };
   }
   console.log(`[${label}] aggregating ${draws.length} draws`);
