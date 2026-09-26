@@ -7,10 +7,44 @@ import { META, getAgg } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { redirect } from "next/navigation";
 
-export default function PositionalPage({ params }: { params: { game: string } }) {
+export default function PositionalPage({
+  params,
+  searchParams,
+}: {
+  params: { game: string };
+  searchParams?: { diag?: string };
+}) {
   const game = params.game as Game;
   if (game === "powerball" || game === "megamillions") {
     return <BallGameSums game={game} />;
+  }
+  // TEMP probe: does the digit branch fail even with nothing but the shell?
+  if (searchParams?.diag === "shell") return <BallGameSums game={game} />;
+  // TEMP probe: shell + getAgg(), no client mount.
+  if (searchParams?.diag === "agg") {
+    const probe = getAgg(game);
+    return (
+      <>
+        <GameHeader game={game} view="positional" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+          <div className="panel p-6 font-mono text-[12px]">
+            agg loaded: {String(!!probe?.combined)} · draws {probe?.combined?.count ?? "?"}
+          </div>
+        </div>
+      </>
+    );
+  }
+  // TEMP probe: shell + the static server table, no client mount.
+  if (searchParams?.diag === "static") {
+    const probe = getAgg(game);
+    return (
+      <>
+        <GameHeader game={game} view="positional" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+          <StaticPositional agg={probe} positions={game.endsWith("pick3") ? 3 : 4} />
+        </div>
+      </>
+    );
   }
   const agg = getAgg(game);
   return (
