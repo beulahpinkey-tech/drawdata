@@ -36,7 +36,8 @@
     "build:cf": "npm run precompute && npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

@@ -40,6 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ["", "daily", 1.0],
     ["/picker", "weekly", 0.8],
     ["/explore", "daily", 0.8],
+    ["/combinations", "daily", 0.8],
     ["/draw-machine", "monthly", 0.5],
     ["/odds", "monthly", 0.7],
     ["/lab", "weekly", 0.7],

@@ -41,6 +41,7 @@ past frequency carries no predictive power.
 - Learn / honest Q&A — https://draw-data.com/learn
 - Odds explainer — https://draw-data.com/odds
 - Formula Lab (backtest any "system" and watch it match chance) — https://draw-data.com/lab
+- 10,000 Combination Explorer (every four-digit combination, 0000-9999, against real Pick 4 history) — https://draw-data.com/combinations
 - About & methodology / data sources — https://draw-data.com/about
 
 ## How to cite DrawData
