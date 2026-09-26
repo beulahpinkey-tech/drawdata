@@ -7,13 +7,7 @@ import { META, getAgg } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { redirect } from "next/navigation";
 
-export default function PositionalPage({
-  params,
-  searchParams,
-}: {
-  params: { game: string };
-  searchParams?: { diag?: string };
-}) {
+export default function PositionalPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;
   if (game === "powerball" || game === "megamillions") {
     return <BallGameSums game={game} />;
@@ -28,7 +22,7 @@ export default function PositionalPage({
           every slot should look like 0–9 picked from a hat — about 10% each, with sample noise.
           Any heat pattern you can see by eye is almost certainly within that noise band.
         </HonestyNote>
-        <PositionalView game={game} agg={agg} diag={searchParams?.diag} />
+        <PositionalView game={game} agg={agg} />
       </div>
     </>
   );
