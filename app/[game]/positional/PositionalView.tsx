@@ -6,8 +6,20 @@ import { SumDistribution } from "@/components/charts/SumDistribution";
 import { StreamSelect } from "@/components/StreamSelect";
 import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { boxTypeBreakdown, rootSumDistribution } from "@/lib/analytics/digits";
+import dynamic from "next/dynamic";
 import { ChartZoom } from "@/components/motion/ChartZoom";
-import { ChartPanelActions } from "@/components/ChartPanelActions";
+
+// This route's client tree is the largest on the site, and past a certain
+// size next-on-pages ships it with a client reference the worker cannot
+// resolve — every digit game's /positional then 500s in production while
+// the RSC payload itself renders fine. Keeping the panel's action menu
+// (and, through it, ShowmoreInteraction) out of the server render trims
+// the graph below that threshold. The menu is a pure interaction — copy
+// link, share, export CSV — so nothing crawlable is lost by deferring it.
+const ChartPanelActions = dynamic(
+  () => import("@/components/ChartPanelActions").then((m) => m.ChartPanelActions),
+  { ssr: false, loading: () => <div className="h-8 w-8" aria-hidden /> },
+);
 
 import type { Game } from "@/lib/types";
 
