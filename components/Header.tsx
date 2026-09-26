@@ -56,6 +56,7 @@ export function Header() {
   // mobile sheet, so the two can never drift apart.
   const siteLinks = [
     { href: "/explore", label: "Explorer", active: pathname.startsWith("/explore") },
+    { href: "/combinations", label: "Combinations", active: pathname.startsWith("/combinations") },
     { href: labHref, label: "Formula Lab", active: pathname.startsWith("/lab") },
     { href: "/patterns", label: "Patterns", active: pathname.startsWith("/patterns") },
     { href: "/draw-machine", label: "Machine", active: pathname.startsWith("/draw-machine") },
