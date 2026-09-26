@@ -60,7 +60,7 @@ const FORCE = args.includes("--force");
 const CURRENT_YEAR = new Date().getUTCFullYear();
 
 type RawDraw = {
-  drawingGameID: number;
+  drawingGameID: number; // 12 = Powerball, 36 = Double Play
   drawingNumberDate: string;
   drawingNumber1: number | null;
   drawingNumber2: number | null;
@@ -195,7 +195,13 @@ async function main() {
       continue;
     }
     let added = 0;
+    const seen = new Set<string>();
     for (const d of draws) {
+      // Since Double Play launched on 2021-08-23 the g=12 response also
+      // carries the Double Play drawing (drawingGameID 36) under the same
+      // date, listed after the main draw. Without this filter the Double
+      // Play row overwrote the main draw in the merge below.
+      if (d.drawingGameID !== POWERBALL_GAME_ID) continue;
       const date = parseDotNetDate(d.drawingNumberDate);
       if (!date) continue;
       const w1 = parseInt1to99(d.drawingNumber1);
@@ -205,6 +211,10 @@ async function main() {
       const w5 = parseInt1to99(d.drawingNumber5);
       const pb = parseInt1to99(d.drawingNumber6);
       if (!w1 || !w2 || !w3 || !w4 || !w5 || !pb) continue;
+      if (seen.has(date.iso)) {
+        throw new Error(`duplicate main Powerball draw for ${date.iso}`);
+      }
+      seen.add(date.iso);
       // Keep "Order Drawn" — don't sort the whites. The downstream
       // parser sorts internally for analytics; the CSV preserves the
       // raw draw sequence to match the existing file convention.
