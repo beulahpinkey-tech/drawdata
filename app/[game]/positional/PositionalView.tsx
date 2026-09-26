@@ -8,6 +8,7 @@ import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { boxTypeBreakdown, rootSumDistribution } from "@/lib/analytics/digits";
 import { ChartZoom } from "@/components/motion/ChartZoom";
 import { ChartPanelActions } from "@/components/ChartPanelActions";
+import { ShowmoreInteraction } from "@/components/ShowmoreInteraction";
 
 import type { Game } from "@/lib/types";
 
@@ -50,6 +51,12 @@ export function PositionalView({ game, agg, diag }: { game: Game; agg: any; diag
         )}
         {diag === "actions" && (
           <ChartPanelActions ctx={{ panelId: "diag", title: "diag", csv: () => "a,b" }} />
+        )}
+        {diag === "actions-nocsv" && (
+          <ChartPanelActions ctx={{ panelId: "diag", title: "diag" }} />
+        )}
+        {diag === "showmore" && (
+          <ShowmoreInteraction items={[{ id: "a", label: "A", onClick: () => {} }]} />
         )}
         {diag === "draws" && <div className="font-mono text-[12px]">draws loaded: {String(!loading)}</div>}
       </div>
