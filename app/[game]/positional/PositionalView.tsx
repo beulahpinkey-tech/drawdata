@@ -11,7 +11,7 @@ import { ChartPanelActions } from "@/components/ChartPanelActions";
 
 import type { Game } from "@/lib/types";
 
-export function PositionalView({ game, agg }: { game: Game; agg: any }) {
+export function PositionalView({ game, agg, diag }: { game: Game; agg: any; diag?: string }) {
   const [stream, setStream] = useState<"combined" | "midday" | "evening">("combined");
   const slice = agg[stream] ?? agg.combined;
   const positions = game.endsWith("pick3") ? 3 : 4;
@@ -32,6 +32,29 @@ export function PositionalView({ game, agg }: { game: Game; agg: any }) {
     () => (streamFiltered.length > 0 ? rootSumDistribution(streamFiltered) : {}),
     [streamFiltered],
   );
+
+  // TEMPORARY diagnostic — remove before merge. Each value renders exactly
+  // one client component so a single preview deploy can name the one whose
+  // SSR reference the Cloudflare worker cannot resolve.
+  if (diag) {
+    return (
+      <div className="panel p-6 space-y-4">
+        <div className="font-mono text-[12px]">diag={diag}</div>
+        {diag === "stream" && <StreamSelect value={stream} onChange={setStream} />}
+        {diag === "heatmap" && <PositionHeatmap freqByPosition={slice.freqByPosition} />}
+        {diag === "sum" && <SumDistribution dist={slice.sums} maxSum={maxSum} height={260} />}
+        {diag === "zoom" && (
+          <ChartZoom caption="diag">
+            <div className="p-4">zoom wrapper only</div>
+          </ChartZoom>
+        )}
+        {diag === "actions" && (
+          <ChartPanelActions ctx={{ panelId: "diag", title: "diag", csv: () => "a,b" }} />
+        )}
+        {diag === "draws" && <div className="font-mono text-[12px]">draws loaded: {String(!loading)}</div>}
+      </div>
+    );
+  }
 
   return (
     <>
