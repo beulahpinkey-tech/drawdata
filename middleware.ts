@@ -31,6 +31,9 @@ const CANONICAL_HOST = "draw-data.com";
 // is the reliable signal.
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);
 
+/** Opt-in header that lets a *.pages.dev preview render instead of redirecting. */
+const PREVIEW_BYPASS_HEADER = "x-drawdata-preview";
+
 export function middleware(request: NextRequest) {
   const rawHost = request.headers.get("host") ?? "";
   // Strip the port — "localhost:3000" → "localhost"
@@ -71,6 +74,21 @@ export function middleware(request: NextRequest) {
   // Already canonical (over https) — let it through unchanged.
   if (host === CANONICAL_HOST && url.protocol === "https:") {
     return NextResponse.next();
+  }
+
+  // QA escape hatch for preview deploys. Every *.pages.dev URL — including
+  // the per-PR preview builds — is 301'd to production by the rule below,
+  // which means a preview cannot be opened at all and a change that only
+  // misbehaves on Cloudflare's runtime cannot be caught before it ships.
+  // (That is how fifteen /positional pages reached production 500ing.)
+  // A request carrying this header is let through instead. Crawlers never
+  // send it, nothing links to it, and the redirect is unchanged for every
+  // ordinary visitor, so the canonical-host consolidation still holds.
+  if (host.endsWith(".pages.dev") && request.headers.get(PREVIEW_BYPASS_HEADER)) {
+    const res = NextResponse.next();
+    // Belt and braces: a preview must never be indexed, header or not.
+    res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    return res;
   }
 
   // Anything else → 301 to https://draw-data.com/<path>
