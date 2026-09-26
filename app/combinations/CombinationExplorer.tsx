@@ -15,7 +15,7 @@
  * only update once the reel settles.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { HonestyNote } from "@/components/HonestyNote";
@@ -78,9 +78,14 @@ export function CombinationExplorer() {
   }, []);
   const { index, loading, progress, error } = useComboIndex(scope, filter);
 
+  // Build from the live query string rather than the `sp` snapshot: two
+  // interactions in quick succession would otherwise both patch the same
+  // stale params, and the slower write would undo the faster one.
   const setParams = useCallback(
     (patch: Record<string, string | null>) => {
-      const next = new URLSearchParams(sp.toString());
+      const next = new URLSearchParams(
+        typeof window === "undefined" ? sp.toString() : window.location.search,
+      );
       for (const [k, v] of Object.entries(patch)) {
         if (v == null || v === "") next.delete(k);
         else next.set(k, v);
@@ -90,13 +95,22 @@ export function CombinationExplorer() {
     [router, sp],
   );
 
+  // The last combination this page put in the URL. An inbound `?n=` that
+  // matches it is our own write echoing back; anything else is a real
+  // outside change (a shared link, the back button) and wins.
+  const lastWritten = useRef<number | null>(urlCombo);
+
   // A settled reel writes the combination back to the URL.
   const commit = useCallback(
     (combo: number) => {
       setSelected(combo);
-      if ((sp.get("n") ?? "") !== comboLabel(combo)) setParams({ n: comboLabel(combo) });
+      lastWritten.current = combo;
+      // Always write, even when the `sp` snapshot already looks right —
+      // a pending replace() from the previous interaction may still be in
+      // flight, and the last write is the one that sticks.
+      setParams({ n: comboLabel(combo) });
     },
-    [setParams, sp],
+    [setParams],
   );
 
   // Selection driven from elsewhere: digit reels, search, universe, saved sets.
@@ -109,13 +123,14 @@ export function CombinationExplorer() {
     [commit],
   );
 
-  // An inbound URL (shared link, back button) wins over local state.
+  // An inbound URL (shared link, back button) wins over local state —
+  // unless it is the echo of a write this page just made, which can arrive
+  // after a newer selection and would otherwise drag the reel backwards.
   useEffect(() => {
-    if (urlCombo != null && urlCombo !== selected) {
-      setSelected(urlCombo);
-      setActive(urlCombo);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (urlCombo == null || urlCombo === lastWritten.current) return;
+    lastWritten.current = urlCombo;
+    setSelected(urlCombo);
+    setActive(urlCombo);
   }, [urlCombo]);
 
   const onScope = (next: ComboScope) => {
