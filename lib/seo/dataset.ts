@@ -15,6 +15,67 @@ export function dataModified(): string {
   return (META as any).lastCsvUpdated ?? (META as any).generatedAt ?? new Date().toISOString();
 }
 
+// Google's Dataset rich result rejects a `description` outside 50–5000
+// characters ("Invalid string length in field 'description'"). The terse
+// archive templates this file used to receive — "All 62 North Carolina Pick 4
+// draws in July 2018." — landed at 34–49 characters, so 6,553 of 8,501
+// Dataset pages (every short-named month and most years) were ineligible.
+// Builders below produce informative descriptions well inside the range, and
+// pageDatasetJsonLd enforces the bound for every caller regardless.
+export const DESCRIPTION_MIN = 50;
+export const DESCRIPTION_MAX = 5000;
+
+const ARCHIVE_TAIL =
+  "Part of DrawData's free, public-domain archive of official lottery results.";
+
+const draws = (n: number) => `${n.toLocaleString("en-US")} draw${n === 1 ? "" : "s"}`;
+
+export function resultsIndexDescription(label: string, latestN: number): string {
+  return `Complete ${label} draw history, browsable by year and month, with the latest ${latestN} draws on this page.`;
+}
+
+export function resultsYearDescription(label: string, count: number, year: string): string {
+  return `All ${draws(count)} of ${label} from ${year}, organized by month, each with its draw date and winning numbers. ${ARCHIVE_TAIL}`;
+}
+
+export function resultsMonthDescription(
+  label: string,
+  count: number,
+  monthName: string,
+  year: string,
+): string {
+  return `All ${draws(count)} of ${label} from ${monthName} ${year}, each listed with its draw date and winning numbers. ${ARCHIVE_TAIL}`;
+}
+
+export function numberDescription(
+  thing: string,
+  label: string,
+  count: number,
+  rank: number,
+  poolSize: number,
+): string {
+  return `Appearances of ${thing} in ${label}: ${count} draws, rank ${rank} of ${poolSize}.`;
+}
+
+/**
+ * Clamp a description into Google's accepted range. Short text is extended
+ * with a factual provenance sentence rather than rejected, so a future caller
+ * can't silently knock a page out of Dataset eligibility; overlong text is
+ * cut at a word boundary.
+ */
+export function boundedDescription(text: string, label: string): string {
+  let d = text.trim();
+  if (d.length < DESCRIPTION_MIN) {
+    d = `${d} Historical ${label} draw data from DrawData, free and in the public domain.`;
+  }
+  if (d.length > DESCRIPTION_MAX) {
+    const cut = d.slice(0, DESCRIPTION_MAX - 1);
+    const space = cut.lastIndexOf(" ");
+    d = `${space > DESCRIPTION_MAX / 2 ? cut.slice(0, space) : cut}…`;
+  }
+  return d;
+}
+
 export type DatasetInput = {
   game: Game;
   /** Page path beginning with "/", e.g. "/pa-pick3/results/2026/06". */
@@ -40,7 +101,7 @@ export function pageDatasetJsonLd(input: DatasetInput) {
     "@context": "https://schema.org",
     "@type": "Dataset",
     name: `${label} — ${sliceName}`,
-    description,
+    description: boundedDescription(description, label),
     url: `${BASE}${path}`,
     isPartOf: { "@id": `${BASE}/${game}#dataset` },
     creator: { "@type": "Organization", name: "DrawData", url: BASE },

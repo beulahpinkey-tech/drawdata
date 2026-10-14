@@ -6,7 +6,7 @@
 // Ball games are filtered to the CURRENT matrix era (same basis the
 // frequency page uses) so cross-number comparisons are apples-to-apples.
 
-import { getDraws, META, isBallGame } from "@/lib/data";
+import { getDraws, META, isBallGame, GAME_LABELS } from "@/lib/data";
 import type { Draw, Game } from "@/lib/types";
 
 export type NumberStat = {
@@ -146,4 +146,12 @@ export async function numberSlugs(game: Game): Promise<string[]> {
 /** One number's stats by slug, or null. */
 export async function numberStat(game: Game, slug: string): Promise<NumberStat | null> {
   return (await numberStats(game)).find((s) => s.slug === slug) ?? null;
+}
+
+/** Human name for a number page's subject: "digit 7", "Powerball 12", "number 33". */
+export function noun(game: Game, kind: string, value: number): string {
+  const label = GAME_LABELS[game];
+  if (kind === "digit") return `digit ${value}`;
+  if (kind === "special") return `${label === "Mega Millions" ? "Mega Ball" : "Powerball"} ${value}`;
+  return `number ${value}`;
 }

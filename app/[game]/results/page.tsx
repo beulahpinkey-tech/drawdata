@@ -9,7 +9,7 @@ import { GAME_LABELS, META } from "@/lib/data";
 import { ALL_GAMES } from "@/lib/types";
 import type { Game } from "@/lib/types";
 import { drawsNewestFirst, yearBuckets } from "@/lib/results";
-import { pageDatasetJsonLd } from "@/lib/seo/dataset";
+import { pageDatasetJsonLd, resultsIndexDescription } from "@/lib/seo/dataset";
 import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 const LATEST_N = 50;
@@ -53,7 +53,7 @@ export default async function ResultsIndexPage({ params }: { params: { game: str
     game: g,
     path,
     sliceName: "results archive",
-    description: `Complete ${label} draw history, browsable by year and month, with the latest ${LATEST_N} draws on this page.`,
+    description: resultsIndexDescription(label, LATEST_N),
     count: m.count,
   });
 

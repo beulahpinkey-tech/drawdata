@@ -11,8 +11,8 @@ import { Sparkline } from "@/components/Sparkline";
 import { GAME_LABELS, isBallGame } from "@/lib/data";
 import { ALL_GAMES } from "@/lib/types";
 import type { Game } from "@/lib/types";
-import { numberStats, numberStat } from "@/lib/numbers";
-import { pageDatasetJsonLd } from "@/lib/seo/dataset";
+import { numberStats, numberStat, noun } from "@/lib/numbers";
+import { pageDatasetJsonLd, numberDescription } from "@/lib/seo/dataset";
 import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; n: string };
@@ -23,13 +23,6 @@ export async function generateStaticParams() {
     for (const s of await numberStats(game)) out.push({ game, n: s.slug });
   }
   return out;
-}
-
-function noun(game: Game, kind: string, value: number) {
-  const label = GAME_LABELS[game];
-  if (kind === "digit") return `digit ${value}`;
-  if (kind === "special") return `${label === "Mega Millions" ? "Mega Ball" : "Powerball"} ${value}`;
-  return `number ${value}`;
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
@@ -84,7 +77,7 @@ export default async function NumberPage({ params }: { params: Params }) {
     game: g,
     path,
     sliceName: `${thing} draw history`,
-    description: `Appearances of ${thing} in ${label}: ${stat.count} draws, rank ${stat.rank} of ${stat.poolSize}.`,
+    description: numberDescription(thing, label, stat.count, stat.rank, stat.poolSize),
     variableMeasured: ["appearance count", "last drawn date", "current gap", "frequency rank"],
     count: stat.count,
   });

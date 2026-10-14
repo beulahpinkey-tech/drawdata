@@ -9,7 +9,7 @@ import { GAME_LABELS, isBallGame } from "@/lib/data";
 import { ALL_GAMES } from "@/lib/types";
 import type { Game } from "@/lib/types";
 import { yearBuckets, drawsInYear } from "@/lib/results";
-import { pageDatasetJsonLd } from "@/lib/seo/dataset";
+import { pageDatasetJsonLd, resultsYearDescription } from "@/lib/seo/dataset";
 import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; year: string };
@@ -65,7 +65,7 @@ export default async function YearArchivePage({ params }: { params: Params }) {
     game: g,
     path,
     sliceName: `results for ${year}`,
-    description: `All ${bucket.count} ${label} draws in ${year}, by month.`,
+    description: resultsYearDescription(label, bucket.count, year),
     temporalCoverage: year,
     count: bucket.count,
   });

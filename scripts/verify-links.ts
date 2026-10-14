@@ -14,9 +14,19 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ALL_GAMES } from "../lib/types";
-import { yearBuckets, monthSequence } from "../lib/results";
-import { numberStats } from "../lib/numbers";
-import { isBallGame } from "../lib/data";
+import { yearBuckets, monthSequence, MONTH_NAMES } from "../lib/results";
+import { numberStats, noun } from "../lib/numbers";
+import { isBallGame, GAME_LABELS, GAME_BLURB } from "../lib/data";
+import {
+  pageDatasetJsonLd,
+  boundedDescription,
+  resultsIndexDescription,
+  resultsYearDescription,
+  resultsMonthDescription,
+  numberDescription,
+  DESCRIPTION_MIN,
+  DESCRIPTION_MAX,
+} from "../lib/seo/dataset";
 import { learnPages } from "../lib/learn";
 
 let failures = 0;
@@ -81,6 +91,43 @@ for (const game of ALL_GAMES) {
     const digitSum = stats.filter((s) => s.kind === "digit").reduce((s, x) => s + x.count, 0);
     check(`[${game}] digit appearances = positions × draws`, digitSum === positions * totalDraws, `${digitSum} vs ${positions}×${totalDraws}`);
   }
+
+  // Dataset description length (Search Console: "Invalid string length in
+  // field 'description'"). Google accepts 50–5000 characters. Build every
+  // page's Dataset exactly as the page does — same builders, same guard —
+  // and check the emitted description. Before this check existed, 6,553 of
+  // 8,501 pages shipped 34–49 character descriptions.
+  const label = GAME_LABELS[game];
+  const descs: Array<[string, string]> = [
+    [`/${game}`, GAME_BLURB[game]],
+    [`/${game}/results`, resultsIndexDescription(label, 50)],
+    ...years.map((y): [string, string] => [`/${game}/results/${y.year}`, resultsYearDescription(label, y.count, y.year)]),
+    ...months.map((m): [string, string] => [
+      `/${game}/results/${m.year}/${m.month}`,
+      resultsMonthDescription(label, m.count, MONTH_NAMES[parseInt(m.month, 10) - 1], m.year),
+    ]),
+    ...stats.map((st): [string, string] => [
+      `/${game}/number/${st.slug}`,
+      numberDescription(noun(game, st.kind, st.value), label, st.count, st.rank, st.poolSize),
+    ]),
+  ];
+  const badDesc = descs
+    .map(([path, d]) => [path, path === `/${game}` ? d : pageDatasetJsonLd({ game, path, sliceName: "x", description: d }).description] as const)
+    .filter(([, d]) => d.length < DESCRIPTION_MIN || d.length > DESCRIPTION_MAX);
+  check(
+    `[${game}] every Dataset description is ${DESCRIPTION_MIN}–${DESCRIPTION_MAX} chars`,
+    badDesc.length === 0,
+    badDesc.length ? `${badDesc.length}/${descs.length} bad, e.g. ${badDesc[0][0]} (${badDesc[0][1].length})` : `${descs.length} pages`,
+  );
+}
+
+// The guard itself: a caller that passes a too-short description must still
+// emit a valid one, and an oversized one must be cut to the limit.
+{
+  const short = boundedDescription("Too short.", "Test Pick 3");
+  const long = boundedDescription("word ".repeat(2000), "Test Pick 3");
+  check("Dataset description guard pads short text", short.length >= DESCRIPTION_MIN, `${short.length} chars`);
+  check("Dataset description guard caps long text", long.length <= DESCRIPTION_MAX, `${long.length} chars`);
 }
 
 // Learn hub: unique slugs, every page has FAQs + a backing link, and the

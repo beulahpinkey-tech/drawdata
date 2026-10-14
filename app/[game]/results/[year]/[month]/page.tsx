@@ -9,7 +9,7 @@ import { GAME_LABELS } from "@/lib/data";
 import { ALL_GAMES } from "@/lib/types";
 import type { Game } from "@/lib/types";
 import { drawsInMonth, monthSequence, MONTH_NAMES } from "@/lib/results";
-import { pageDatasetJsonLd } from "@/lib/seo/dataset";
+import { pageDatasetJsonLd, resultsMonthDescription } from "@/lib/seo/dataset";
 import type { Crumb } from "@/lib/seo/breadcrumbs";
 
 type Params = { game: string; year: string; month: string };
@@ -72,7 +72,7 @@ export default async function MonthArchivePage({ params }: { params: Params }) {
     game: g,
     path,
     sliceName: `results for ${monthName} ${year}`,
-    description: `All ${draws.length} ${label} draws in ${monthName} ${year}.`,
+    description: resultsMonthDescription(label, draws.length, monthName, year),
     temporalCoverage: `${year}-${month}`,
     count: draws.length,
   });
