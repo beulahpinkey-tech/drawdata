@@ -1,6 +1,5 @@
 import { META, GAME_BLURB, GAME_LABELS, isBallGame, hasStreams, presentStreams, STREAM_LABEL } from "@/lib/data";
 import type { Game } from "@/lib/types";
-import { GameJsonLd } from "./GameJsonLd";
 import { Breadcrumbs } from "./Breadcrumbs";
 import type { Crumb } from "@/lib/seo/breadcrumbs";
 
@@ -29,7 +28,6 @@ export function GameHeader({
   const isBall = isBallGame(game);
   return (
     <div className="border-b border-edge bg-radial-amber">
-      <GameJsonLd game={game} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="mb-4">
           <Breadcrumbs crumbs={crumbs ?? defaultCrumbs(game, view)} />

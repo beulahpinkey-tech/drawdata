@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { ALL_GAMES } from "@/lib/types";
 import { GAME_LABELS, GAME_BLURB, META } from "@/lib/data";
+import { gameDatasetJsonLd } from "@/lib/seo/dataset";
+import type { Game } from "@/lib/types";
 
 const GAMES = new Set<string>(ALL_GAMES);
 
@@ -18,49 +20,10 @@ export default function GameLayout({
 }) {
   if (!GAMES.has(params.game)) notFound();
   const slug = params.game;
-  const label = (GAME_LABELS as any)[slug] ?? slug;
-  const blurb = (GAME_BLURB as any)[slug] ?? "";
-  const m = (META as any)[slug];
-
-  // schema.org Dataset is THE structured-data type Google looks for
-  // when it wants to surface a "Dataset" rich result. Pure win — it's
-  // free indexability juice as long as the underlying claims are real.
-  // Everything here is derived from META so the numbers stay honest.
-  const datasetJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    name: `${label} — winning numbers history`,
-    description: blurb,
-    url: `https://draw-data.com/${slug}`,
-    creator: { "@id": "https://draw-data.com/#org" },
-    publisher: { "@id": "https://draw-data.com/#org" },
-    license: "https://creativecommons.org/publicdomain/zero/1.0/",
-    isAccessibleForFree: true,
-    keywords: [
-      label,
-      "lottery",
-      "winning numbers",
-      "draw history",
-      "analytics",
-    ].join(", "),
-    ...(m?.earliest && m?.latest
-      ? {
-          temporalCoverage: `${m.earliest}/${m.latest}`,
-          variableMeasured: "winning digits per draw",
-        }
-      : {}),
-    ...(m?.count
-      ? {
-          distribution: [
-            {
-              "@type": "DataDownload",
-              encodingFormat: "application/json",
-              contentUrl: `https://draw-data.com/lib/data/${slug}.json`,
-            },
-          ],
-        }
-      : {}),
-  };
+  // The single whole-history Dataset for this game. Every page under
+  // /[game] renders it exactly once; slice pages (results months, numbers…)
+  // add their own Dataset that points back here via isPartOf.
+  const datasetJsonLd = gameDatasetJsonLd(slug as Game);
 
   return (
     <>

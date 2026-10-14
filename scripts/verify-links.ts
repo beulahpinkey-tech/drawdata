@@ -16,9 +16,11 @@ import { join } from "node:path";
 import { ALL_GAMES } from "../lib/types";
 import { yearBuckets, monthSequence, MONTH_NAMES } from "../lib/results";
 import { numberStats, noun } from "../lib/numbers";
-import { isBallGame, GAME_LABELS, GAME_BLURB } from "../lib/data";
+import { isBallGame, GAME_LABELS } from "../lib/data";
 import {
   pageDatasetJsonLd,
+  gameDatasetJsonLd,
+  gameDatasetId,
   boundedDescription,
   resultsIndexDescription,
   resultsYearDescription,
@@ -99,7 +101,7 @@ for (const game of ALL_GAMES) {
   // 8,501 pages shipped 34–49 character descriptions.
   const label = GAME_LABELS[game];
   const descs: Array<[string, string]> = [
-    [`/${game}`, GAME_BLURB[game]],
+    [`/${game}`, gameDatasetJsonLd(game).description],
     [`/${game}/results`, resultsIndexDescription(label, 50)],
     ...years.map((y): [string, string] => [`/${game}/results/${y.year}`, resultsYearDescription(label, y.count, y.year)]),
     ...months.map((m): [string, string] => [
@@ -114,6 +116,20 @@ for (const game of ALL_GAMES) {
   const badDesc = descs
     .map(([path, d]) => [path, path === `/${game}` ? d : pageDatasetJsonLd({ game, path, sliceName: "x", description: d }).description] as const)
     .filter(([, d]) => d.length < DESCRIPTION_MIN || d.length > DESCRIPTION_MAX);
+  // One whole-game Dataset, and every slice's isPartOf must resolve to it.
+  // Before this, the slices pointed at `<game>#dataset` while no node
+  // declared that @id — a dangling reference on every archive page.
+  const gameDs = gameDatasetJsonLd(game);
+  const slicePart = pageDatasetJsonLd({ game, path: `/${game}/results`, sliceName: "x", description: "x".repeat(60) }).isPartOf["@id"];
+  check(
+    `[${game}] slice isPartOf resolves to the game Dataset @id`,
+    gameDs["@id"] === gameDatasetId(game) && slicePart === gameDs["@id"],
+    `${slicePart} → ${gameDs["@id"]}`,
+  );
+  check(
+    `[${game}] game Dataset declares no download it can't serve`,
+    !("distribution" in gameDs),
+  );
   check(
     `[${game}] every Dataset description is ${DESCRIPTION_MIN}–${DESCRIPTION_MAX} chars`,
     badDesc.length === 0,

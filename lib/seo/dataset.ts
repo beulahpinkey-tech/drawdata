@@ -1,12 +1,21 @@
-// Per-page Dataset JSON-LD builder. The game hub already emits a Dataset
-// (app/[game]/layout.tsx + GameJsonLd) describing the whole history; the
-// archetype pages (results archives, frequency, gaps, …) each describe a
-// SLICE, so they get their own Dataset with a slice-specific name,
-// description, temporalCoverage, and variableMeasured. dateModified comes
-// from the twice-daily refresh (meta.lastCsvUpdated) so Google sees the
-// data as fresh after every bot commit.
+// Dataset JSON-LD builders.
+//
+// Two shapes, one module:
+//   * gameDatasetJsonLd — the WHOLE history of a game. Emitted once per page
+//     by app/[game]/layout.tsx and identified by `${BASE}/<game>#dataset`.
+//   * pageDatasetJsonLd — a SLICE (a results month, a number, …) that points
+//     back to the whole via isPartOf → that same @id.
+// Both live here so the @id a slice references is guaranteed to be the @id
+// the game Dataset declares. They used to be built in three places (the
+// layout, a GameJsonLd component and this file): every page carried two
+// whole-game Datasets with different descriptions, neither declared the
+// #dataset id the slices pointed at, and one advertised a download URL
+// (/lib/data/<game>.json) that 404s.
+//
+// dateModified comes from the twice-daily refresh (meta.lastCsvUpdated) so
+// Google sees the data as fresh after every bot commit.
 
-import { META, GAME_LABELS } from "@/lib/data";
+import { META, GAME_LABELS, GAME_BLURB } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { BASE } from "./breadcrumbs";
 
@@ -76,6 +85,55 @@ export function boundedDescription(text: string, label: string): string {
   return d;
 }
 
+/** The @id every slice's isPartOf points at; declared by gameDatasetJsonLd. */
+export const gameDatasetId = (game: Game) => `${BASE}/${game}#dataset`;
+
+export function gameDatasetDescription(game: Game): string {
+  return (
+    `${GAME_BLURB[game]} Refreshed twice daily with the latest draws. ` +
+    `Includes frequency, gap, sum, pair, and coverage analytics — purely descriptive, never predictive.`
+  );
+}
+
+/**
+ * The single whole-history Dataset for a game. No `distribution` is declared:
+ * the site has no public bulk-download endpoint, and claiming one that 404s is
+ * worse than omitting the recommended field.
+ */
+export function gameDatasetJsonLd(game: Game) {
+  const m = (META as any)[game] ?? {};
+  const label = GAME_LABELS[game];
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "@id": gameDatasetId(game),
+    name: `${label} winning numbers history`,
+    alternateName: label,
+    description: boundedDescription(gameDatasetDescription(game), label),
+    url: `${BASE}/${game}`,
+    keywords: [
+      label,
+      `${label} history`,
+      `${label} past numbers`,
+      `${label} frequency`,
+      "lottery analytics",
+    ],
+    creator: { "@id": `${BASE}/#org` },
+    publisher: { "@id": `${BASE}/#org` },
+    license: "https://creativecommons.org/publicdomain/zero/1.0/",
+    isAccessibleForFree: true,
+    dateModified: dataModified(),
+    // Only real values — never a placeholder date range or row count.
+    ...(m.earliest && m.latest ? { temporalCoverage: `${m.earliest}/${m.latest}` } : {}),
+    variableMeasured: ["draw date", "winning numbers", "draw frequency", "current gap", "digit sum"],
+    measurementTechnique: "Aggregation of official lottery draw history",
+    citation: `${BASE}/about`,
+    ...(typeof m.count === "number"
+      ? { size: { "@type": "QuantitativeValue", value: m.count, unitText: "draws" } }
+      : {}),
+  };
+}
+
 export type DatasetInput = {
   game: Game;
   /** Page path beginning with "/", e.g. "/pa-pick3/results/2026/06". */
@@ -103,7 +161,7 @@ export function pageDatasetJsonLd(input: DatasetInput) {
     name: `${label} — ${sliceName}`,
     description: boundedDescription(description, label),
     url: `${BASE}${path}`,
-    isPartOf: { "@id": `${BASE}/${game}#dataset` },
+    isPartOf: { "@id": gameDatasetId(game) },
     creator: { "@type": "Organization", name: "DrawData", url: BASE },
     publisher: { "@type": "Organization", name: "DrawData", url: BASE },
     license: "https://creativecommons.org/publicdomain/zero/1.0/",
