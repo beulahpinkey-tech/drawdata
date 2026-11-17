@@ -16,7 +16,7 @@ name: Lottery daily refresh
 #                          app API (2yr rolling window, merge-only)
 #    7. fetch:wa         — WA Daily Game (3-digit only), walottery.com
 #                          180-day rolling window, merge-only
-#    8. fetch:ga         — GA Cash 3 / Cash 4 from galottery.com JSON
+#    8. fetch:ga         — GA Cash 3 / Cash 4 from galottery.com results page (headless Chromium)
 #                          (midday/evening/night streams)
 #    9. fetch:mi         — MI Daily 3 / Daily 4, michiganlottery.com
 #                          GraphQL, fetched in monthly chunks
@@ -163,14 +163,6 @@ jobs:
           restore-keys: |
             fl-fetch-cache-
 
-      - name: Restore GA year cache
-        uses: actions/cache@v5
-        with:
-          path: .cache/ga
-          key: ga-fetch-cache-${{ github.run_id }}
-          restore-keys: |
-            ga-fetch-cache-
-
       - name: Restore MI month cache
         uses: actions/cache@v5
         with:
@@ -277,7 +269,14 @@ jobs:
         continue-on-error: true
         run: npm run fetch:wa
 
-      - name: Fetch latest GA draws (galottery.com API, Cash 3/4, midday/evening/night)
+      # Georgia's draw API now needs a key issued to galottery.com, so the GA
+      # fetcher reads the public Winning Numbers page in headless Chromium
+      # instead (scripts/fetch-ga.ts). ~1 min to install.
+      - name: Install Chromium for the GA fetcher
+        continue-on-error: true
+        run: npx playwright install --with-deps chromium
+
+      - name: Fetch latest GA draws (galottery.com Winning Numbers page, Cash 3/4, midday/evening/night)
         continue-on-error: true
         run: npm run fetch:ga
 
