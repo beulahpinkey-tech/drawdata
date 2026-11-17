@@ -30,6 +30,8 @@ import {
 export type GameCard = {
   id: string;
   label: string;
+  /** Game name without the state prefix ("Numbers", "Pick 3"), from the server. */
+  short: string;
   tag: string;
   blurb: string;
   count: number;
@@ -113,8 +115,12 @@ function GroupPanel({ group }: { group: GameGroup }) {
         <div>
           <div className="t-data-label">{group.title}</div>
           <h3 className="t-h3 mt-1 text-fg-primary">
+            {/* The state prefix is dropped using the server-supplied short
+                name. Taking the last two words of the label instead turned
+                "New York Numbers" into "York Numbers" on the live homepage —
+                New York is the only state whose name is two words. */}
             {group.games.length === 2
-              ? `${group.games[0].label.split(" ").slice(-2).join(" ")} · ${group.games[1].label.split(" ").slice(-2).join(" ")}`
+              ? `${group.games[0].short} · ${group.games[1].short}`
               : group.title}
           </h3>
         </div>

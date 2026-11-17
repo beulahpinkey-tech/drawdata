@@ -33,6 +33,32 @@ test("homepage game grid includes every available state", async ({ page }) => {
   for (const s of available) await expect(main).toContainText(s.state);
 });
 
+/* ── Card headings name the games, not a sliced-up state name ─────────── */
+test("homepage cards show game names with no state fragment", async ({ page }) => {
+  await page.goto("/");
+  const headings = await page.locator("main h3").allInnerTexts();
+  expect(headings.length).toBeGreaterThan(0);
+
+  // Two-game cards read "<game> · <game>". Deriving that by taking the last
+  // two words of the full label turned "New York Numbers" into
+  // "York Numbers · Win 4" in production — New York is the only state whose
+  // name is two words, so the heuristic looked right everywhere else.
+  //
+  // Compared exactly, not by substring: "York Numbers · Win 4" *contains*
+  // "Numbers · Win 4", so a toContain-on-joined-string check passes while
+  // the bug is live. That mistake made the first version of this test green
+  // against a broken page.
+  expect(headings).toContain("Numbers · Win 4");
+
+  // No heading may carry a leftover word from a multi-word state name.
+  const FRAGMENTS = ["York", "Carolina", "Jersey", "Hampshire"];
+  for (const heading of headings) {
+    const words = heading.split(/\s+/);
+    const leaked = FRAGMENTS.filter((f) => words.includes(f));
+    expect(leaked, `heading "${heading}" carries a state-name fragment`).toEqual([]);
+  }
+});
+
 /* ── Formula Lab on a state added after the original five ─────────────── */
 test("formula lab backtests a later-added state", async ({ page }) => {
   await page.goto("/lab?game=ny-pick3");
