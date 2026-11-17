@@ -6,6 +6,11 @@ import { PairsView } from "./PairsView";
 import type { Game } from "@/lib/types";
 import { isBallGame } from "@/lib/data";
 import { notFound } from "next/navigation";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "pairs");
+}
 
 export default function PairsPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

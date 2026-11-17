@@ -6,6 +6,11 @@ import { HonestyNote } from "@/components/HonestyNote";
 import { GapsView } from "./GapsView";
 import { getAgg, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "gaps");
+}
 
 export default function GapsPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

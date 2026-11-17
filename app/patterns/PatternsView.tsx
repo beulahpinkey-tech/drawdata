@@ -21,10 +21,14 @@ import { backtestRule, type Rule, type RuleStep } from "@/lib/analytics/formula"
 import { GAME_LABELS } from "@/lib/data";
 import { track } from "@/lib/analytics";
 import type { Game } from "@/lib/types";
+import { ALL_GAMES, isPickSlug } from "@/lib/types";
 
+// Every digit game, 3-digit first then 4-digit, derived from the canonical
+// list. This was hardcoded to the original WI/PA/NJ/TX/NC games, so the 15
+// digit games added later never appeared as options.
 const DIGIT_GAMES: Game[] = [
-  "wi-pick3", "pa-pick3", "nj-pick3", "tx-pick3", "nc-pick3",
-  "wi-pick4", "pa-pick4", "nj-pick4", "tx-pick4", "nc-pick4",
+  ...ALL_GAMES.filter((g) => isPickSlug(g) && g.endsWith("pick3")),
+  ...ALL_GAMES.filter((g) => isPickSlug(g) && g.endsWith("pick4")),
 ];
 
 type System = {

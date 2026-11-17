@@ -11,26 +11,31 @@ import {
   type RuleStep,
   type BacktestResult,
 } from "@/lib/analytics/formula";
-import type { Draw } from "@/lib/types";
+import type { Draw, Game } from "@/lib/types";
+import { ALL_GAMES, isPickSlug } from "@/lib/types";
+import { STATE_GAMES } from "@/lib/states";
+import { useGameDraws } from "@/lib/hooks/useGameDraws";
 import { NumberBall } from "@/components/NumberBall";
 import { readActiveGame, writeActiveGame } from "@/lib/clientState";
 import { CountUp } from "@/components/motion/primitives";
 import { ShowmoreInteraction } from "@/components/ShowmoreInteraction";
 
-type GamePick = "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4";
-const ALL_PICKS: GamePick[] = ["wi-pick3", "wi-pick4", "pa-pick3", "pa-pick4", "nj-pick3", "nj-pick4", "tx-pick3", "tx-pick4", "nc-pick3", "nc-pick4"];
-const PICK_LABELS: Record<GamePick, string> = {
-  "wi-pick3": "WI Pick 3",
-  "wi-pick4": "WI Pick 4",
-  "pa-pick3": "PA Pick 3",
-  "pa-pick4": "PA Pick 4",
-  "nj-pick3": "NJ Pick 3",
-  "nj-pick4": "NJ Pick 4",
-  "tx-pick3": "TX Pick 3",
-  "tx-pick4": "TX Daily 4",
-  "nc-pick3": "NC Pick 3",
-  "nc-pick4": "NC Pick 4",
-};
+// Every shipped digit game, derived from the canonical list so a newly added
+// state appears here automatically. This used to be a hardcoded list of the
+// original 10 games (WI/PA/NJ/TX/NC), so the 15 digit games added later —
+// New York, California, Massachusetts, Colorado, Maryland, Florida,
+// Washington, Georgia, Michigan — were unreachable in the Lab.
+type GamePick = Game;
+const ALL_PICKS: GamePick[] = ALL_GAMES.filter(isPickSlug);
+// Short labels from lib/states (client-safe — lib/data would pull every
+// aggregate JSON into this bundle): "WI Pick 3", "TX Daily 4", "NY Win 4".
+const PICK_LABELS: Record<string, string> = Object.fromEntries(
+  ALL_PICKS.map((g) => {
+    const st = STATE_GAMES.find((s) => s.abbr.toLowerCase() === g.slice(0, 2));
+    const name = g.endsWith("pick4") ? (st?.pick4Name ?? st?.pick3Name) : st?.pick3Name;
+    return [g, `${g.slice(0, 2).toUpperCase()} ${name ?? (g.endsWith("pick3") ? "Pick 3" : "Pick 4")}`];
+  }),
+);
 const isPick = (s: any): s is GamePick => ALL_PICKS.includes(s as GamePick);
 
 export function LabView() {
@@ -61,54 +66,10 @@ export function LabView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game]);
 
-  const [draws, setDraws] = useState<Draw[] | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    (async () => {
-      let mod: any;
-      switch (game) {
-        case "wi-pick3":
-          mod = await import("@/lib/data/wi-pick3.json");
-          break;
-        case "wi-pick4":
-          mod = await import("@/lib/data/wi-pick4.json");
-          break;
-        case "pa-pick3":
-          mod = await import("@/lib/data/pa-pick3.json");
-          break;
-        case "pa-pick4":
-          mod = await import("@/lib/data/pa-pick4.json");
-          break;
-        case "nj-pick3":
-          mod = await import("@/lib/data/nj-pick3.json");
-          break;
-        case "nj-pick4":
-          mod = await import("@/lib/data/nj-pick4.json");
-          break;
-        case "tx-pick3":
-          mod = await import("@/lib/data/tx-pick3.json");
-          break;
-        case "tx-pick4":
-          mod = await import("@/lib/data/tx-pick4.json");
-          break;
-        case "nc-pick3":
-          mod = await import("@/lib/data/nc-pick3.json");
-          break;
-        case "nc-pick4":
-          mod = await import("@/lib/data/nc-pick4.json");
-          break;
-      }
-      if (cancelled) return;
-      setDraws(mod.draws ?? mod.default?.draws);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [game]);
+  // Shared loader (all games, compact-format aware). The Lab used to carry its
+  // own 10-case switch reading `mod.draws`, which returned undefined once pick
+  // histories moved to the compact encoding — so backtests ran on no draws.
+  const { draws, loading } = useGameDraws(game);
 
   const positions = game.endsWith("pick3") ? 3 : 4;
 
@@ -155,19 +116,21 @@ export function LabView() {
 
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-[12px] text-dim font-mono uppercase tracking-[0.16em]">game</span>
-        <div className="inline-flex items-center rounded-md border border-edge p-0.5 bg-white/[0.02]">
+        {/* A select, not a button strip: with every state's games (25+) a
+            single-row strip was ~1,300px wide and zoomed the whole page out
+            on phones. */}
+        <select
+          aria-label="Game"
+          value={game}
+          onChange={(e) => setGame(e.target.value as GamePick)}
+          className="rounded-md border border-edge bg-panel px-3 py-1.5 text-[13px] text-text max-w-full"
+        >
           {ALL_PICKS.map((g) => (
-            <button
-              key={g}
-              onClick={() => setGame(g)}
-              className={`px-3 py-1 text-[12px] rounded-[5px] transition-colors ${
-                game === g ? "bg-white/[0.08] text-text" : "text-dim hover:text-text"
-              }`}
-            >
+            <option key={g} value={g}>
               {PICK_LABELS[g]}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
         <span className="text-[12px] text-dim font-mono">
           {loading ? "loading…" : `${draws?.length.toLocaleString()} draws loaded · combined stream · ${Math.pow(10, positions).toLocaleString()} possible outcomes`}
         </span>

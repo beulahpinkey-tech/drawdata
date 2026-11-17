@@ -6,6 +6,11 @@ import { HonestyNote } from "@/components/HonestyNote";
 import { LookupView } from "./LookupView";
 import type { Game } from "@/lib/types";
 import { notFound } from "next/navigation";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "lookup");
+}
 
 export default function LookupPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

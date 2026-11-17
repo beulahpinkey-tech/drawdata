@@ -62,7 +62,10 @@ export function generateMetadata({
     m?.earliest && m?.latest ? ` (${m.earliest} → ${m.latest})` : "";
   const description = `${blurb} Free interactive analytics on ${count}${range}: frequency, gaps, sums, pairs, positional and stream breakdowns. Descriptive only — no predictions.`;
   return {
-    title: `${label} History & Analytics`,
+    // A plain-string title here would stop the root "%s — DrawData" template
+    // from reaching every page below /[game] (results, numbers, spokes), so
+    // re-declare it. (The root template already wraps this default for the hub.)
+    title: { default: `${label} History & Analytics`, template: "%s — DrawData" },
     description,
     alternates: { canonical: `https://draw-data.com/${slug}` },
     openGraph: {

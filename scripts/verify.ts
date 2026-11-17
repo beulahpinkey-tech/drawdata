@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { STATE_GAMES } from "../lib/states";
+import { ALL_GAMES } from "../lib/types";
 
 const DATA = join(process.cwd(), "lib", "data");
 const j = <T,>(name: string): T => JSON.parse(readFileSync(join(DATA, name), "utf8"));
@@ -195,6 +196,40 @@ check(
   dataWithoutAvailable.length === 0,
   dataWithoutAvailable.join(",") || "none",
 );
+
+// ─── Single draw loader ─────────────────────────────────────────────────
+// lib/draws.ts is the ONLY module allowed to import lib/data game JSON. It
+// covers every game and decodes the compact on-disk format. Every other
+// loader that existed (useGameDraws, the Formula Lab, Check, Combinations)
+// kept its own hand-written switch and read `mod.draws` directly; when pick
+// histories moved to the compact `{ rows }` encoding they silently returned
+// undefined, so pairs/carryover/lookup/Explore/Patterns/Lab computed on zero
+// draws and Check spun forever — for ~3 months, with every HTTP check green.
+{
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      if (statSync(full).isDirectory()) { if (name !== "node_modules" && name !== "data") walk(full); continue; }
+      if (!/\.(ts|tsx)$/.test(name)) continue;
+      const rel = full.slice(process.cwd().length + 1).split("\\").join("/");
+      if (rel === "lib/draws.ts") continue;
+      if (/import\(\s*["'](@\/lib\/data|\.\.?\/data|\.\.\/lib\/data)\/[a-z0-9-]+\.json["']\s*\)/.test(readFileSync(full, "utf8"))) offenders.push(rel);
+    }
+  };
+  for (const d of ["app", "components", "lib"]) walk(join(process.cwd(), d));
+  check("[loader] only lib/draws.ts imports game JSON", offenders.length === 0, offenders.join(", ") || "single loader");
+}
+
+// ─── Every available state is routable ──────────────────────────────────
+// The picker routes a state to its first game; a state marked available with
+// no matching slug falls through to the waitlist modal for a live state.
+{
+  const unroutable = STATE_GAMES.filter(
+    (s) => s.status === "available" && !ALL_GAMES.some((g) => g.startsWith(`${s.abbr.toLowerCase()}-`)),
+  ).map((s) => s.abbr);
+  check("[states] every available state maps to a game route", unroutable.length === 0, unroutable.join(",") || "all routable");
+}
 
 console.log(
   `

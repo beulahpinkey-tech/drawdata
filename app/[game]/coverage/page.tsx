@@ -5,6 +5,11 @@ import { HonestyNote } from "@/components/HonestyNote";
 import { CoverageView } from "./CoverageView";
 import { getAgg, META } from "@/lib/data";
 import type { Game } from "@/lib/types";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "coverage");
+}
 
 export default function CoveragePage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

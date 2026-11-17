@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { decodeDrawFile } from "@/lib/draw-codec";
+import { getDraws } from "@/lib/draws";
 import type { Draw, Game } from "@/lib/types";
 import { buildComboIndex, type ComboFilter, type ComboIndex } from "@/lib/combos/index-build";
 import { scopeGames, type ComboScope } from "@/lib/combos/games";
@@ -26,25 +26,12 @@ import { scopeGames, type ComboScope } from "@/lib/combos/games";
 const drawCache = new Map<Game, Draw[]>();
 const inFlight = new Map<Game, Promise<Draw[]>>();
 
-async function importGame(game: Game): Promise<unknown> {
-  // An explicit switch, not a template literal, because the bundler needs
-  // a static module graph — the same reason lib/draws.ts spells them out.
-  switch (game) {
-    case "wi-pick4": return (await import("@/lib/data/wi-pick4.json")).default;
-    case "pa-pick4": return (await import("@/lib/data/pa-pick4.json")).default;
-    case "nj-pick4": return (await import("@/lib/data/nj-pick4.json")).default;
-    case "tx-pick4": return (await import("@/lib/data/tx-pick4.json")).default;
-    case "nc-pick4": return (await import("@/lib/data/nc-pick4.json")).default;
-    case "fl-pick4": return (await import("@/lib/data/fl-pick4.json")).default;
-    case "ga-pick4": return (await import("@/lib/data/ga-pick4.json")).default;
-    case "mi-pick4": return (await import("@/lib/data/mi-pick4.json")).default;
-    case "ny-pick4": return (await import("@/lib/data/ny-pick4.json")).default;
-    case "ca-pick4": return (await import("@/lib/data/ca-pick4.json")).default;
-    case "ma-pick4": return (await import("@/lib/data/ma-pick4.json")).default;
-    case "md-pick4": return (await import("@/lib/data/md-pick4.json")).default;
-    default:
-      throw new Error(`No four-digit dataset for ${game}`);
-  }
+/** Four-digit games only: the explorer indexes a 10,000-combination space. */
+async function importGame(game: Game): Promise<Draw[]> {
+  if (!game.endsWith("pick4")) throw new Error(`No four-digit dataset for ${game}`);
+  // Single loader for every game (lib/draws.ts): decodes the compact format
+  // and is the one place allowed to import lib/data JSON directly.
+  return getDraws(game);
 }
 
 export function loadComboDraws(game: Game): Promise<Draw[]> {
@@ -53,8 +40,7 @@ export function loadComboDraws(game: Game): Promise<Draw[]> {
   const pending = inFlight.get(game);
   if (pending) return pending;
   const p = importGame(game)
-    .then((file) => {
-      const draws = decodeDrawFile(file);
+    .then((draws) => {
       drawCache.set(game, draws);
       inFlight.delete(game);
       return draws;

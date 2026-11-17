@@ -5,6 +5,11 @@ import { HonestyNote } from "@/components/HonestyNote";
 import { CarryoverView } from "./CarryoverView";
 import type { Game } from "@/lib/types";
 import { notFound } from "next/navigation";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "carryover");
+}
 
 export default function CarryoverPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

@@ -9,3 +9,5 @@ out
 next-env.d.ts
 .cache/
 exports/
+playwright-report/
+test-results/

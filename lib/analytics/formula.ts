@@ -1,4 +1,4 @@
-import type { Draw } from "../types";
+import type { Draw, Game } from "../types";
 
 /**
  * Formula Lab — honest backtester.
@@ -31,7 +31,8 @@ export type RuleStep = {
 };
 
 export type Rule = {
-  game: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4";
+  /** Any digit game; positions are derived from the pick3/pick4 suffix. */
+  game: Game;
   steps: RuleStep[];
   target: TargetMode;
 };

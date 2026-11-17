@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { STATE_GAMES, type StateGame } from "@/lib/states";
+import { ALL_GAMES } from "@/lib/types";
 import { WaitlistModal } from "@/components/WaitlistModal";
 import { writeActiveGame } from "@/lib/clientState";
 import { StaggerGroup, StaggerItem } from "@/components/motion/primitives";
@@ -40,12 +41,15 @@ export function PickerView() {
 
   const handleStateClick = (s: StateGame) => {
     if (s.status === "available") {
+      // First shipped game for this state (pick3, else pick4 — Massachusetts
+      // runs only a 4-digit game). This was a WI/PA/NJ/TX/NC-only ternary, so
+      // clicking any of the 9 states added later — all marked "available" —
+      // fell through to the waitlist modal ("DrawData doesn't have New York
+      // yet") for a state that was live.
+      const code = s.abbr.toLowerCase();
       const slug =
-        s.abbr === "WI" ? "wi-pick3" :
-        s.abbr === "PA" ? "pa-pick3" :
-        s.abbr === "NJ" ? "nj-pick3" :
-        s.abbr === "TX" ? "tx-pick3" :
-        s.abbr === "NC" ? "nc-pick3" :
+        ALL_GAMES.find((g) => g === `${code}-pick3`) ??
+        ALL_GAMES.find((g) => g === `${code}-pick4`) ??
         null;
       if (slug) {
         writeActiveGame(slug as any);

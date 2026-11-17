@@ -7,6 +7,11 @@ import { StreamsView } from "./StreamsView";
 import { getAgg, hasStreams, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { notFound } from "next/navigation";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "streams");
+}
 
 export default function StreamsPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { META } from "@/lib/data";
+import { META, GAME_LABELS, GAME_BLURB, STATE_LABEL, presentStreams } from "@/lib/data";
+import { ALL_GAMES, type Game } from "@/lib/types";
 import { ScrollReveal } from "@/components/motion/primitives";
 import { HeroVideoBackground } from "@/components/HeroVideoBackground";
 import { Magnet } from "@/components/motion/Magnet";
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://draw-data.com" },
 };
 
-const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3" | "nj-pick4" | "tx-pick3" | "tx-pick4" | "nc-pick3" | "nc-pick4" | "powerball" | "megamillions"; label: string; tag: string; blurb: string }[] = [
+// Hand-written card copy where it exists; every other game is derived below.
+const GAMES: { id: Game; label: string; tag: string; blurb: string }[] = [
   { id: "wi-pick3", label: "Wisconsin Pick 3", tag: "3-digit · twice daily", blurb: "Wisconsin Lottery's twice-daily 3-digit game. History since 1992." },
   { id: "wi-pick4", label: "Wisconsin Pick 4", tag: "4-digit · twice daily", blurb: "Wisconsin Lottery's 10,000-outcome game. History since 1997." },
   { id: "pa-pick3", label: "Pennsylvania Pick 3", tag: "3-digit · twice daily", blurb: "Pennsylvania Pick 3. The deepest record on the site — back to 1977." },
@@ -27,24 +29,40 @@ const GAMES: { id: "wi-pick3" | "wi-pick4" | "pa-pick3" | "pa-pick4" | "nj-pick3
   { id: "megamillions", label: "Mega Millions", tag: "5/70 + 1/24", blurb: "National. Matrix revamped April 2025 to 5/70 + 1/24; earlier eras tagged separately." },
 ];
 
-// Sticky-stack grouping: National first, then the five states in the
-// order they shipped. Counts/dates resolved server-side from META so
-// the client component receives plain props (no META in the bundle).
-const GROUP_DEFS: { key: string; title: string; ids: string[] }[] = [
-  { key: "national", title: "National games", ids: ["powerball", "megamillions"] },
-  { key: "wi", title: "Wisconsin", ids: ["wi-pick3", "wi-pick4"] },
-  { key: "pa", title: "Pennsylvania", ids: ["pa-pick3", "pa-pick4"] },
-  { key: "nj", title: "New Jersey", ids: ["nj-pick3", "nj-pick4"] },
-  { key: "tx", title: "Texas", ids: ["tx-pick3", "tx-pick4"] },
-  { key: "nc", title: "North Carolina", ids: ["nc-pick3", "nc-pick4"] },
-];
+// Sticky-stack grouping: National first, then every state in the order it
+// shipped (STATE_LABEL's key order). This was a hardcoded list of the original
+// five states, so the grid showed 5 states under a hero that says fourteen.
+// Counts/dates resolved server-side from META so the client component receives
+// plain props (no META in the bundle).
+const GROUP_DEFS: { key: string; title: string; ids: Game[] }[] = [
+  { key: "national", title: "National games", ids: ["powerball", "megamillions"] as Game[] },
+  ...Object.entries(STATE_LABEL).map(([code, title]) => ({
+    key: code,
+    title,
+    ids: ALL_GAMES.filter((g) => g.startsWith(`${code}-`)),
+  })),
+].filter((d) => d.ids.length > 0);
+
+/** Card copy: hand-written if present, else derived from the game's metadata. */
+function cardFor(id: Game) {
+  const hand = GAMES.find((x) => x.id === id);
+  if (hand) return hand;
+  const digits = id.endsWith("pick3") ? 3 : 4;
+  const streams = presentStreams(id).length;
+  return {
+    id,
+    label: GAME_LABELS[id],
+    tag: `${digits}-digit · ${streams >= 3 ? `${streams} draws daily` : streams === 2 ? "twice daily" : "once daily"}`,
+    blurb: GAME_BLURB[id],
+  };
+}
 
 export default function HomePage() {
   const groups: GameGroup[] = GROUP_DEFS.map((def) => ({
     key: def.key,
     title: def.title,
     games: def.ids.map((id) => {
-      const g = GAMES.find((x) => x.id === id)!;
+      const g = cardFor(id);
       const m = (META as any)[id];
       return {
         id: g.id,

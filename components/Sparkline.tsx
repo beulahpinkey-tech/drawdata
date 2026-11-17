@@ -30,7 +30,9 @@ export function Sparkline({
       viewBox={`0 0 ${width} ${height}`}
       role="img"
       aria-label={`Appearances per year from ${data[0].year} to ${data[n - 1].year}, peak ${max}`}
-      className="overflow-visible"
+      // Scale down inside narrow containers: a fixed 640px SVG overflowed the
+      // 330px panel on phones and made the whole /[game]/number page zoom out.
+      className="overflow-visible max-w-full h-auto"
     >
       <polyline points={points} fill="none" stroke="var(--accent, #e9b84a)" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
       {data.map((d, i) => (

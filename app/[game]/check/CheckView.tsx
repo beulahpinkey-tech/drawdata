@@ -5,54 +5,14 @@ import { NumberBall } from "@/components/NumberBall";
 import { SumDistribution } from "@/components/charts/SumDistribution";
 import type { Draw, Game } from "@/lib/types";
 import { checkDigits, checkPowerball } from "@/lib/analytics/check";
-
-type DrawsModule = { default: { draws: Draw[] } };
+import { useGameDraws } from "@/lib/hooks/useGameDraws";
 
 export function CheckView({ game }: { game: Game }) {
-  const [draws, setDraws] = useState<Draw[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Shared loader: covers every game and decodes the compact format. The old
+  // inline switch only knew WI, PA and the ball games, and read `mod.draws`,
+  // so every other Check page threw and spun forever.
+  const { draws, loading } = useGameDraws(game);
   const [_, startTransition] = useTransition();
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      let mod: any;
-      switch (game) {
-        case "wi-pick3":
-          mod = await import("@/lib/data/wi-pick3.json");
-          break;
-        case "wi-pick4":
-          mod = await import("@/lib/data/wi-pick4.json");
-          break;
-        case "pa-pick3":
-          mod = await import("@/lib/data/pa-pick3.json");
-          break;
-        case "pa-pick4":
-          mod = await import("@/lib/data/pa-pick4.json");
-          break;
-        case "megamillions":
-          mod = await import("@/lib/data/megamillions.json");
-          break;
-        case "powerball":
-          mod = await import("@/lib/data/powerball.json");
-          break;
-      }
-      if (cancelled) return;
-      const all = mod.default?.draws ?? (mod as any).draws;
-      if (game === "powerball") {
-        setDraws(all.filter((d: Draw) => d.era === "2015-10-07"));
-      } else if (game === "megamillions") {
-        setDraws(all.filter((d: Draw) => d.era === "2025-04-08"));
-      } else {
-        setDraws(all);
-      }
-      setLoading(false);
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [game]);
 
   if (loading || !draws) {
     return (

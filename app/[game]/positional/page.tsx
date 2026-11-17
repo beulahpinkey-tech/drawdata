@@ -4,6 +4,11 @@ import { GameHeader } from "@/components/GameHeader";
 import { HonestyNote } from "@/components/HonestyNote";
 import { getAgg, presentStreams, STREAM_LABEL, type NamedStream } from "@/lib/data";
 import type { Game } from "@/lib/types";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "positional");
+}
 
 /**
  * Positional view — server-rendered end to end.

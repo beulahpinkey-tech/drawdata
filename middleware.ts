@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { SECURITY_HEADERS } from "@/lib/security-headers";
 
 const CANONICAL_HOST = "draw-data.com";
 
@@ -34,7 +35,24 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "0.0.0.0"]);
 /** Opt-in header that lets a *.pages.dev preview render instead of redirecting. */
 const PREVIEW_BYPASS_HEADER = "x-drawdata-preview";
 
+/**
+ * Every non-local response leaves through here with the security headers set.
+ * public/_headers alone is not enough: Cloudflare applies it to static assets
+ * only, so the edge-rendered /[game]/* pages (nearly the whole site) shipped
+ * without CSP / X-Frame-Options / Permissions-Policy. See lib/security-headers.ts.
+ * Local hosts are skipped: `next dev` needs eval (React Refresh), which the CSP
+ * forbids, and HSTS/upgrade-insecure-requests make no sense over http://localhost.
+ */
 export function middleware(request: NextRequest) {
+  const res = route(request);
+  const host = (request.headers.get("host") ?? "").split(":")[0].toLowerCase();
+  if (!LOCAL_HOSTS.has(host)) {
+    for (const [k, v] of Object.entries(SECURITY_HEADERS)) res.headers.set(k, v);
+  }
+  return res;
+}
+
+function route(request: NextRequest): NextResponse {
   const rawHost = request.headers.get("host") ?? "";
   // Strip the port — "localhost:3000" → "localhost"
   const host = rawHost.split(":")[0].toLowerCase();

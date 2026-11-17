@@ -8,6 +8,11 @@ import { FrequencyView } from "./FrequencyView";
 import { META, getAgg, isBallGame, GAME_LABELS } from "@/lib/data";
 import type { Game } from "@/lib/types";
 import { numberStats, type NumberStat } from "@/lib/numbers";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "frequency");
+}
 
 export default async function FrequencyPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;

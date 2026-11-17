@@ -4,6 +4,11 @@ import { GameHeader } from "@/components/GameHeader";
 import { HonestyNote } from "@/components/HonestyNote";
 import { CheckView } from "./CheckView";
 import type { Game } from "@/lib/types";
+import { spokeMetadata } from "@/lib/seo/spoke-meta";
+
+export function generateMetadata({ params }: { params: { game: string } }) {
+  return spokeMetadata(params.game, "check");
+}
 
 export default function CheckPage({ params }: { params: { game: string } }) {
   const game = params.game as Game;
