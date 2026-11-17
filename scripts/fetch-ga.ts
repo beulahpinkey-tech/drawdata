@@ -155,6 +155,10 @@ function csvFor(rows: Row[], positions: 3 | 4): string {
 }
 
 async function main() {
+  // Years whose fetch failed outright. A failure on the CURRENT year means no
+  // new draws can arrive, so the run must exit non-zero. Swallowing it (the old
+  // behaviour: print "x", exit 0) hid the Sept 2026 API move for two months.
+  const failures: string[] = [];
   console.log(`Fetching GA Cash 3 / Cash 4 history (${START_YEAR}…${END_YEAR})${FORCE ? " [FORCE]" : ""}`);
   console.log(`Cache: ${CACHE_DIR}`);
   for (const ep of ENDPOINTS) {
@@ -166,8 +170,9 @@ async function main() {
       let draws: RawDraw[];
       try {
         draws = await fetchYear(ep, year);
-      } catch {
+      } catch (err) {
         process.stdout.write("x");
+        failures.push(`${ep.game} ${year}: ${(err as Error).message}`);
         continue;
       }
       let added = 0;
@@ -189,6 +194,13 @@ async function main() {
       `  ${merged.size.toLocaleString().padStart(7)} draws (+${added.toLocaleString()} new, ${fetched.toLocaleString()} seen)\n`,
     );
     console.log(`         ${rows[rows.length - 1]?.iso} → ${rows[0]?.iso}`);
+  }
+  const current = failures.filter((f) => f.includes(` ${CURRENT_YEAR}:`));
+  if (failures.length) {
+    console.error(`\n${failures.length} year fetch(es) failed:\n  ${failures.slice(0, 6).join("\n  ")}`);
+  }
+  if (current.length) {
+    throw new Error(`could not fetch ${CURRENT_YEAR} draws — the source API is unreachable or has changed (existing draws kept; nothing new added)`);
   }
 }
 

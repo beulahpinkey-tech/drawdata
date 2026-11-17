@@ -441,3 +441,21 @@ jobs:
           done
           echo "All 5 push attempts failed; bailing"
           exit 1
+
+      # Last on purpose: fresh data from the other states is already committed
+      # above. Each fetch step is continue-on-error, so a source that breaks
+      # (Georgia's API moved in Sept 2026 and returned 404 for two months) used
+      # to leave every run green. Failing the run here turns it red, which makes
+      # GitHub email the workflow owner, and keeps it red until the state is
+      # fixed or deliberately retired.
+      - name: Fail if any game's data is stale
+        run: |
+          node -e '
+            const m = require("./lib/data/meta.json");
+            const stale = (m.stale || []).map((g) => `${g} (latest ${m[g]?.latest}, ${m[g]?.ageDays} days old)`);
+            if (stale.length) {
+              for (const s of stale) console.log(`::error::Stale dataset: ${s}`);
+              process.exit(1);
+            }
+            console.log("OK — every game is within its freshness window.");
+          '

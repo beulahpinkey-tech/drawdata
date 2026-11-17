@@ -64,6 +64,19 @@ export function GameHeader({
             <span>current era: <span className="text-text">{m.currentEra.label}</span></span>
           )}
         </div>
+        {m.stale && (
+          // Set by scripts/precompute.ts when the newest draw is older than its
+          // freshness cap. Without this, a state whose official feed broke
+          // (Georgia, Sept 2026) looked current while silently going out of date.
+          <p
+            role="status"
+            className="mt-4 max-w-3xl rounded-md border border-hot/30 bg-hot/[0.06] px-3 py-2 text-[13px] text-text"
+          >
+            Updates paused: the most recent draw we have is from{" "}
+            <span className="font-mono">{m.latest}</span>. The official results feed changed and newer
+            draws haven&apos;t been added yet. Everything on this page covers history up to that date.
+          </p>
+        )}
       </div>
     </div>
   );
