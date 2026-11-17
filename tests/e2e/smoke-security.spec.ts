@@ -45,13 +45,17 @@ for (const path of ["/", "/wi-pick3", "/ny-pick4/pairs", "/powerball/number/7"])
   expect(h["referrer-policy"]).toBeTruthy();
   expect(h["permissions-policy"]).toContain("camera=()");
   expect(h["cross-origin-opener-policy"]).toBe("same-origin");
-  expect(h["strict-transport-security"]).toContain("max-age=");
+  // Cloudflare's zone HSTS setting overrides the origin header; "max-age=0"
+  // there disables HSTS site-wide (SSL/TLS → Edge Certificates → HSTS).
+  expect(Number(/max-age=(\d+)/.exec(h["strict-transport-security"] ?? "")?.[1] ?? 0), "HSTS max-age").toBeGreaterThan(0);
   expect(h["x-powered-by"]).toBeUndefined();
 });
 
-test("redirects never leave the site", async ({ request }) => {
+test("redirects never leave the site", async ({ request, baseURL }) => {
   for (const p of ["/pick3?next=https://evil.example", "/wi-pick3/sums?redirect=//evil.example", "//evil.example/"]) {
-    const r = await request.get(p, { maxRedirects: 0 });
+    // Prefix the origin by hand: passed bare, "//evil.example/" is a
+    // protocol-relative URL and the client would go to that host instead.
+    const r = await request.get(baseURL!.replace(/\/$/, "") + p, { maxRedirects: 0 });
     const loc = r.headers()["location"] ?? "";
     expect(loc === "" || /^(\/(?!\/)|https:\/\/draw-data\.com)/.test(loc), `${p} -> ${loc}`).toBeTruthy();
   }

@@ -35,9 +35,11 @@ export async function headerDrawCount(page: Page): Promise<number> {
 }
 
 /**
- * Known framework noise we have triaged and deliberately do not fail on:
- * React #329 ("Unknown root exit status") and the hydration trio on the lookup
- * route are tracked in docs/AUDIT_2026-11.md (F-07/F-08) — content renders.
- * Anything else thrown in the page is a real failure.
+ * Page errors we deliberately tolerate. Currently none.
+ *
+ * React #329/#418/#423/#425 were thrown on every load of the edge-rendered
+ * pages before the 2026-11-17 deploy and stopped with it (0/18 loads across
+ * three timezones, vs 18/18 before). The cause was never isolated — see
+ * docs/AUDIT_2026-11.md F-07 — so any recurrence must fail the suite.
  */
-export const isTriagedNoise = (msg: string) => /Minified React error #(329|418|423|425)/.test(msg);
+export const isTriagedNoise = (_msg: string) => false;

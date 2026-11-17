@@ -79,7 +79,10 @@ export default async function YearArchivePage({ params }: { params: Params }) {
           <h2 className="font-display text-[24px]">
             {label} results — {year}
           </h2>
-          <p className="mt-2 text-[14px] text-dim max-w-2xl leading-relaxed">
+          {/* A div, not a <p>: NumberBall renders a <div>, which a <p> may not
+              contain. The browser closed the paragraph early and React threw
+              hydration error #418 on every results-year page. */}
+          <div className="mt-2 text-[14px] text-dim max-w-2xl leading-relaxed">
             {bucket.count.toLocaleString()} draws across {bucket.months.length}{" "}
             {bucket.months.length === 1 ? "month" : "months"}. Pick a month for the full draw table.
             {latest && (
@@ -94,7 +97,7 @@ export default async function YearArchivePage({ params }: { params: Params }) {
                 on {latest.date}.
               </>
             )}
-          </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
