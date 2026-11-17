@@ -21,8 +21,8 @@ const GAMES: { id: Game; label: string; tag: string; blurb: string }[] = [
   { id: "pa-pick4", label: "Pennsylvania Pick 4", tag: "4-digit · twice daily", blurb: "Pennsylvania Pick 4. 23k+ draws since 1980." },
   { id: "nj-pick3", label: "New Jersey Pick 3", tag: "3-digit · twice daily", blurb: "New Jersey Pick-3. Midday 12:59 PM / Evening 10:57 PM ET." },
   { id: "nj-pick4", label: "New Jersey Pick 4", tag: "4-digit · twice daily", blurb: "New Jersey Pick-4. Twice-daily 4-digit game." },
-  { id: "tx-pick3", label: "Texas Pick 3", tag: "3-digit · Day + Night", blurb: "Texas Lottery Pick 3 (Day + Night). Texas runs four draws daily; we show the two flagship times." },
-  { id: "tx-pick4", label: "Texas Daily 4", tag: "4-digit · Day + Night", blurb: "Texas Lottery Daily 4. Same two-draw model as Pick 3 — 11k+ draws since 2007." },
+  { id: "tx-pick3", label: "Texas Pick 3", tag: "3-digit · four draws daily", blurb: "Texas Lottery Pick 3: Morning, Day, Evening and Night draws, Monday to Saturday, since 1993." },
+  { id: "tx-pick4", label: "Texas Daily 4", tag: "4-digit · four draws daily", blurb: "Texas Lottery Daily 4: all four daily draws, 20k+ draws since 2007." },
   { id: "nc-pick3", label: "North Carolina Pick 3", tag: "3-digit · twice daily", blurb: "NC Education Lottery Pick 3. Day + Evening draws — 13k+ records back to October 2006." },
   { id: "nc-pick4", label: "North Carolina Pick 4", tag: "4-digit · twice daily", blurb: "NC Education Lottery Pick 4. Day + Evening — full history since April 2009." },
   { id: "powerball", label: "Powerball", tag: "5/69 + 1/26", blurb: "Multi-state. Current 5/69+1/26 era began Oct 2015; older eras tagged separately." },
@@ -203,8 +203,8 @@ export default function HomePage() {
             </p>
             <p>
               <strong className="text-text">Texas Pick 3 and Daily 4</strong> — Texas
-              runs four daily draws (Morning, Day, Evening, Night); we expose the two
-              flagship Day + Night times since 1993 / 2007.
+              runs four daily draws (Morning, Day, Evening, Night), all included,
+              since 1993 / 2007.
             </p>
             <p>
               <strong className="text-text">North Carolina Pick 3 and Pick 4</strong>

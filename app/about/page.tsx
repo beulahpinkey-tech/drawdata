@@ -69,8 +69,8 @@ export default function AboutPage() {
           Mega Millions and Powerball are national games (same numbers everywhere);
           their start dates here reflect when our chosen feed begins, not when the
           game launched. Pennsylvania&rsquo;s Pick 3 has the deepest single-state record
-          in the system — back to 1977. Texas runs four draws daily; we expose the
-          Day and Night flagship times as Midday/Evening to match the other states.
+          in the system — back to 1977. Texas runs four draws daily (Morning, Day,
+          Evening, Night) and all four are included; Texas&rsquo;s Day draw is shown as Midday.
         </p>
         <p className="mt-3 text-fg-secondary">
           Powerball is multi-state; its drawing matrix has changed seven times since

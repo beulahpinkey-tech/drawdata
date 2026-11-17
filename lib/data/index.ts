@@ -167,9 +167,9 @@ export const GAME_BLURB: Record<Game, string> = {
   "nj-pick4":
     "Four digits, 0–9, drawn twice daily by the New Jersey Lottery. Outcome space: 10,000 combinations.",
   "tx-pick3":
-    "Three digits, 0–9, drawn by the Texas Lottery. We show the Day (~12:27 PM CT) and Night (~10:12 PM CT) flagship draws.",
+    "Three digits, 0–9, drawn four times a day, Monday to Saturday, by the Texas Lottery: Morning (~10 AM CT), Day (~12:27 PM), Evening (~6 PM) and Night (~10:12 PM).",
   "tx-pick4":
-    "Four digits, 0–9, drawn by the Texas Lottery (\"Daily 4\"). Day + Night draws shown. Outcome space: 10,000 combinations.",
+    "Four digits, 0–9, drawn four times a day, Monday to Saturday, by the Texas Lottery (\"Daily 4\"): Morning, Day, Evening and Night. Outcome space: 10,000 combinations.",
   "nc-pick3":
     "Three digits, 0–9, drawn twice daily by the North Carolina Education Lottery. Day + Evening draws since October 2006.",
   "nc-pick4":

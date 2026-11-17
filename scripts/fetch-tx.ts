@@ -23,29 +23,32 @@
  *   Newer rows leave sum blank and use the last column for Fireball.
  *   We ignore sum and Fireball — only date + digits feed the analytics.
  *
- * Stream mapping — our pipeline models two draws/day (Midday + Evening).
- * Texas runs FOUR. We pick the two flagship draws as the canonical
- * Midday/Evening and skip the intra-day Morning + Evening times so the
- * output schema matches PA / NJ / WI exactly:
+ * Stream mapping — Texas runs FOUR draws a day (Mon–Sat) and we keep all
+ * of them under their real names:
  *
- *   Texas "Day"   (~12:27 PM CT) → Midday
- *   Texas "Night" (~10:12 PM CT) → Evening
- *   Texas "Morning"              → skipped
- *   Texas "Evening"              → skipped
+ *   Texas "Morning" (~10:00 AM CT) → Morning
+ *   Texas "Day"     (~12:27 PM CT) → Midday
+ *   Texas "Evening" (~6:00 PM CT)  → Evening
+ *   Texas "Night"   (~10:12 PM CT) → Night
  *
- * Re-run any time. Years that are not the current year are cached under
- * .cache/tx; same idea as fetch-pa.ts. Current-year rows are never
- * cached (or we'd silently freeze at whatever was in the cache).
+ * HISTORY: until Nov 2026 this fetcher kept only Day + Night and stored
+ * Night as "Evening" (the app then modelled two draws a day), so half of
+ * Texas was missing and the Night draws were mislabelled. On first run
+ * against a file in that legacy shape (no Morning and no Night rows), its
+ * "Evening" rows are relabelled Night before merging.
+ *
+ * The writer is MERGE-ONLY and VERIFIED: every draw already on disk must
+ * either be absent from the fresh download (then it is kept as-is) or match
+ * it exactly. Any disagreement aborts without writing, and draws are never
+ * removed, so a short upstream file can no longer delete history.
+ *
+ * The cache under .cache/tx is only a last-known-good copy for retries;
+ * every normal run re-downloads (we need today's draws).
  *
  * Run:  npm run fetch:tx
  */
 
-import {
-  mkdirSync,
-  existsSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -55,18 +58,10 @@ mkdirSync(CACHE_DIR, { recursive: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 type TxStream = "morning" | "day" | "evening" | "night";
+type Endpoint = { game: "pick3" | "pick4"; txStream: TxStream; url: string; positions: 3 | 4 };
 
-type Endpoint = {
-  game: "pick3" | "pick4";
-  txStream: TxStream;
-  url: string;
-  positions: 3 | 4;
-};
-
-const TX_PICK3_BASE =
-  "https://www.texaslottery.com/export/sites/lottery/Games/Pick_3/Winning_Numbers";
-const TX_DAILY4_BASE =
-  "https://www.texaslottery.com/export/sites/lottery/Games/Daily_4/Winning_Numbers";
+const TX_PICK3_BASE = "https://www.texaslottery.com/export/sites/lottery/Games/Pick_3/Winning_Numbers";
+const TX_DAILY4_BASE = "https://www.texaslottery.com/export/sites/lottery/Games/Daily_4/Winning_Numbers";
 
 const ENDPOINTS: Endpoint[] = [
   { game: "pick3", txStream: "morning", url: `${TX_PICK3_BASE}/pick3morning.csv`, positions: 3 },
@@ -81,23 +76,14 @@ const ENDPOINTS: Endpoint[] = [
 
 const args = process.argv.slice(2);
 const FORCE = args.includes("--force");
-
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function fetchCsv(ep: Endpoint, attempt = 1): Promise<string> {
-  // Texas publishes ONE CSV per stream containing the full history, so
-  // unlike PA we can't shard the cache by year. We cache the whole file
-  // but always re-fetch on a normal run — the file is small (a few hundred
-  // KB) and we need today's draws. The cache exists only to survive a
-  // transient 5xx: --force means "re-fetch even if cache exists" but on
-  // a clean run with no --force we still fetch fresh and overwrite the
-  // cache; the saved copy is just a last-known-good for retries.
   const cachePath = join(CACHE_DIR, `${ep.game}-${ep.txStream}.csv`);
   try {
     const res = await fetch(ep.url, {
       headers: {
-        "user-agent":
-          "DrawData/1.0 (Texas-lottery-analytics; +https://draw-data.com)",
+        "user-agent": "DrawData/1.0 (Texas-lottery-analytics; +https://draw-data.com)",
         accept: "text/csv,*/*",
       },
     });
@@ -112,30 +98,32 @@ async function fetchCsv(ep: Endpoint, attempt = 1): Promise<string> {
       return fetchCsv(ep, attempt + 1);
     }
     if (existsSync(cachePath)) {
-      console.warn(
-        `\n  ${ep.game} ${ep.txStream}: live fetch failed (${err.message}); falling back to cached copy.`,
-      );
+      console.warn(`\n  ${ep.game} ${ep.txStream}: live fetch failed (${err.message}); falling back to cached copy.`);
       return readFileSync(cachePath, "utf8");
     }
     throw err;
   }
 }
 
-type Row = { iso: string; ddmmyyyy: string; stream: "Midday" | "Evening"; digits: number[] };
+type OurStream = "Morning" | "Midday" | "Evening" | "Night";
+type Row = { iso: string; ddmmyyyy: string; stream: OurStream; digits: number[] };
 
-// Texas-stream → our two-draw model. Anything not Day/Night is dropped.
-function mapStream(tx: TxStream): "Midday" | "Evening" | null {
-  if (tx === "day") return "Midday";
-  if (tx === "night") return "Evening";
-  return null;
-}
+const STREAM_OF: Record<TxStream, OurStream> = {
+  morning: "Morning",
+  day: "Midday",
+  evening: "Evening",
+  night: "Night",
+};
+/** Newest-first order within one day. */
+const STREAM_RANK: Record<OurStream, number> = { Night: 0, Evening: 1, Midday: 2, Morning: 3 };
+
+const keyOf = (r: Row) => `${r.iso}|${r.stream}`;
+const digitsOf = (r: Row) => r.digits.join("");
 
 function parseCsv(raw: string, ep: Endpoint): Row[] {
   const out: Row[] = [];
-  const targetStream = mapStream(ep.txStream);
-  if (!targetStream) return out; // Morning / Evening: skipped entirely
-  const lines = raw.split(/\r?\n/);
-  for (const line of lines) {
+  const stream = STREAM_OF[ep.txStream];
+  for (const line of raw.split(/\r?\n/)) {
     if (!line) continue;
     const cols = line.split(",");
     // expected layout: name, MM, DD, YYYY, d1..dN, [sum], [fireball]
@@ -155,72 +143,94 @@ function parseCsv(raw: string, ep: Endpoint): Row[] {
     if (!ok) continue;
     const mmS = String(mm).padStart(2, "0");
     const ddS = String(dd).padStart(2, "0");
-    out.push({
-      iso: `${yyyy}-${mmS}-${ddS}`,
-      ddmmyyyy: `${ddS}-${mmS}-${yyyy}`,
-      stream: targetStream,
-      digits,
-    });
+    out.push({ iso: `${yyyy}-${mmS}-${ddS}`, ddmmyyyy: `${ddS}-${mmS}-${yyyy}`, stream, digits });
   }
   return out;
 }
 
+function readExisting(game: "pick3" | "pick4", positions: 3 | 4): Row[] {
+  const path = join(OUT_DIR, `${game}.csv`);
+  if (!existsSync(path)) return [];
+  const rows: Row[] = [];
+  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+    const cols = line.split(",");
+    const m = (cols[0] ?? "").trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (!m) continue;
+    const [, dd, mo, yyyy] = m;
+    const stream = (cols[1] ?? "").trim() as OurStream;
+    if (!(stream in STREAM_RANK)) continue;
+    const digits = cols.slice(2, 2 + positions).map((c) => parseInt(c, 10));
+    if (digits.length !== positions || digits.some((x) => Number.isNaN(x))) continue;
+    rows.push({ iso: `${yyyy}-${mo}-${dd}`, ddmmyyyy: `${dd}-${mo}-${yyyy}`, stream, digits });
+  }
+  // Legacy two-draw file: its "Evening" rows were really Texas Night draws.
+  if (rows.length && !rows.some((r) => r.stream === "Morning" || r.stream === "Night")) {
+    for (const r of rows) if (r.stream === "Evening") r.stream = "Night";
+    console.log(`  ${game}: legacy two-draw file, relabelled its Evening rows as Night`);
+  }
+  return rows;
+}
+
 function csvFor(rows: Row[], positions: 3 | 4): string {
   const cols = positions === 3 ? ",,,," : ",,,,,";
-  const lines = [
-    `Texas Lottery - Pick ${positions} Winning Numbers${cols}`,
-    `Draw Date${cols}`,
-  ];
+  const lines = [`Texas Lottery - Pick ${positions} Winning Numbers${cols}`, `Draw Date${cols}`];
   for (const r of rows) lines.push(`${r.ddmmyyyy},${r.stream},${r.digits.join(",")}`);
   return lines.join("\n") + "\n";
 }
 
 async function main() {
-  console.log(`Fetching TX Pick 3 / Daily 4 history${FORCE ? " [FORCE refetch]" : ""}`);
-  console.log(`Cache: ${CACHE_DIR}`);
-  const buckets: Record<"pick3" | "pick4", Row[]> = { pick3: [], pick4: [] };
+  console.log(`Fetching TX Pick 3 / Daily 4 history, all four daily draws${FORCE ? " [FORCE refetch]" : ""}`);
+  const fresh: Record<"pick3" | "pick4", Map<string, Row>> = { pick3: new Map(), pick4: new Map() };
+  const problems: string[] = [];
 
   for (const ep of ENDPOINTS) {
-    const label = `${ep.game} ${ep.txStream}`.padEnd(18);
-    process.stdout.write(`  ${label} `);
-    try {
-      const raw = await fetchCsv(ep);
-      const rows = parseCsv(raw, ep);
-      buckets[ep.game].push(...rows);
-      const kept = rows.length;
-      const note = mapStream(ep.txStream)
-        ? `${kept.toLocaleString().padStart(6)} kept`
-        : `      skipped (intra-day draw)`;
-      process.stdout.write(`${note}\n`);
-    } catch (err: any) {
-      process.stdout.write(`FAILED: ${err.message}\n`);
-      throw err;
+    process.stdout.write(`  ${`${ep.game} ${ep.txStream}`.padEnd(18)} `);
+    const rows = parseCsv(await fetchCsv(ep), ep);
+    if (rows.length === 0) throw new Error(`${ep.game} ${ep.txStream}: no draws in ${ep.url}`);
+    let dupes = 0;
+    for (const r of rows) {
+      const have = fresh[ep.game].get(keyOf(r));
+      if (!have) { fresh[ep.game].set(keyOf(r), r); continue; }
+      dupes++;
+      if (digitsOf(have) !== digitsOf(r)) {
+        problems.push(`${ep.game} ${keyOf(r)} listed twice upstream with different digits (${digitsOf(have)} / ${digitsOf(r)})`);
+      }
     }
+    console.log(`${rows.length.toLocaleString().padStart(6)} draws${dupes ? ` (${dupes} duplicate line(s) ignored)` : ""}`);
     await sleep(150);
   }
 
-  // newest first; for same date, Evening before Midday (matches PA/NJ output)
-  const sortFn = (a: Row, b: Row) => {
-    if (a.iso !== b.iso) return a.iso < b.iso ? 1 : -1;
-    return a.stream === "Evening" && b.stream === "Midday" ? -1 : 1;
-  };
-  buckets.pick3.sort(sortFn);
-  buckets.pick4.sort(sortFn);
+  const out: Record<"pick3" | "pick4", Row[]> = { pick3: [], pick4: [] };
+  for (const [game, positions] of [["pick3", 3], ["pick4", 4]] as const) {
+    const merged = new Map(fresh[game]);
+    let keptOnlyOnDisk = 0;
+    for (const r of readExisting(game, positions)) {
+      const f = merged.get(keyOf(r));
+      if (!f) { merged.set(keyOf(r), r); keptOnlyOnDisk++; continue; }
+      if (digitsOf(f) !== digitsOf(r)) {
+        problems.push(`${game} ${keyOf(r)}: disk ${digitsOf(r)} vs texaslottery.com ${digitsOf(f)}`);
+      }
+    }
+    out[game] = [...merged.values()].sort((a, b) =>
+      a.iso !== b.iso ? (a.iso < b.iso ? 1 : -1) : STREAM_RANK[a.stream] - STREAM_RANK[b.stream],
+    );
+    if (keptOnlyOnDisk) console.log(`  ${game}: kept ${keptOnlyOnDisk} draw(s) on disk that today's download lacks`);
+  }
 
-  writeFileSync(join(OUT_DIR, "pick3.csv"), csvFor(buckets.pick3, 3));
-  writeFileSync(join(OUT_DIR, "pick4.csv"), csvFor(buckets.pick4, 4));
+  if (problems.length) {
+    throw new Error(`refusing to write, ${problems.length} disagreement(s):\n  ${problems.slice(0, 8).join("\n  ")}`);
+  }
+
+  writeFileSync(join(OUT_DIR, "pick3.csv"), csvFor(out.pick3, 3));
+  writeFileSync(join(OUT_DIR, "pick4.csv"), csvFor(out.pick4, 4));
 
   const fmt = (rows: Row[]) =>
-    rows.length === 0
-      ? "—"
-      : `${rows[rows.length - 1].iso} → ${rows[0].iso} (${rows.length.toLocaleString()} draws)`;
-
-  console.log(`\nWrote ${OUT_DIR}/pick3.csv  ${fmt(buckets.pick3)}`);
-  console.log(`Wrote ${OUT_DIR}/pick4.csv  ${fmt(buckets.pick4)}`);
-  console.log(`\nDone.`);
+    rows.length === 0 ? "none" : `${rows[rows.length - 1].iso} → ${rows[0].iso} (${rows.length.toLocaleString()} draws)`;
+  console.log(`\nWrote data/tx/pick3.csv  ${fmt(out.pick3)}`);
+  console.log(`Wrote data/tx/pick4.csv  ${fmt(out.pick4)}`);
 }
 
 main().catch((err) => {
-  console.error("\nFAILED:", err);
+  console.error("\nFAILED:", err instanceof Error ? err.message : err);
   process.exit(1);
 });
