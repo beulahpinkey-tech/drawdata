@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { META, GAME_LABELS, GAME_BLURB, STATE_LABEL, presentStreams } from "@/lib/data";
+import { META, GAME_LABELS, GAME_SHORT, GAME_BLURB, STATE_LABEL, presentStreams } from "@/lib/data";
 import { ALL_GAMES, type Game } from "@/lib/types";
 import { ScrollReveal } from "@/components/motion/primitives";
 import { HeroVideoBackground } from "@/components/HeroVideoBackground";
@@ -67,6 +67,7 @@ export default function HomePage() {
       return {
         id: g.id,
         label: g.label,
+        short: GAME_SHORT[g.id],
         tag: g.tag,
         blurb: g.blurb,
         count: m?.count ?? 0,
